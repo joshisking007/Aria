@@ -1,16 +1,15 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const ALLOWED_ORIGINS = [
-  'https://aria-b15.pages.dev/',   // replace with your actual Cloudflare domain
+  'https://aria-b15.pages.dev',
   'http://localhost',
-  'file://',                         // local file open in browser
-  'null',                            // some browsers send "null" for file://
+  'file://',
+  'null',
 ]
 
 function cors(origin: string | null) {
-  const allowed = !origin || ALLOWED_ORIGINS.some(o => origin.startsWith(o))
   return {
-    'Access-Control-Allow-Origin': allowed ? (origin || '*') : 'https://aria-sapha.pages.dev',
+    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   }
