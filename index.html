@@ -1,0 +1,2984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>ARIA</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet"/>
+<style>
+/* ─── RESET & ROOT ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #0a0a0a;
+  --card: #141414;
+  --card2: #1a1a1a;
+  --border: rgba(255,255,255,0.065);
+  --border-hover: rgba(255,255,255,0.12);
+  --rose: #f472b6;
+  --rose-dim: rgba(244,114,182,0.09);
+  --rose-dim2: rgba(244,114,182,0.14);
+  --rose-border: rgba(244,114,182,0.22);
+  --rose-border2: rgba(244,114,182,0.35);
+  --text: #f0ece4;
+  --text2: rgba(240,236,228,0.75);
+  --muted: rgba(240,236,228,0.4);
+  --faint: rgba(240,236,228,0.12);
+  --green: #34d399;
+  --green-dim: rgba(52,211,153,0.1);
+  --amber: #fbbf24;
+  --amber-dim: rgba(251,191,36,0.1);
+  --blue: #60a5fa;
+  --blue-dim: rgba(96,165,250,0.1);
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --shadow-rose: 0 0 60px rgba(244,114,182,0.12), 0 0 120px rgba(244,114,182,0.05);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Ambient blobs */
+.ambient {
+  position: fixed; pointer-events: none; z-index: 0;
+}
+.ambient-1 {
+  top: -200px; left: 50%; transform: translateX(-50%);
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(244,114,182,0.055) 0%, transparent 65%);
+}
+.ambient-2 {
+  bottom: -150px; right: -100px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(96,165,250,0.04) 0%, transparent 65%);
+}
+.ambient-3 {
+  top: 40%; left: -150px;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(244,114,182,0.03) 0%, transparent 65%);
+}
+
+/* Noise grain overlay */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0; opacity: 0.4;
+}
+
+.screen {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  max-width: 480px; margin: 0 auto;
+}
+.screen:not(#introScreen) { display: none; }
+.screen.active { display: flex !important; }
+
+/* ─── SHARED UI ─────────────────────────────────────────────── */
+.top-bar {
+  padding: 18px 20px 0;
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 20px;
+  position: sticky; top: 0; z-index: 10;
+  background: linear-gradient(to bottom, var(--bg) 70%, transparent);
+  padding-bottom: 12px;
+}
+.back-btn {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--muted);
+  font-size: 16px; cursor: pointer;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; flex-shrink: 0;
+}
+.back-btn:active { border-color: var(--rose-border); color: var(--rose); }
+
+.aria-mini {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #f9a8d4, #ec4899);
+  box-shadow: 0 0 16px rgba(244,114,182,0.35);
+  flex-shrink: 0; position: relative;
+}
+.aria-mini.thinking::before {
+  content: '';
+  position: absolute; inset: -3px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  border-top-color: var(--rose);
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.top-bar-info { flex: 1; min-width: 0; }
+.top-bar-name { font-family: 'Instrument Serif', serif; font-size: 18px; }
+.top-bar-status { font-size: 11px; color: var(--rose); margin-top: 1px; letter-spacing: 0.5px; }
+
+.section-label {
+  font-size: 10px; color: var(--muted);
+  letter-spacing: 2px; padding: 0 20px; margin-bottom: 12px;
+}
+
+/* ─── TOAST ─────────────────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #fce7f3; color: #4a0025;
+  padding: 10px 22px; border-radius: 20px;
+  font-size: 12px; font-weight: 500;
+  opacity: 0; transition: all 0.25s ease;
+  pointer-events: none; z-index: 999;
+  white-space: nowrap; box-shadow: 0 8px 32px rgba(244,114,182,0.25);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.toast-green { background: #d1fae5; color: #065f46; }
+.toast.toast-blue { background: #dbeafe; color: #1e3a5f; }
+
+/* ─── MODAL ─────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal-sheet {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 24px 24px 0 0;
+  padding: 24px 20px 40px;
+  width: 100%; max-width: 480px;
+  transform: translateY(30px); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  max-height: 85vh; overflow-y: auto;
+}
+.modal-overlay.open .modal-sheet { transform: translateY(0); }
+.modal-handle {
+  width: 40px; height: 4px; border-radius: 2px;
+  background: var(--border-hover); margin: 0 auto 20px;
+}
+.modal-title {
+  font-family: 'Instrument Serif', serif; font-size: 22px;
+  margin-bottom: 8px; color: var(--text);
+}
+.modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; line-height: 1.6; }
+.modal-close {
+  position: absolute; top: 20px; right: 20px;
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 50%; width: 32px; height: 32px;
+  color: var(--muted); font-size: 16px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+
+/* ─── CURSOR ─────────────────────────────────────────────────── */
+.cursor {
+  display: inline-block; width: 2px; height: 14px;
+  background: var(--rose); margin-left: 2px;
+  animation: blink 0.8s ease infinite; vertical-align: middle;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ─── SLIDE UP ANIM ─────────────────────────────────────────── */
+@keyframes slide-up { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fade-in { from{opacity:0} to{opacity:1} }
+@keyframes scale-in { from{opacity:0;transform:scale(0.94)} to{opacity:1;transform:scale(1)} }
+
+/* ─── INTRO SCREEN ──────────────────────────────────────────── */
+#introScreen { padding-bottom: 0; min-height: 100vh; }
+
+.intro-scroll { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+
+.aria-avatar-wrap {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 60px 20px 32px;
+}
+
+.aria-orb-container { position: relative; margin-bottom: 28px; }
+
+.aria-orb {
+  width: 100px; height: 100px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fce7f3, #f472b6 40%, #be185d 80%, #831843);
+  box-shadow: 0 0 60px rgba(244,114,182,0.4), 0 0 120px rgba(244,114,182,0.12);
+  animation: breathe 3.5s ease-in-out infinite;
+  position: relative; z-index: 1;
+}
+.aria-orb::before {
+  content: '';
+  position: absolute; inset: 25%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 30%, rgba(255,255,255,0.4), transparent 60%);
+}
+.orb-ring {
+  position: absolute; inset: -6px; border-radius: 50%;
+  border: 1px solid rgba(244,114,182,0.25);
+  animation: ring-pulse 3.5s ease-in-out infinite;
+}
+.orb-ring-2 {
+  position: absolute; inset: -14px; border-radius: 50%;
+  border: 1px solid rgba(244,114,182,0.1);
+  animation: ring-pulse 3.5s ease-in-out infinite 0.4s;
+}
+.orb-ring-3 {
+  position: absolute; inset: -24px; border-radius: 50%;
+  border: 1px solid rgba(244,114,182,0.05);
+  animation: ring-pulse 3.5s ease-in-out infinite 0.8s;
+}
+
+@keyframes breathe {
+  0%,100% { transform: scale(1); box-shadow: 0 0 60px rgba(244,114,182,0.4), 0 0 120px rgba(244,114,182,0.12); }
+  50% { transform: scale(1.05); box-shadow: 0 0 80px rgba(244,114,182,0.55), 0 0 160px rgba(244,114,182,0.18); }
+}
+@keyframes ring-pulse {
+  0%,100% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.15); opacity: 0; }
+}
+
+.aria-name {
+  font-family: 'Instrument Serif', serif;
+  font-size: 46px; letter-spacing: 3px;
+  color: var(--text); margin-bottom: 6px;
+  text-shadow: 0 0 40px rgba(244,114,182,0.15);
+}
+.aria-full-name {
+  font-size: 9px; color: var(--muted);
+  letter-spacing: 2.5px; text-align: center;
+  line-height: 1.8;
+}
+
+/* Version badge */
+.version-badge {
+  margin-top: 10px;
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--rose-dim); border: 1px solid var(--rose-border);
+  border-radius: 20px; padding: 3px 10px;
+  font-size: 10px; color: var(--rose); letter-spacing: 1px;
+}
+.version-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--rose); animation: blink 1.5s ease infinite; }
+
+.intro-bubble-area { padding: 0 20px; margin-bottom: 20px; }
+.intro-msg {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px 20px 20px 4px;
+  padding: 18px 20px; font-size: 15px; line-height: 1.75;
+  opacity: 0; transform: translateY(8px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.intro-msg.visible { opacity: 1; transform: translateY(0); }
+.intro-msg .highlight { color: var(--rose); font-family: 'Instrument Serif', serif; font-style: italic; }
+
+/* Mood selector on intro */
+.mood-strip {
+  padding: 0 20px; margin-bottom: 16px;
+  opacity: 0; transition: opacity 0.4s ease 0.15s;
+}
+.mood-strip.visible { opacity: 1; }
+.mood-label { font-size: 10px; color: var(--muted); letter-spacing: 2px; margin-bottom: 10px; }
+.mood-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.mood-pill {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 7px 14px;
+  font-size: 12px; color: var(--muted); cursor: pointer;
+  transition: all 0.2s; white-space: nowrap;
+}
+.mood-pill:active, .mood-pill.active {
+  background: var(--rose-dim); border-color: var(--rose-border); color: var(--rose);
+}
+
+.intro-options {
+  padding: 0 20px 36px; display: flex; flex-direction: column; gap: 10px;
+  opacity: 0; transform: translateY(8px);
+  transition: opacity 0.4s ease 0.3s, transform 0.4s ease 0.3s;
+}
+.intro-options.visible { opacity: 1; transform: translateY(0); }
+
+.option-btn {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 16px 18px;
+  text-align: left; color: var(--text); font-size: 14px;
+  font-family: 'DM Sans', sans-serif; cursor: pointer;
+  transition: all 0.2s; display: flex; align-items: center; gap: 12px;
+  position: relative; overflow: hidden;
+}
+.option-btn::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent, rgba(244,114,182,0.04));
+  opacity: 0; transition: opacity 0.2s;
+}
+.option-btn:active::before { opacity: 1; }
+.option-btn:active { border-color: var(--rose-border); }
+.option-icon { font-size: 20px; flex-shrink: 0; }
+.option-label { flex: 1; }
+.option-label > div:first-child { font-weight: 500; margin-bottom: 2px; }
+.option-sub { font-size: 11px; color: var(--muted); }
+.option-arrow { color: var(--muted); font-size: 18px; flex-shrink: 0; }
+
+/* Stats row on intro */
+.intro-stats {
+  margin: 0 20px 20px;
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 8px;
+  opacity: 0; transition: opacity 0.4s ease 0.5s;
+}
+.intro-stats.visible { opacity: 1; }
+.stat-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 12px;
+  text-align: center;
+}
+.stat-num { font-family: 'Instrument Serif', serif; font-size: 22px; color: var(--text); }
+.stat-label { font-size: 10px; color: var(--muted); margin-top: 2px; letter-spacing: 0.5px; }
+
+/* ─── CONTACT SCREEN ─────────────────────────────────────────── */
+#contactScreen { padding-bottom: 80px; }
+
+/* Search bar */
+.search-wrap {
+  padding: 0 20px; margin-bottom: 16px;
+  opacity: 0; animation: slide-up 0.3s ease 0.1s both;
+}
+#contactScreen.active .search-wrap { opacity: 1; }
+.search-input-wrap {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 11px 14px;
+  transition: border-color 0.2s;
+}
+.search-input-wrap:focus-within { border-color: var(--rose-border); }
+.search-icon { font-size: 14px; color: var(--muted); flex-shrink: 0; }
+.search-input {
+  flex: 1; background: none; border: none; outline: none;
+  color: var(--text); font-size: 14px; font-family: 'DM Sans', sans-serif;
+}
+.search-input::placeholder { color: var(--muted); }
+
+/* ARIA comment */
+.aria-comment {
+  margin: 0 20px 16px;
+  padding: 14px 16px;
+  background: var(--rose-dim); border: 1px solid var(--rose-border);
+  border-radius: var(--radius-md);
+  font-size: 13px; color: var(--text2); line-height: 1.6;
+  display: none; animation: slide-up 0.3s ease;
+}
+.aria-tag { color: var(--rose); font-size: 10px; letter-spacing: 1.5px; margin-bottom: 5px; font-weight: 500; }
+
+/* Contact cards */
+.contact-card {
+  margin: 0 20px 8px; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 14px 16px;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 14px;
+  animation: slide-up 0.3s ease both;
+  position: relative;
+}
+.contact-card:active { border-color: var(--rose-border); background: var(--rose-dim); }
+.contact-card.selected { border-color: var(--rose-border2); background: var(--rose-dim2); }
+
+.contact-avatar {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 600; color: var(--text);
+  flex-shrink: 0; position: relative;
+}
+.contact-avatar.online::after {
+  content: ''; position: absolute; bottom: 1px; right: 1px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--green); border: 2px solid var(--bg);
+}
+.contact-avatar.needs-reply::after {
+  content: ''; position: absolute; bottom: 1px; right: 1px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--rose); border: 2px solid var(--bg);
+}
+.contact-avatar.away::after {
+  content: ''; position: absolute; bottom: 1px; right: 1px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--amber); border: 2px solid var(--bg);
+}
+
+/* Avatar color variants */
+.contact-avatar[data-color="blue"] { background: linear-gradient(135deg, #1e3a5f, #1d4ed8); }
+.contact-avatar[data-color="purple"] { background: linear-gradient(135deg, #3b0764, #7c3aed); }
+.contact-avatar[data-color="green"] { background: linear-gradient(135deg, #064e3b, #059669); }
+.contact-avatar[data-color="rose"] { background: linear-gradient(135deg, #4a0025, #be185d); }
+.contact-avatar[data-color="amber"] { background: linear-gradient(135deg, #451a03, #b45309); }
+
+.contact-info { flex: 1; min-width: 0; }
+.contact-name { font-size: 15px; font-weight: 500; margin-bottom: 3px; }
+.contact-preview { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.contact-meta { text-align: right; flex-shrink: 0; }
+.contact-time { font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+.platform-badge {
+  font-size: 10px; padding: 2px 7px; border-radius: 8px;
+  white-space: nowrap; display: inline-block;
+}
+.platform-badge.instagram { background: rgba(225,48,108,0.12); color: #e1306c; border: 1px solid rgba(225,48,108,0.2); }
+.platform-badge.imessage { background: rgba(52,211,153,0.1); color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
+.platform-badge.whatsapp { background: rgba(37,211,102,0.1); color: #25d366; border: 1px solid rgba(37,211,102,0.2); }
+.platform-badge.twitter { background: rgba(96,165,250,0.1); color: #60a5fa; border: 1px solid rgba(96,165,250,0.2); }
+.platform-badge.snapchat { background: rgba(255,252,0,0.1); color: #fffc00; border: 1px solid rgba(255,252,0,0.2); }
+.silent-badge {
+  font-size: 10px; color: var(--rose);
+  background: var(--rose-dim); border: 1px solid var(--rose-border);
+  padding: 2px 8px; border-radius: 8px; white-space: nowrap; display: inline-block;
+}
+
+/* Add contact card */
+.add-contact-card {
+  margin: 0 20px 8px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 14px;
+}
+.add-contact-card:active { border-color: var(--rose-border); }
+
+/* ─── REPLY SCREEN ─────────────────────────────────────────────── */
+#replyScreen { padding-bottom: 24px; }
+
+.convo-area { padding: 0 20px; margin-bottom: 16px; }
+.convo-label {
+  font-size: 10px; color: var(--muted);
+  letter-spacing: 2px; margin-bottom: 10px;
+}
+.their-bubble {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 18px 18px 18px 4px;
+  padding: 12px 16px; font-size: 14px; line-height: 1.65;
+  max-width: 85%; margin-bottom: 6px;
+}
+.time-label { font-size: 10px; color: var(--faint); margin-top: 4px; }
+
+/* Convo thread */
+.convo-thread { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.thread-msg {
+  max-width: 80%; font-size: 13px; line-height: 1.6;
+  padding: 10px 14px; border-radius: 14px;
+}
+.thread-msg.them {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px 14px 14px 3px;
+  align-self: flex-start;
+}
+.thread-msg.me {
+  background: var(--rose-dim); border: 1px solid var(--rose-border);
+  border-radius: 14px 14px 3px 14px;
+  align-self: flex-end; color: #fce7f3;
+}
+.thread-timestamp { font-size: 10px; color: var(--faint); margin: 4px 2px; align-self: center; }
+
+/* Thinking indicator */
+.aria-thinking {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 20px; margin-bottom: 16px;
+}
+.thinking-orb {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #f9a8d4, #ec4899);
+  box-shadow: 0 0 16px rgba(244,114,182,0.3);
+  flex-shrink: 0; animation: breathe 2s ease-in-out infinite;
+}
+.thinking-dots { display: flex; gap: 4px; align-items: center; }
+.dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--rose); animation: dot-pulse 1.2s ease infinite;
+}
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dot-pulse { 0%,100%{opacity:0.25;transform:scale(0.7)} 50%{opacity:1;transform:scale(1)} }
+.thinking-text { font-size: 13px; color: var(--muted); margin-left: 2px; }
+
+/* Thinking status messages */
+.thinking-status {
+  font-size: 11px; color: var(--rose); margin-left: 4px;
+  animation: fade-in 0.3s ease;
+}
+
+/* Reply section */
+.reply-section { padding: 0 20px; }
+.reply-from-label {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10px; color: var(--rose); letter-spacing: 1.5px;
+  margin-bottom: 12px;
+}
+.reply-from-label::before {
+  content: ''; width: 24px; height: 1px; background: var(--rose-border2);
+}
+
+.reply-bubble {
+  background: var(--rose-dim); border: 1px solid var(--rose-border);
+  padding: 13px 16px; color: #fce7f3; font-size: 14px; line-height: 1.65;
+  margin-bottom: 8px; position: relative; cursor: pointer;
+  animation: slide-up 0.3s ease both;
+  transition: background 0.2s, border-color 0.2s;
+}
+.reply-bubble:active { background: var(--rose-dim2); border-color: var(--rose-border2); }
+.reply-bubble.first { border-radius: 4px 18px 18px 18px; }
+.reply-bubble.middle { border-radius: 4px 18px 18px 4px; }
+.reply-bubble.last { border-radius: 4px 18px 4px 18px; }
+.reply-bubble.only { border-radius: 18px 4px 18px 18px; }
+
+/* Editable reply bubbles */
+.reply-bubble.editable { cursor: text; }
+.reply-bubble[contenteditable="true"]:focus {
+  outline: none;
+  border-color: var(--rose-border2);
+  background: var(--rose-dim2);
+}
+.edit-hint {
+  font-size: 10px; color: var(--rose); letter-spacing: 1px;
+  margin-bottom: 8px; display: flex; align-items: center; gap: 5px;
+}
+
+/* Tone pills */
+.tone-section { padding: 0 20px; margin-bottom: 16px; }
+.tone-label { font-size: 10px; color: var(--muted); letter-spacing: 2px; margin-bottom: 10px; }
+.tone-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.tone-pill {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 6px 14px;
+  font-size: 12px; color: var(--muted); cursor: pointer;
+  transition: all 0.2s;
+}
+.tone-pill.active {
+  background: var(--rose-dim); border-color: var(--rose-border); color: var(--rose);
+}
+
+/* ARIA opinion */
+.aria-opinion {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 14px 16px;
+  margin-bottom: 16px; font-size: 13px; color: var(--muted);
+  line-height: 1.6; font-style: italic;
+  animation: slide-up 0.3s ease 0.3s both;
+}
+.aria-opinion .name {
+  color: var(--rose); font-style: normal;
+  font-size: 10px; letter-spacing: 1.5px;
+  display: block; margin-bottom: 5px; font-weight: 500;
+}
+
+/* Vibes score */
+.vibes-score {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px; margin-bottom: 16px;
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  animation: slide-up 0.3s ease 0.4s both;
+}
+.vibes-label { font-size: 11px; color: var(--muted); flex: 1; }
+.vibes-bar-wrap { flex: 2; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.vibes-bar { height: 100%; background: linear-gradient(90deg, #db2777, #f472b6); border-radius: 2px; transition: width 0.5s ease; }
+.vibes-num { font-size: 12px; color: var(--rose); font-weight: 500; min-width: 30px; text-align: right; }
+
+/* Alternatives section */
+.alternatives-section { padding: 0 20px; margin-bottom: 16px; }
+.alt-label { font-size: 10px; color: var(--muted); letter-spacing: 2px; margin-bottom: 10px; }
+.alt-bubble {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 12px 14px;
+  font-size: 13px; color: var(--text2); line-height: 1.6;
+  margin-bottom: 8px; cursor: pointer; transition: all 0.2s;
+  animation: slide-up 0.3s ease both;
+}
+.alt-bubble:active { border-color: var(--rose-border); background: var(--rose-dim); }
+.alt-bubble-tone { font-size: 10px; color: var(--muted); margin-bottom: 5px; letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
+.alt-bubble-tone::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--muted); }
+
+/* Action row */
+.action-row { display: flex; gap: 8px; padding: 0 20px; margin-bottom: 12px; }
+.regen-btn {
+  flex: 1; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 13px;
+  color: var(--muted); font-size: 13px;
+  font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s;
+}
+.regen-btn:active { border-color: var(--rose-border); color: var(--rose); }
+.copy-btn {
+  flex: 2; background: linear-gradient(135deg, #be185d, #db2777, #f472b6);
+  border: none; border-radius: var(--radius-md); padding: 13px;
+  color: #fff; font-size: 13px; font-family: 'DM Sans', sans-serif;
+  font-weight: 500; cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
+  box-shadow: 0 4px 20px rgba(219,39,119,0.25);
+}
+.copy-btn:active { transform: scale(0.98); opacity: 0.9; }
+.copy-btn.copied { background: linear-gradient(135deg, #065f46, #059669, #34d399); box-shadow: 0 4px 20px rgba(5,150,105,0.25); }
+
+/* Action buttons row 2 */
+.action-row-2 { display: flex; gap: 8px; padding: 0 20px; margin-bottom: 12px; }
+.action-btn-sm {
+  flex: 1; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 8px;
+  color: var(--muted); font-size: 11px; letter-spacing: 0.3px;
+  font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s;
+  text-align: center;
+}
+.action-btn-sm:active { border-color: var(--rose-border); color: var(--rose); }
+.action-btn-sm .btn-icon { display: block; font-size: 16px; margin-bottom: 3px; }
+
+/* Paste area */
+.paste-area { padding: 0 20px; margin-bottom: 12px; }
+.paste-label { font-size: 10px; color: var(--muted); letter-spacing: 2px; margin-bottom: 8px; }
+textarea.convo-input {
+  width: 100%; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 14px 16px;
+  color: var(--text); font-size: 13px; font-family: 'DM Sans', sans-serif;
+  resize: none; line-height: 1.65; transition: border-color 0.2s;
+  margin-bottom: 10px;
+}
+textarea.convo-input:focus { border-color: var(--rose-border); outline: none; }
+textarea.convo-input::placeholder { color: var(--muted); }
+
+.gen-reply-btn {
+  width: 100%; padding: 16px;
+  background: linear-gradient(135deg, #831843, #be185d, #db2777, #f472b6);
+  border: none; border-radius: var(--radius-md);
+  color: #fff; font-size: 14px; font-family: 'DM Sans', sans-serif;
+  font-weight: 500; cursor: pointer; letter-spacing: 0.5px;
+  transition: all 0.2s;
+  box-shadow: 0 6px 24px rgba(190,24,93,0.3);
+}
+.gen-reply-btn:active { transform: scale(0.98); opacity: 0.9; }
+.gen-reply-btn:disabled {
+  background: var(--rose-dim); border: 1px solid var(--rose-border);
+  color: var(--rose); cursor: default; box-shadow: none;
+}
+
+/* Platform selector */
+.platform-selector { padding: 0 20px; margin-bottom: 14px; }
+.platform-label { font-size: 10px; color: var(--muted); letter-spacing: 2px; margin-bottom: 10px; }
+.platform-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.platform-pill {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 6px 12px;
+  font-size: 11px; color: var(--muted); cursor: pointer;
+  transition: all 0.2s;
+}
+.platform-pill.active.instagram { background: rgba(225,48,108,0.1); border-color: rgba(225,48,108,0.3); color: #e1306c; }
+.platform-pill.active.imessage { background: rgba(52,211,153,0.1); border-color: rgba(52,211,153,0.3); color: #34d399; }
+.platform-pill.active.whatsapp { background: rgba(37,211,102,0.1); border-color: rgba(37,211,102,0.3); color: #25d366; }
+.platform-pill.active.twitter { background: rgba(96,165,250,0.1); border-color: rgba(96,165,250,0.3); color: #60a5fa; }
+.platform-pill.active.snapchat { background: rgba(255,252,0,0.1); border-color: rgba(255,252,0,0.3); color: #e8e300; }
+
+/* ─── HISTORY SCREEN ─────────────────────────────────────────── */
+#historyScreen { padding-bottom: 80px; }
+
+.history-card {
+  margin: 0 20px 10px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px;
+  cursor: pointer; transition: all 0.2s;
+  animation: slide-up 0.3s ease both;
+}
+.history-card:active { border-color: var(--rose-border); }
+.history-card-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+}
+.history-card-name { font-size: 14px; font-weight: 500; flex: 1; }
+.history-card-time { font-size: 11px; color: var(--muted); }
+.history-original {
+  font-size: 12px; color: var(--muted); line-height: 1.6;
+  margin-bottom: 8px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.history-reply { font-size: 13px; color: var(--text2); line-height: 1.6; }
+.history-meta {
+  display: flex; align-items: center; gap: 8px; margin-top: 10px;
+}
+.history-tone-tag {
+  font-size: 10px; background: var(--rose-dim);
+  border: 1px solid var(--rose-border); color: var(--rose);
+  padding: 2px 8px; border-radius: 8px;
+}
+
+/* ─── PROFILE/VOICE SCREEN ───────────────────────────────────── */
+#profileScreen { padding-bottom: 80px; }
+
+.profile-hero {
+  padding: 0 20px 24px;
+  text-align: center;
+}
+.profile-orb {
+  width: 70px; height: 70px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fce7f3, #f472b6 40%, #be185d 80%);
+  margin: 0 auto 16px;
+  box-shadow: 0 0 40px rgba(244,114,182,0.3);
+}
+.profile-name { font-family: 'Instrument Serif', serif; font-size: 28px; margin-bottom: 4px; }
+.profile-sub { font-size: 12px; color: var(--muted); }
+
+.profile-section { margin-bottom: 24px; }
+.profile-section-title {
+  font-size: 10px; color: var(--muted); letter-spacing: 2px;
+  padding: 0 20px; margin-bottom: 12px;
+}
+.profile-card {
+  margin: 0 20px 8px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 16px;
+}
+.profile-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.profile-row:last-child { border-bottom: none; padding-bottom: 0; }
+.profile-row-icon { font-size: 18px; flex-shrink: 0; width: 28px; text-align: center; }
+.profile-row-info { flex: 1; }
+.profile-row-label { font-size: 13px; color: var(--text); font-weight: 500; }
+.profile-row-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.profile-row-action { font-size: 12px; color: var(--rose); cursor: pointer; flex-shrink: 0; }
+
+/* Style trait pills */
+.trait-pills-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.trait-pill {
+  background: var(--rose-dim); border: 1px solid var(--rose-border);
+  color: var(--rose); font-size: 11px;
+  padding: 4px 12px; border-radius: 20px;
+}
+.trait-pill.muted {
+  background: var(--card2); border-color: var(--border); color: var(--muted);
+}
+
+/* Toggle */
+.toggle-wrap { display: flex; align-items: center; gap: 10px; }
+.toggle {
+  width: 40px; height: 22px; border-radius: 11px;
+  background: var(--card2); border: 1px solid var(--border);
+  position: relative; cursor: pointer; transition: background 0.2s;
+  flex-shrink: 0;
+}
+.toggle.on { background: var(--rose-dim); border-color: var(--rose-border); }
+.toggle-knob {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--muted); position: absolute; top: 2px; left: 2px;
+  transition: all 0.2s;
+}
+.toggle.on .toggle-knob { background: var(--rose); left: 20px; }
+
+/* Input field */
+.profile-input {
+  width: 100%; background: var(--card2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 12px;
+  color: var(--text); font-size: 13px; font-family: 'DM Sans', sans-serif;
+  margin-top: 8px; outline: none; transition: border-color 0.2s;
+}
+.profile-input:focus { border-color: var(--rose-border); }
+
+/* Slider */
+.slider-wrap { margin-top: 10px; }
+.slider-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-bottom: 6px; }
+input[type=range] {
+  width: 100%; appearance: none; background: var(--border);
+  border-radius: 4px; height: 4px; outline: none; cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  appearance: none; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--rose); box-shadow: 0 0 10px rgba(244,114,182,0.4);
+}
+
+/* ─── NAV BAR ─────────────────────────────────────────────────── */
+.nav-bar {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 480px; z-index: 50;
+  background: rgba(10,10,10,0.9); backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+  display: flex; padding: 8px 0 16px;
+}
+.nav-btn {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; gap: 4px; padding: 8px;
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-size: 10px; letter-spacing: 0.5px;
+  font-family: 'DM Sans', sans-serif; transition: color 0.2s;
+}
+.nav-btn.active { color: var(--rose); }
+.nav-btn-icon { font-size: 20px; }
+
+/* ─── ADD CONTACT MODAL ──────────────────────────────────────── */
+.form-field { margin-bottom: 14px; }
+.form-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-bottom: 6px; }
+.form-input {
+  width: 100%; background: var(--card2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px 14px;
+  color: var(--text); font-size: 14px; font-family: 'DM Sans', sans-serif;
+  outline: none; transition: border-color 0.2s;
+}
+.form-input:focus { border-color: var(--rose-border); }
+.form-select {
+  width: 100%; background: var(--card2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px 14px;
+  color: var(--text); font-size: 14px; font-family: 'DM Sans', sans-serif;
+  outline: none; appearance: none; cursor: pointer;
+}
+.btn-primary {
+  width: 100%; padding: 15px; background: linear-gradient(135deg, #be185d, #f472b6);
+  border: none; border-radius: var(--radius-md); color: #fff;
+  font-size: 14px; font-family: 'DM Sans', sans-serif; font-weight: 500;
+  cursor: pointer; letter-spacing: 0.5px; margin-top: 8px;
+}
+
+/* ─── STREAK / STATS SECTION ─────────────────────────────────── */
+.streak-banner {
+  margin: 0 20px 20px;
+  background: linear-gradient(135deg, rgba(244,114,182,0.08), rgba(190,24,93,0.05));
+  border: 1px solid var(--rose-border);
+  border-radius: var(--radius-lg); padding: 16px 18px;
+  display: flex; align-items: center; gap: 14px;
+}
+.streak-flame { font-size: 32px; }
+.streak-info { flex: 1; }
+.streak-num { font-family: 'Instrument Serif', serif; font-size: 28px; color: var(--text); }
+.streak-label { font-size: 12px; color: var(--muted); }
+.streak-badge {
+  background: var(--rose-dim); border: 1px solid var(--rose-border);
+  border-radius: var(--radius-sm); padding: 6px 12px;
+  font-size: 11px; color: var(--rose);
+}
+
+/* ─── MOOD SCREEN ────────────────────────────────────────────── */
+#moodScreen { padding-bottom: 80px; }
+.mood-grid {
+  padding: 0 20px; display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; margin-bottom: 20px;
+}
+.mood-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 20px 16px;
+  text-align: center; cursor: pointer; transition: all 0.2s;
+  animation: scale-in 0.3s ease both;
+}
+.mood-card:active, .mood-card.active {
+  border-color: var(--rose-border); background: var(--rose-dim);
+}
+.mood-card-emoji { font-size: 32px; margin-bottom: 10px; }
+.mood-card-label { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+.mood-card-sub { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+/* ─── SMART SUGGESTIONS ──────────────────────────────────────── */
+.smart-suggestions {
+  padding: 0 20px; margin-bottom: 16px;
+}
+.suggestions-label { font-size: 10px; color: var(--muted); letter-spacing: 2px; margin-bottom: 10px; }
+.suggestion-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 6px 14px;
+  font-size: 12px; color: var(--text2); cursor: pointer;
+  margin: 0 6px 6px 0; transition: all 0.2s;
+}
+.suggestion-chip:active { border-color: var(--rose-border); background: var(--rose-dim); color: var(--rose); }
+
+/* ─── LOADING SKELETON ───────────────────────────────────────── */
+@keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+.skeleton {
+  background: linear-gradient(90deg, var(--card) 25%, var(--card2) 50%, var(--card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ─── SCROLLBAR ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 0; background: transparent; }
+
+/* ─── ANIMATIONS ─────────────────────────────────────────────── */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+
+/* ─── DIVIDER ────────────────────────────────────────────────── */
+.divider {
+  height: 1px; background: var(--border);
+  margin: 0 20px 20px;
+}
+
+/* ─── ARIA SPEAKING ─────────────────────────────────────────── */
+.aria-orb.speaking {
+  animation: orb-speaking 0.45s ease-in-out infinite !important;
+  box-shadow: 0 0 90px rgba(244,114,182,0.75), 0 0 200px rgba(244,114,182,0.3) !important;
+}
+@keyframes orb-speaking {
+  0%   { transform: scale(1);    box-shadow: 0 0 80px rgba(244,114,182,0.6); }
+  30%  { transform: scale(1.08); box-shadow: 0 0 110px rgba(244,114,182,0.8); }
+  60%  { transform: scale(0.97); box-shadow: 0 0 70px rgba(244,114,182,0.55); }
+  100% { transform: scale(1);    box-shadow: 0 0 80px rgba(244,114,182,0.6); }
+}
+.aria-mini.speaking {
+  box-shadow: 0 0 28px rgba(244,114,182,0.8), 0 0 56px rgba(244,114,182,0.3) !important;
+  animation: mini-speaking 0.4s ease-in-out infinite !important;
+}
+.thinking-orb.speaking {
+  animation: mini-speaking 0.4s ease-in-out infinite !important;
+}
+.profile-orb.speaking {
+  animation: mini-speaking 0.4s ease-in-out infinite !important;
+  box-shadow: 0 0 56px rgba(244,114,182,0.6) !important;
+}
+@keyframes mini-speaking {
+  0%,100% { transform: scale(1); }
+  50%     { transform: scale(1.14); }
+}
+
+/* Sound wave bars — shown under orb when speaking */
+.sound-bars {
+  display: flex; gap: 3px; align-items: flex-end;
+  height: 16px; margin-top: 10px;
+  opacity: 0; transition: opacity 0.25s;
+  pointer-events: none;
+}
+.sound-bars.active { opacity: 1; }
+.sound-bar {
+  width: 3px; border-radius: 2px;
+  background: var(--rose);
+}
+.sound-bar:nth-child(1) { height: 4px;  animation: bar-bounce 0.55s ease infinite 0s; }
+.sound-bar:nth-child(2) { height: 10px; animation: bar-bounce 0.55s ease infinite 0.09s; }
+.sound-bar:nth-child(3) { height: 16px; animation: bar-bounce 0.55s ease infinite 0.18s; }
+.sound-bar:nth-child(4) { height: 10px; animation: bar-bounce 0.55s ease infinite 0.09s; }
+.sound-bar:nth-child(5) { height: 4px;  animation: bar-bounce 0.55s ease infinite 0s; }
+@keyframes bar-bounce {
+  0%,100% { transform: scaleY(0.35); opacity: 0.4; }
+  50%     { transform: scaleY(1.2);  opacity: 1; }
+}
+
+/* Stop-speech floating pill */
+#stopSpeechBtn {
+  position: fixed; top: 64px; right: 16px; z-index: 200;
+  background: rgba(10,10,10,0.85); border: 1px solid var(--rose-border2);
+  border-radius: 20px; padding: 7px 14px 7px 10px;
+  display: none; align-items: center; gap: 7px;
+  font-size: 12px; color: var(--rose); cursor: pointer;
+  backdrop-filter: blur(12px); animation: fade-in 0.2s ease;
+  box-shadow: 0 6px 24px rgba(244,114,182,0.2);
+  letter-spacing: 0.3px;
+}
+#stopSpeechBtn .stop-bars {
+  display: flex; gap: 2px; align-items: flex-end; height: 12px;
+}
+#stopSpeechBtn .stop-bar {
+  width: 2px; border-radius: 1px; background: var(--rose);
+}
+#stopSpeechBtn .stop-bar:nth-child(1) { height: 4px;  animation: bar-bounce 0.5s ease infinite 0s; }
+#stopSpeechBtn .stop-bar:nth-child(2) { height: 8px;  animation: bar-bounce 0.5s ease infinite 0.1s; }
+#stopSpeechBtn .stop-bar:nth-child(3) { height: 12px; animation: bar-bounce 0.5s ease infinite 0.2s; }
+#stopSpeechBtn .stop-bar:nth-child(4) { height: 8px;  animation: bar-bounce 0.5s ease infinite 0.1s; }
+
+/* Mute button in top bar */
+.mute-btn {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; font-size: 15px; cursor: pointer;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; flex-shrink: 0;
+}
+.mute-btn.muted { border-color: rgba(100,100,100,0.3); opacity: 0.5; }
+.mute-btn:active { transform: scale(0.9); }
+
+/* ─── VOICE PICKER ───────────────────────────────────────────── */
+.voice-section { margin-bottom: 24px; }
+.voice-list {
+  max-height: 220px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 6px;
+  margin-top: 10px; padding-right: 2px;
+}
+.voice-option {
+  padding: 11px 14px;
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); cursor: pointer;
+  transition: all 0.18s;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.voice-option:active { border-color: var(--rose-border); }
+.voice-option.active {
+  background: var(--rose-dim); border-color: var(--rose-border2);
+}
+.voice-option-left { flex: 1; min-width: 0; }
+.voice-option-name { font-size: 13px; color: var(--text); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.voice-option-lang { font-size: 10px; color: var(--muted); margin-top: 2px; letter-spacing: 0.5px; }
+.voice-lang-tab {
+  flex: 1; padding: 8px; background: var(--card2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--muted); font-size: 12px; font-family: 'DM Sans', sans-serif;
+  cursor: pointer; transition: all 0.18s; letter-spacing: 0.3px;
+}
+.voice-lang-tab.active {
+  background: var(--rose-dim); border-color: var(--rose-border);
+  color: var(--rose);
+}
+.voice-option-badge {
+  font-size: 9px; color: var(--rose); background: var(--rose-dim);
+  border: 1px solid var(--rose-border); border-radius: 6px;
+  padding: 2px 6px; flex-shrink: 0;
+}
+
+.voice-controls-row {
+  display: flex; gap: 8px; margin-top: 12px;
+}
+.voice-ctrl-card {
+  flex: 1; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px;
+}
+.voice-ctrl-label { font-size: 10px; color: var(--muted); letter-spacing: 1.5px; margin-bottom: 8px; }
+.voice-ctrl-row { display: flex; align-items: center; gap: 8px; }
+.voice-ctrl-row input[type=range] { flex: 1; }
+.voice-ctrl-val { font-size: 12px; color: var(--rose); min-width: 28px; text-align: right; }
+
+.test-voice-btn {
+  width: 100%; padding: 12px; margin-top: 12px;
+  background: var(--rose-dim); border: 1px solid var(--rose-border);
+  border-radius: var(--radius-sm); color: var(--rose);
+  font-size: 13px; font-family: 'DM Sans', sans-serif;
+  cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
+}
+.test-voice-btn:active { background: var(--rose-dim2); }
+
+.voice-mute-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.voice-mute-row:last-child { border-bottom: none; padding-bottom: 0; }
+.voice-mute-label { font-size: 13px; color: var(--text); font-weight: 500; }
+.voice-mute-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* ─── EMPTY STATE ────────────────────────────────────────────── */
+.empty-state {
+  text-align: center; padding: 40px 20px;
+  animation: fade-in 0.4s ease;
+}
+.empty-state-icon { font-size: 40px; margin-bottom: 16px; opacity: 0.5; }
+.empty-state-text { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+/* ─── FLOATING COPY BUTTON ───────────────────────────────────── */
+.float-copy {
+  position: fixed; bottom: 90px; right: 20px;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: linear-gradient(135deg, #be185d, #f472b6);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; color: #fff;
+  box-shadow: 0 8px 24px rgba(190,24,93,0.4);
+  transition: all 0.2s; z-index: 40;
+  opacity: 0; pointer-events: none;
+}
+.float-copy.visible { opacity: 1; pointer-events: all; }
+.float-copy:active { transform: scale(0.92); }
+
+/* Reaction row */
+.reaction-row {
+  display: flex; gap: 6px; margin-bottom: 12px; padding: 0 20px;
+  flex-wrap: wrap;
+}
+.reaction-btn {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 20px; padding: 5px 12px;
+  font-size: 13px; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 4px;
+}
+.reaction-btn:active { transform: scale(0.92); }
+.reaction-btn .reaction-count { font-size: 10px; color: var(--muted); }
+
+</style>
+</head>
+<body>
+
+<!-- Ambient layers -->
+<div class="ambient ambient-1"></div>
+<div class="ambient ambient-2"></div>
+<div class="ambient ambient-3"></div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: INTRO
+════════════════════════════════════════════════ -->
+<div class="screen active" id="introScreen">
+  <div class="intro-scroll">
+
+    <div class="aria-avatar-wrap">
+      <div class="aria-orb-container">
+        <div class="aria-orb" id="mainOrb"></div>
+        <div class="orb-ring"></div>
+        <div class="orb-ring-2"></div>
+        <div class="orb-ring-3"></div>
+      </div>
+      <div class="sound-bars" id="mainSoundBars">
+        <div class="sound-bar"></div><div class="sound-bar"></div><div class="sound-bar"></div><div class="sound-bar"></div><div class="sound-bar"></div>
+      </div>
+      <div class="aria-name">Aria</div>
+      <div class="aria-full-name">AUTOMATED · REPLY · INTELLIGENCE · ASSISTANT</div>
+      <div class="version-badge"><span class="version-dot"></span> v2.0 · enhanced</div>
+    </div>
+
+    <!-- Intro message -->
+    <div class="intro-bubble-area">
+      <div class="intro-msg" id="introMsg"></div>
+    </div>
+
+    <!-- Stats strip -->
+    <div class="intro-stats" id="introStats">
+      <div class="stat-card">
+        <div class="stat-num" id="statReplies">0</div>
+        <div class="stat-label">replies sent</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="statContacts">3</div>
+        <div class="stat-label">contacts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="statStreak">🔥0</div>
+        <div class="stat-label">day streak</div>
+      </div>
+    </div>
+
+    <!-- Current mood -->
+    <div class="mood-strip" id="moodStrip">
+      <div class="mood-label">YOUR VIBE RIGHT NOW</div>
+      <div class="mood-pills">
+        <button class="mood-pill" onclick="setMood('chill','😌 chill',this)">😌 chill</button>
+        <button class="mood-pill" onclick="setMood('hype','🔥 hyped',this)">🔥 hyped</button>
+        <button class="mood-pill" onclick="setMood('deep','🌊 in my feels',this)">🌊 in my feels</button>
+        <button class="mood-pill" onclick="setMood('funny','💀 chaotic',this)">💀 chaotic</button>
+        <button class="mood-pill" onclick="setMood('busy','⚡ busy',this)">⚡ busy</button>
+      </div>
+    </div>
+
+    <!-- Options -->
+    <div class="intro-options" id="introOptions">
+      <button class="option-btn" onclick="goToContacts('reply')">
+        <span class="option-icon">💬</span>
+        <div class="option-label">
+          <div>someone messaged me</div>
+          <div class="option-sub">i'll write back in your voice</div>
+        </div>
+        <span class="option-arrow">›</span>
+      </button>
+      <button class="option-btn" onclick="goToContacts('start')">
+        <span class="option-icon">✨</span>
+        <div class="option-label">
+          <div>start a conversation</div>
+          <div class="option-sub">i'll say something so you don't have to</div>
+        </div>
+        <span class="option-arrow">›</span>
+      </button>
+      <button class="option-btn" onclick="goToContacts('check')">
+        <span class="option-icon">🔍</span>
+        <div class="option-label">
+          <div>check who needs a reply</div>
+          <div class="option-sub">who's been left on read</div>
+        </div>
+        <span class="option-arrow">›</span>
+      </button>
+      <button class="option-btn" onclick="showScreen('historyScreen')">
+        <span class="option-icon">📋</span>
+        <div class="option-label">
+          <div>view reply history</div>
+          <div class="option-sub">what i've drafted before</div>
+        </div>
+        <span class="option-arrow">›</span>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: CONTACTS
+════════════════════════════════════════════════ -->
+<div class="screen" id="contactScreen">
+  <div class="top-bar">
+    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <div class="aria-mini" id="contactAriaOrb"></div>
+    <div class="top-bar-info">
+      <div class="top-bar-name">Aria</div>
+      <div class="top-bar-status" id="contactScreenStatus">● active</div>
+    </div>
+    <button class="mute-btn" id="muteBtnContact" onclick="toggleMute()" title="mute / unmute">🔊</button>
+    <button class="back-btn" onclick="openModal('addContactModal')" title="Add contact" style="font-size:18px;">+</button>
+  </div>
+
+  <!-- Search -->
+  <div class="search-wrap">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" id="contactSearch" placeholder="search contacts..." oninput="filterContacts(this.value)"/>
+    </div>
+  </div>
+
+  <!-- Aria comment -->
+  <div class="aria-comment" id="ariaComment">
+    <div class="aria-tag">ARIA</div>
+    <span id="ariaCommentText"></span>
+  </div>
+
+  <div class="section-label" id="contactSectionLabel">SELECT A CONTACT</div>
+
+  <div id="contactList"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: REPLY
+════════════════════════════════════════════════ -->
+<div class="screen" id="replyScreen">
+  <div class="top-bar">
+    <button class="back-btn" onclick="showScreen('contactScreen')">←</button>
+    <div class="aria-mini" id="replyAriaOrb"></div>
+    <div class="top-bar-info">
+      <div class="top-bar-name" id="replyTopName">Aria</div>
+      <div class="top-bar-status" id="replyTopStatus">● ready</div>
+    </div>
+    <button class="mute-btn" id="muteBtnReply" onclick="toggleMute()" title="mute / unmute">🔊</button>
+    <button class="back-btn" onclick="openModal('toneModal')" title="Tone settings" style="font-size:14px;">🎛️</button>
+  </div>
+
+  <!-- Platform selector -->
+  <div class="platform-selector" id="platformSelector">
+    <div class="platform-label">PLATFORM</div>
+    <div class="platform-pills">
+      <button class="platform-pill instagram active" data-platform="Instagram" onclick="setPlatform(this)">📸 Instagram</button>
+      <button class="platform-pill imessage" data-platform="iMessage" onclick="setPlatform(this)">💬 iMessage</button>
+      <button class="platform-pill whatsapp" data-platform="WhatsApp" onclick="setPlatform(this)">💚 WhatsApp</button>
+      <button class="platform-pill twitter" data-platform="Twitter" onclick="setPlatform(this)">𝕏 Twitter</button>
+      <button class="platform-pill snapchat" data-platform="Snapchat" onclick="setPlatform(this)">👻 Snapchat</button>
+    </div>
+  </div>
+
+  <!-- Convo area -->
+  <div class="convo-area" id="convoArea">
+    <div class="convo-label">THEIR MESSAGE</div>
+  </div>
+
+  <!-- Paste area -->
+  <div class="paste-area" id="pasteArea">
+    <div class="paste-label">PASTE THEIR MESSAGE (OR ADD CONTEXT)</div>
+    <textarea class="convo-input" id="theirMsgInput" rows="3" placeholder="paste what they said... or give context"></textarea>
+    <button class="gen-reply-btn" id="genReplyBtn" onclick="generateReply()">let aria respond →</button>
+  </div>
+
+  <!-- Thinking -->
+  <div class="aria-thinking" id="ariaThinking" style="display:none;">
+    <div class="thinking-orb"></div>
+    <div class="thinking-dots">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+    <span class="thinking-text">aria is thinking</span>
+    <span class="thinking-status" id="thinkingStatus"></span>
+  </div>
+
+  <!-- Reply section -->
+  <div id="replySection" style="display:none;">
+    <div class="reply-section">
+      <div class="reply-from-label">ARIA'S DRAFT</div>
+      <div class="edit-hint" id="editHint" style="display:none;">✏️ TAP ANY BUBBLE TO EDIT</div>
+      <div id="replyBubbles"></div>
+
+      <div class="aria-opinion" id="ariaOpinion" style="display:none;">
+        <span class="name">ARIA</span>
+        <span id="ariaOpinionText"></span>
+      </div>
+    </div>
+
+    <!-- Vibes score -->
+    <div class="vibes-score" id="vibesScore">
+      <span class="vibes-label">vibe match</span>
+      <div class="vibes-bar-wrap"><div class="vibes-bar" id="vibesBar" style="width:0%"></div></div>
+      <span class="vibes-num" id="vibesNum">—</span>
+    </div>
+
+    <!-- Action buttons row 1 -->
+    <div class="action-row">
+      <button class="regen-btn" onclick="generateReply()">↺ retry</button>
+      <button class="copy-btn" id="mainCopyBtn" onclick="copyReply()">copy & send →</button>
+    </div>
+
+    <!-- Action buttons row 2 -->
+    <div class="action-row-2">
+      <button class="action-btn-sm" onclick="makeFormalerOrCasual('formal')">
+        <span class="btn-icon">🎩</span>more formal
+      </button>
+      <button class="action-btn-sm" onclick="makeFormalerOrCasual('casual')">
+        <span class="btn-icon">😎</span>more casual
+      </button>
+      <button class="action-btn-sm" onclick="makeShorterOrLonger('shorter')">
+        <span class="btn-icon">✂️</span>shorter
+      </button>
+      <button class="action-btn-sm" onclick="makeShorterOrLonger('longer')">
+        <span class="btn-icon">📝</span>longer
+      </button>
+    </div>
+
+    <!-- Alternatives -->
+    <div class="alternatives-section" id="altSection" style="display:none;">
+      <div class="alt-label">DIFFERENT VIBES</div>
+      <div id="altBubbles"></div>
+    </div>
+
+    <!-- Save button -->
+    <div style="padding: 0 20px; margin-bottom: 16px;">
+      <button class="action-btn-sm" style="width:100%;padding:12px;" onclick="saveToHistory()">
+        <span style="font-size:14px;">💾 save this reply to history</span>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: HISTORY
+════════════════════════════════════════════════ -->
+<div class="screen" id="historyScreen">
+  <div class="top-bar">
+    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <div class="aria-mini"></div>
+    <div class="top-bar-info">
+      <div class="top-bar-name">Reply History</div>
+      <div class="top-bar-status">● <span id="historyCount">0</span> saved</div>
+    </div>
+    <button class="back-btn" onclick="clearHistory()" style="margin-left:auto;font-size:11px;color:var(--muted);">clear</button>
+  </div>
+
+  <div id="historyList"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: PROFILE / VOICE SETTINGS
+════════════════════════════════════════════════ -->
+<div class="screen" id="profileScreen">
+  <div class="top-bar">
+    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <div class="aria-mini"></div>
+    <div class="top-bar-info">
+      <div class="top-bar-name">Your Voice Profile</div>
+      <div class="top-bar-status">● personalised</div>
+    </div>
+  </div>
+
+  <!-- Streak banner -->
+  <div class="streak-banner">
+    <span class="streak-flame">🔥</span>
+    <div class="streak-info">
+      <div class="streak-num" id="profileStreakNum">0 days</div>
+      <div class="streak-label">reply streak — keep it going</div>
+    </div>
+    <div class="streak-badge" id="streakBadge">just started</div>
+  </div>
+
+  <!-- Writing style section -->
+  <div class="profile-section">
+    <div class="profile-section-title">YOUR TEXTING STYLE</div>
+    <div class="profile-card">
+      <div class="profile-row">
+        <span class="profile-row-icon">🔡</span>
+        <div class="profile-row-info">
+          <div class="profile-row-label">Capitalisation</div>
+          <div class="profile-row-sub">lowercase everything</div>
+        </div>
+        <div class="toggle-wrap">
+          <div class="toggle" id="capsToggle" onclick="toggleSetting('caps',this)">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+      </div>
+      <div class="profile-row">
+        <span class="profile-row-icon">.</span>
+        <div class="profile-row-info">
+          <div class="profile-row-label">Punctuation</div>
+          <div class="profile-row-sub">no periods at end of sentences</div>
+        </div>
+        <div class="toggle-wrap">
+          <div class="toggle on" id="punctToggle" onclick="toggleSetting('punct',this)">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+      </div>
+      <div class="profile-row">
+        <span class="profile-row-icon">😂</span>
+        <div class="profile-row-info">
+          <div class="profile-row-label">Emojis</div>
+          <div class="profile-row-sub">sparse — only when it lands</div>
+        </div>
+        <div class="toggle-wrap">
+          <div class="toggle on" id="emojiToggle" onclick="toggleSetting('emoji',this)">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slang/vocab -->
+  <div class="profile-section">
+    <div class="profile-section-title">YOUR SLANG & VOCAB</div>
+    <div class="profile-card">
+      <div style="margin-bottom:8px;font-size:13px;color:var(--muted);line-height:1.6;">
+        Words & phrases Aria has learned from you:
+      </div>
+      <div class="trait-pills-wrap" id="traitPills">
+        <span class="trait-pill">bro</span>
+        <span class="trait-pill">u / r u</span>
+        <span class="trait-pill">hnstly</span>
+        <span class="trait-pill">idk</span>
+        <span class="trait-pill">ngl</span>
+        <span class="trait-pill">lmk</span>
+        <span class="trait-pill">💀</span>
+        <span class="trait-pill">🙏</span>
+        <span class="trait-pill muted">+ add your own</span>
+      </div>
+      <input class="profile-input" id="slangInput" placeholder="add a word or phrase…" onkeydown="addSlang(event)"/>
+    </div>
+  </div>
+
+  <!-- Energy level -->
+  <div class="profile-section">
+    <div class="profile-section-title">RESPONSE ENERGY</div>
+    <div class="profile-card">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:4px;">How much does Aria match their energy vs. stay in your vibe?</div>
+      <div class="slider-wrap">
+        <div class="slider-labels"><span>always you</span><span>mirror them</span></div>
+        <input type="range" min="0" max="100" value="40" id="energySlider" oninput="updateEnergyLabel(this.value)"/>
+      </div>
+      <div style="font-size:12px;color:var(--rose);margin-top:8px;" id="energyLabel">leaning toward your voice (40%)</div>
+    </div>
+  </div>
+
+  <!-- Default tone -->
+  <div class="profile-section">
+    <div class="profile-section-title">DEFAULT TONE</div>
+    <div style="padding:0 20px;">
+      <div class="tone-pills">
+        <button class="tone-pill active" onclick="setDefaultTone('real',this)">💬 real talk</button>
+        <button class="tone-pill" onclick="setDefaultTone('funny',this)">😂 funny</button>
+        <button class="tone-pill" onclick="setDefaultTone('warm',this)">🤗 warm</button>
+        <button class="tone-pill" onclick="setDefaultTone('brief',this)">⚡ brief</button>
+        <button class="tone-pill" onclick="setDefaultTone('hype',this)">🔥 hype</button>
+        <button class="tone-pill" onclick="setDefaultTone('soft',this)">🕊️ soft</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ARIA'S VOICE ── -->
+  <div class="profile-section voice-section">
+    <div class="profile-section-title">ARIA'S VOICE</div>
+    <div class="profile-card">
+
+      <!-- Mute / speak toggle -->
+      <div class="voice-mute-row">
+        <div>
+          <div class="voice-mute-label">Speak out loud</div>
+          <div class="voice-mute-sub">Aria reads her words through your speakers</div>
+        </div>
+        <div class="toggle-wrap">
+          <div class="toggle on" id="speakToggle" onclick="toggleSpeak(this)">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ElevenLabs API key -->
+      <div id="voiceControlsWrap">
+        <div style="margin-top:14px;">
+          <div class="voice-ctrl-label">ELEVENLABS API KEY</div>
+          <div style="display:flex;gap:8px;margin-top:6px;">
+            <input type="password" id="elApiKey" class="profile-input"
+              placeholder="sk-…  paste your key here"
+              style="margin-top:0;flex:1;font-size:12px;"
+              oninput="saveELKey(this.value)"/>
+            <button class="test-voice-btn" style="margin-top:0;width:auto;padding:0 14px;white-space:nowrap;" onclick="testAriaVoice()">▶ test</button>
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.6;">
+            free tier at <span style="color:var(--rose)">elevenlabs.io</span> · ~10k chars/month free
+          </div>
+        </div>
+
+        <!-- Sliders: stability + similarity -->
+        <div class="voice-controls-row" style="margin-top:14px;">
+          <div class="voice-ctrl-card">
+            <div class="voice-ctrl-label">STABILITY</div>
+            <div style="font-size:9px;color:var(--muted);margin-bottom:6px;">lower = more expressive</div>
+            <div class="voice-ctrl-row">
+              <input type="range" min="0" max="1" step="0.05" value="0.45" id="elStability" oninput="updateStability(this.value)"/>
+              <span class="voice-ctrl-val" id="elStabilityVal">0.45</span>
+            </div>
+          </div>
+          <div class="voice-ctrl-card">
+            <div class="voice-ctrl-label">CLARITY</div>
+            <div style="font-size:9px;color:var(--muted);margin-bottom:6px;">higher = closer to original</div>
+            <div class="voice-ctrl-row">
+              <input type="range" min="0" max="1" step="0.05" value="0.75" id="elSimilarity" oninput="updateSimilarity(this.value)"/>
+              <span class="voice-ctrl-val" id="elSimilarityVal">0.75</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Language tabs -->
+        <div style="display:flex;gap:6px;margin-top:16px;margin-bottom:10px;">
+          <button class="voice-lang-tab active" id="tabEN" onclick="setVoiceLang('en',this)">🇺🇸 English</button>
+          <button class="voice-lang-tab" id="tabJA" onclick="setVoiceLang('ja',this)">🇯🇵 Japanese</button>
+        </div>
+
+        <!-- Voice list -->
+        <div class="voice-list" id="voiceList"></div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset -->
+  <div style="padding: 0 20px 80px; margin-top: 8px;">
+    <button class="action-btn-sm" style="width:100%;padding:14px;color:rgba(240,60,60,0.6);border-color:rgba(240,60,60,0.15);" onclick="resetProfile()">
+      reset voice profile
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: MOOD (contextual)
+════════════════════════════════════════════════ -->
+<div class="screen" id="moodScreen" style="display:none;">
+  <div class="top-bar">
+    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <div class="aria-mini"></div>
+    <div class="top-bar-info">
+      <div class="top-bar-name">Today's Vibe</div>
+      <div class="top-bar-status">● sets tone for all replies</div>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-bottom:16px;">HOW ARE YOU FEELING RIGHT NOW?</div>
+
+  <div class="mood-grid">
+    <div class="mood-card stagger-1" onclick="setMoodFull('chill','😌',this)">
+      <div class="mood-card-emoji">😌</div>
+      <div class="mood-card-label">chill</div>
+      <div class="mood-card-sub">relaxed, low effort, easy vibes</div>
+    </div>
+    <div class="mood-card stagger-2" onclick="setMoodFull('hype','🔥',this)">
+      <div class="mood-card-emoji">🔥</div>
+      <div class="mood-card-label">hyped</div>
+      <div class="mood-card-sub">high energy, excited, enthusiastic</div>
+    </div>
+    <div class="mood-card stagger-3" onclick="setMoodFull('deep','🌊',this)">
+      <div class="mood-card-emoji">🌊</div>
+      <div class="mood-card-label">in my feels</div>
+      <div class="mood-card-sub">reflective, emotional, deep</div>
+    </div>
+    <div class="mood-card stagger-4" onclick="setMoodFull('funny','💀',this)">
+      <div class="mood-card-emoji">💀</div>
+      <div class="mood-card-label">chaotic</div>
+      <div class="mood-card-sub">unhinged, funny, chaotic good</div>
+    </div>
+    <div class="mood-card stagger-5" onclick="setMoodFull('busy','⚡',this)">
+      <div class="mood-card-emoji">⚡</div>
+      <div class="mood-card-label">busy</div>
+      <div class="mood-card-sub">short replies, straight to the point</div>
+    </div>
+    <div class="mood-card stagger-1" onclick="setMoodFull('sad','🥺',this)">
+      <div class="mood-card-emoji">🥺</div>
+      <div class="mood-card-label">soft</div>
+      <div class="mood-card-sub">gentle, warm, careful with words</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     NAVIGATION BAR
+════════════════════════════════════════════════ -->
+<nav class="nav-bar" id="navBar" style="display:none;">
+  <button class="nav-btn active" id="navHome" onclick="navTo('introScreen',this)">
+    <span class="nav-btn-icon">🏠</span>home
+  </button>
+  <button class="nav-btn" id="navHistory" onclick="navTo('historyScreen',this)">
+    <span class="nav-btn-icon">📋</span>history
+  </button>
+  <button class="nav-btn" id="navMood" onclick="navTo('moodScreen',this)">
+    <span class="nav-btn-icon">🎭</span>vibe
+  </button>
+  <button class="nav-btn" id="navProfile" onclick="navTo('profileScreen',this)">
+    <span class="nav-btn-icon">🎛️</span>voice
+  </button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════
+     MODALS
+════════════════════════════════════════════════ -->
+
+<!-- Tone modal -->
+<div class="modal-overlay" id="toneModal" onclick="handleModalBgClick(event,'toneModal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('toneModal')">×</button>
+    <div class="modal-title">Reply Tone</div>
+    <div class="modal-sub">Pick a tone for this specific reply. Aria will adjust while keeping your voice.</div>
+    <div class="tone-pills" id="toneModalPills">
+      <button class="tone-pill active" data-tone="natural" onclick="selectTone(this)">💬 natural</button>
+      <button class="tone-pill" data-tone="funny" onclick="selectTone(this)">😂 funny</button>
+      <button class="tone-pill" data-tone="warm" onclick="selectTone(this)">🤗 warm</button>
+      <button class="tone-pill" data-tone="brief" onclick="selectTone(this)">⚡ brief</button>
+      <button class="tone-pill" data-tone="deep" onclick="selectTone(this)">🌊 deep</button>
+      <button class="tone-pill" data-tone="hype" onclick="selectTone(this)">🔥 hype</button>
+      <button class="tone-pill" data-tone="soft" onclick="selectTone(this)">🕊️ soft</button>
+      <button class="tone-pill" data-tone="sarcastic" onclick="selectTone(this)">😏 sarcastic</button>
+      <button class="tone-pill" data-tone="formal" onclick="selectTone(this)">🎩 formal</button>
+    </div>
+
+    <div style="margin-top:24px;">
+      <div class="modal-sub" style="margin-bottom:12px;">Generate 3 alternatives at once?</div>
+      <div class="toggle-wrap">
+        <div class="toggle on" id="altToggle" onclick="this.classList.toggle('on');updateAltPref()">
+          <div class="toggle-knob"></div>
+        </div>
+        <span style="font-size:13px;color:var(--text2);">Show different vibes side by side</span>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="closeModal('toneModal');generateReply()">apply & regenerate</button>
+  </div>
+</div>
+
+<!-- Add contact modal -->
+<div class="modal-overlay" id="addContactModal" onclick="handleModalBgClick(event,'addContactModal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('addContactModal')">×</button>
+    <div class="modal-title">Add Contact</div>
+    <div class="modal-sub">Add someone Aria should know about. The more context you give, the better the replies.</div>
+
+    <div class="form-field">
+      <div class="form-label">NAME</div>
+      <input class="form-input" id="newName" placeholder="e.g. Jensel, mom, bro from work…"/>
+    </div>
+    <div class="form-field">
+      <div class="form-label">YOUR RELATIONSHIP</div>
+      <input class="form-input" id="newRelationship" placeholder="e.g. close friend, situationship, cousin…"/>
+    </div>
+    <div class="form-field">
+      <div class="form-label">PLATFORM</div>
+      <select class="form-select" id="newPlatform">
+        <option value="Instagram">Instagram</option>
+        <option value="iMessage">iMessage</option>
+        <option value="WhatsApp">WhatsApp</option>
+        <option value="Twitter">Twitter / X</option>
+        <option value="Snapchat">Snapchat</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <div class="form-label">LAST MESSAGE FROM THEM (OPTIONAL)</div>
+      <input class="form-input" id="newPreview" placeholder="paste or summarise what they last said…"/>
+    </div>
+    <div class="form-field">
+      <div class="form-label">HOW LONG SILENT?</div>
+      <select class="form-select" id="newSilent">
+        <option value="0">Not silent / just messaged</option>
+        <option value="1">~1 hour</option>
+        <option value="2">2–4 hours</option>
+        <option value="6">~6 hours</option>
+        <option value="24">1 day</option>
+        <option value="48">2+ days</option>
+      </select>
+    </div>
+    <button class="btn-primary" onclick="addContact()">add contact →</button>
+  </div>
+</div>
+
+<!-- History detail modal -->
+<div class="modal-overlay" id="historyDetailModal" onclick="handleModalBgClick(event,'historyDetailModal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('historyDetailModal')">×</button>
+    <div class="modal-title" id="histDetailTitle">Reply</div>
+    <div class="modal-sub" id="histDetailSub"></div>
+    <div id="histDetailBody"></div>
+    <button class="btn-primary" id="histDetailCopyBtn" onclick="copyHistoryDetail()">copy this reply</button>
+  </div>
+</div>
+
+<!-- Floating copy button -->
+<button class="float-copy" id="floatCopy" onclick="copyReply()" title="Copy reply">📋</button>
+
+<!-- Toast -->
+<!-- Stop speech pill (appears when Aria is talking) -->
+<button id="stopSpeechBtn" onclick="ariaVoice.stop()" aria-label="Stop Aria speaking">
+  <div class="stop-bars">
+    <div class="stop-bar"></div><div class="stop-bar"></div>
+    <div class="stop-bar"></div><div class="stop-bar"></div>
+  </div>
+  stop talking
+</button>
+
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════
+     SCRIPT
+════════════════════════════════════════════════ -->
+<script>
+
+// ══════════════════════════════════════════════════════════════
+//  ARIA VOICE ENGINE
+// ══════════════════════════════════════════════════════════════
+
+const ariaVoice = (() => {
+
+  // ── Curated ElevenLabs voices ────────────────────────────────
+  // model: eleven_turbo_v2_5  → English only, fast, cheap
+  // model: eleven_multilingual_v2 → 29 languages incl. Japanese
+  const VOICES = [
+    // ── English ──────────────────────────────────────────────
+    {
+      key: 'mimi_en', id: 'zrHiDhphv9ZnVXBqCLjz', lang: 'en',
+      name: 'Mimi', desc: 'sweet · young · breathy',
+      model: 'eleven_turbo_v2_5', recommended: true
+    },
+    {
+      key: 'aria_en', id: '9BWtsMINqrJLrRacOk9x', lang: 'en',
+      name: 'Aria', desc: 'calm · expressive · clear',
+      model: 'eleven_turbo_v2_5', recommended: true
+    },
+    {
+      key: 'rachel_en', id: '21m00Tcm4TlvDq8ikWAM', lang: 'en',
+      name: 'Rachel', desc: 'warm · composed · natural',
+      model: 'eleven_turbo_v2_5'
+    },
+    {
+      key: 'bella_en', id: 'EXAVITQu4vr4xnSDxMaL', lang: 'en',
+      name: 'Bella', desc: 'soft · gentle · young',
+      model: 'eleven_turbo_v2_5'
+    },
+    {
+      key: 'elli_en', id: 'MF3mGyEYCl7XYWbV9V6O', lang: 'en',
+      name: 'Elli', desc: 'bright · emotive · friendly',
+      model: 'eleven_turbo_v2_5'
+    },
+    {
+      key: 'grace_en', id: 'oWAxZDx7w5VEj9dCyTzz', lang: 'en',
+      name: 'Grace', desc: 'serene · refined · mature',
+      model: 'eleven_turbo_v2_5'
+    },
+    // ── Japanese (multilingual v2) ────────────────────────────
+    {
+      key: 'mimi_ja', id: 'zrHiDhphv9ZnVXBqCLjz', lang: 'ja',
+      name: 'Mimi', desc: 'かわいい · ソフト · 若い',
+      model: 'eleven_multilingual_v2', recommended: true
+    },
+    {
+      key: 'aria_ja', id: '9BWtsMINqrJLrRacOk9x', lang: 'ja',
+      name: 'Aria', desc: '落ち着いた · 表現豊か · クリア',
+      model: 'eleven_multilingual_v2', recommended: true
+    },
+    {
+      key: 'rachel_ja', id: '21m00Tcm4TlvDq8ikWAM', lang: 'ja',
+      name: 'Rachel', desc: '温かい · 自然 · 穏やか',
+      model: 'eleven_multilingual_v2'
+    },
+    {
+      key: 'bella_ja', id: 'EXAVITQu4vr4xnSDxMaL', lang: 'ja',
+      name: 'Bella', desc: '柔らかい · 優しい · 若々しい',
+      model: 'eleven_multilingual_v2'
+    },
+  ];
+
+  // ── State ────────────────────────────────────────────────────
+  let muted      = localStorage.getItem('aria_voice_muted') === '1';
+  let selectedKey = localStorage.getItem('aria_voice_key') || 'mimi_en';
+  let stability  = parseFloat(localStorage.getItem('aria_el_stability')  || '0.45');
+  let similarity = parseFloat(localStorage.getItem('aria_el_similarity') || '0.75');
+  let currentLang = 'en';
+  let currentAudio = null;
+  let loading = false;
+
+  function selected() {
+    return VOICES.find(v => v.key === selectedKey) || VOICES[0];
+  }
+
+  // ── Core: speak via ElevenLabs ───────────────────────────────
+  async function speak(rawText, { onStart, onEnd } = {}) {
+    if (muted || loading) { onEnd?.(); return; }
+
+    const text = rawText.replace(/<[^>]+>/g, '').replace(/&[a-z#0-9]+;/g, '').trim();
+    if (!text) { onEnd?.(); return; }
+
+    const apiKey = localStorage.getItem('aria_el_key') || '';
+    if (!apiKey) {
+      // Graceful fallback — silent, don't annoy the user
+      onEnd?.();
+      return;
+    }
+
+    stop();
+    loading = true;
+    setSpeaking(true);
+    onStart?.();
+
+    const voice = selected();
+
+    try {
+      const res = await fetch(
+        `https://api.elevenlabs.io/v1/text-to-speech/${voice.id}`,
+        {
+          method: 'POST',
+          headers: {
+            'xi-api-key': apiKey,
+            'Content-Type': 'application/json',
+            'Accept': 'audio/mpeg'
+          },
+          body: JSON.stringify({
+            text,
+            model_id: voice.model,
+            voice_settings: {
+              stability,
+              similarity_boost: similarity,
+              style: 0.25,
+              use_speaker_boost: true
+            }
+          })
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        if (res.status === 401) showToast('check your ElevenLabs API key');
+        else if (res.status === 429) showToast('ElevenLabs quota reached');
+        else showToast('voice error — check your key');
+        setSpeaking(false);
+        loading = false;
+        onEnd?.();
+        return;
+      }
+
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      currentAudio = new Audio(url);
+
+      currentAudio.onended = () => {
+        setSpeaking(false);
+        loading = false;
+        URL.revokeObjectURL(url);
+        onEnd?.();
+      };
+      currentAudio.onerror = () => {
+        setSpeaking(false);
+        loading = false;
+        onEnd?.();
+      };
+
+      await currentAudio.play();
+
+    } catch (e) {
+      setSpeaking(false);
+      loading = false;
+      onEnd?.();
+    }
+  }
+
+  function stop() {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.src = '';
+      currentAudio = null;
+    }
+    loading = false;
+    setSpeaking(false);
+  }
+
+  function setSpeaking(active) {
+    document.querySelectorAll('.aria-orb, .aria-mini, .thinking-orb, .profile-orb').forEach(el => {
+      el.classList.toggle('speaking', active);
+    });
+    document.querySelectorAll('.sound-bars').forEach(el => {
+      el.classList.toggle('active', active);
+    });
+    const btn = document.getElementById('stopSpeechBtn');
+    if (btn) btn.style.display = active ? 'flex' : 'none';
+  }
+
+  function setMuted(val) {
+    muted = val;
+    if (val) stop();
+    localStorage.setItem('aria_voice_muted', val ? '1' : '0');
+    document.querySelectorAll('.mute-btn').forEach(b => {
+      b.textContent = val ? '🔇' : '🔊';
+      b.classList.toggle('muted', val);
+    });
+    const tog = document.getElementById('speakToggle');
+    if (tog) tog.classList.toggle('on', !val);
+    const wrap = document.getElementById('voiceControlsWrap');
+    if (wrap) wrap.style.opacity = val ? '0.4' : '1';
+  }
+
+  // ── Voice selection — direct DOM update, no full re-render ───
+  function selectVoice(key) {
+    selectedKey = key;
+    localStorage.setItem('aria_voice_key', key);
+    // Update active class directly — no re-render needed
+    document.querySelectorAll('#voiceList .voice-option').forEach(el => {
+      const isActive = el.dataset.key === key;
+      el.classList.toggle('active', isActive);
+      const badge = el.querySelector('.voice-option-active-icon');
+      if (badge) badge.style.display = isActive ? 'block' : 'none';
+    });
+  }
+
+  function setStability(val)  { stability  = parseFloat(val); localStorage.setItem('aria_el_stability',  val); }
+  function setSimilarity(val) { similarity = parseFloat(val); localStorage.setItem('aria_el_similarity', val); }
+
+  function renderList(lang = currentLang) {
+    currentLang = lang;
+    const container = document.getElementById('voiceList');
+    if (!container) return;
+    const list = VOICES.filter(v => v.lang === lang);
+    container.innerHTML = list.map(v => `
+      <div class="voice-option ${selectedKey === v.key ? 'active' : ''}"
+           data-key="${v.key}"
+           onclick="ariaVoice.selectVoice('${v.key}')">
+        <div class="voice-option-left">
+          <div class="voice-option-name">${v.name}${v.recommended ? ' ✦' : ''}</div>
+          <div class="voice-option-lang">${v.desc}</div>
+        </div>
+        <div class="voice-option-active-icon" style="display:${selectedKey === v.key ? 'block' : 'none'}">♪</div>
+      </div>
+    `).join('');
+  }
+
+  return {
+    speak, stop,
+    get muted() { return muted; },
+    setMuted, selectVoice,
+    setStability, setSimilarity,
+    renderList,
+    get currentLang() { return currentLang; }
+  };
+})();
+
+// ── Voice UI helpers ─────────────────────────────────────────────────
+
+function toggleMute() {
+  ariaVoice.setMuted(!ariaVoice.muted);
+  showToast(ariaVoice.muted ? '🔇 aria is quiet now' : '🔊 aria can speak again');
+}
+
+function toggleSpeak(toggle) {
+  toggle.classList.toggle('on');
+  ariaVoice.setMuted(!toggle.classList.contains('on'));
+  showToast(ariaVoice.muted ? '🔇 aria is quiet' : '🔊 aria will speak');
+}
+
+function saveELKey(val) {
+  localStorage.setItem('aria_el_key', val.trim());
+}
+
+function updateStability(val) {
+  ariaVoice.setStability(val);
+  document.getElementById('elStabilityVal').textContent = parseFloat(val).toFixed(2);
+}
+
+function updateSimilarity(val) {
+  ariaVoice.setSimilarity(val);
+  document.getElementById('elSimilarityVal').textContent = parseFloat(val).toFixed(2);
+}
+
+function setVoiceLang(lang, btn) {
+  document.querySelectorAll('.voice-lang-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  ariaVoice.renderList(lang);
+}
+
+function testAriaVoice() {
+  ariaVoice.stop();
+  const lang = ariaVoice.currentLang;
+  const text = lang === 'ja'
+    ? 'こんにちは。わたしはアリアです。あなたの代わりにメッセージを書きます。'
+    : "hey. it's Aria. this is what i sound like. hope it feels right.";
+  ariaVoice.speak(text);
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  END VOICE ENGINE
+// ─────────────────────────────────────────────────────────────────────
+
+// ── VOICE PROFILES ────────────────────────────────────────────────
+
+const BASE_VOICE = `You are ARIA — a personal reply assistant who writes in the exact voice of the user.
+
+USER'S TEXTING STYLE — inspired by the raw, guarded, quietly intense voice from the film *Speak*:
+- all lowercase, always. zero exceptions.
+- extremely short messages — often just 2-5 words. silence is powerful.
+- doesn't over-explain. lets things hang. uses "..." a lot to trail off.
+- emotionally honest but guarded — doesn't give too much away at once
+- dry. a little detached. but underneath it there's real warmth for people she trusts
+- when something actually matters, one quiet line carries more weight than a paragraph
+- rarely uses exclamation marks. a single "oh" or "yeah" can mean everything
+- almost no emojis. maybe a rare 🙂 or nothing at all.
+- doesn't fill silence with noise — if she doesn't know what to say, she says something small
+- never performs happiness or enthusiasm she doesn't feel
+- sometimes mirrors the other person's energy with just one word back
+- if pushed, will say exactly what she means — blunt, clear, no fluff
+
+EXAMPLE LINES IN THIS VOICE:
+- "yeah"
+- "i know"
+- "that's... a lot"
+- "i've been thinking about that too"
+- "i don't know how to explain it"
+- "it's fine. really."
+- "i heard you"
+- "okay"
+- "i think so"
+- "we can talk about it later if you want"
+
+GOLDEN RULES:
+- NEVER sound cheerful, corporate, or artificially warm
+- NEVER use exclamation marks or hype language
+- NEVER write more than 2 short messages — one is often enough
+- let silence and brevity do the emotional work
+- Output ONLY the reply lines. One per line. No labels, no quotes, no explanation.`;
+
+const TONE_MODIFIERS = {
+  natural:  '',
+  funny:    ' Deadpan, dry, understated humour. The joke lands because it barely tries.',
+  warm:     ' Still quiet, but let the care show in small specific words. No gushing.',
+  brief:    ' Absolute minimum. One line only. Even shorter than usual.',
+  deep:     ' Lean into the introspective, guarded weight. Slow and deliberate.',
+  hype:     ' As close to enthusiastic as this voice gets — still lowercase, still restrained.',
+  soft:     ' Especially gentle. More hesitant. Words chosen very carefully.',
+  sarcastic:' Bone-dry delivery. One flat line that says everything.',
+  formal:   ' Slightly more complete sentences, but still quiet and clipped.'
+};
+
+const MOOD_MODIFIERS = {
+  chill:  ' The user is calm and low-key. Keep it effortless — even quieter than usual.',
+  hype:   ' The user is in a good place today. A tiny bit warmer, still understated.',
+  deep:   ' The user is reflective. Go slower, more internal, let the weight show.',
+  funny:  ' Dry and deadpan. One-liner energy. Say the absurd thing quietly.',
+  busy:   ' User is distracted. Ultra-short. One word if possible.',
+  sad:    ' Very soft, very careful. Every word matters. Almost hesitant.'
+};
+
+const OPINION_PROMPTS = [
+  "short felt right. said enough.",
+  "left a little space there. intentional.",
+  "didn't want to oversell it.",
+  "sometimes quiet says more.",
+  "it's small but it lands.",
+  "held back on purpose. less is more here.",
+  "the pause does the work.",
+  "honest without being too much.",
+  "felt true to you.",
+  "gave them something without giving everything.",
+];
+
+// ── STATE ─────────────────────────────────────────────────────────
+
+let currentMode = 'reply';
+let currentContact = null;
+let currentReplies = [];
+let currentTone = 'natural';
+let currentMood = 'chill';
+let currentPlatform = 'Instagram';
+let showAlternatives = true;
+let ariaIntroTyped = false;
+let activeScreen = 'introScreen';
+let replyHistory = [];
+let slangWords = ['bro','u / r u','hnstly','idk','ngl','lmk','💀','🙏'];
+let settings = { caps: false, punct: true, emoji: true };
+let defaultTone = 'real';
+let energyLevel = 40;
+let replySentCount = 0;
+let streakDays = 0;
+let currentHistoryDetail = null;
+
+// ── CONTACTS ──────────────────────────────────────────────────────
+
+let contacts = [
+  {
+    id: 1, name: "Jensel", initials: "J", color: "rose",
+    preview: "how u been?", time: "2h ago",
+    silent: true, silentHours: 2, platform: "Instagram",
+    relationship: "close friend", online: false
+  },
+  {
+    id: 2, name: "Jaiye", initials: "J", color: "blue",
+    preview: "bro you see this 💀", time: "5h ago",
+    silent: true, silentHours: 5, platform: "Instagram",
+    relationship: "best friend", online: false
+  },
+  {
+    id: 3, name: "Mom", initials: "M", color: "green",
+    preview: "call me when you get a chance", time: "1h ago",
+    silent: true, silentHours: 1, platform: "iMessage",
+    relationship: "family", online: true
+  },
+  {
+    id: 4, name: "Kai", initials: "K", color: "purple",
+    preview: "we still on for friday?", time: "3h ago",
+    silent: true, silentHours: 3, platform: "WhatsApp",
+    relationship: "friend", online: false
+  },
+];
+
+let nextContactId = 5;
+
+// ── INTRO ──────────────────────────────────────────────────────────
+
+const introLines = [
+  "hi. i'm <span class='highlight'>Aria</span>.",
+  " i write your texts for you — in your voice, not mine.",
+  " pick something and i'll take it from there."
+];
+
+function typeIntro() {
+  if (ariaIntroTyped) return;
+  ariaIntroTyped = true;
+  const el = document.getElementById('introMsg');
+  const opts = document.getElementById('introOptions');
+  const stats = document.getElementById('introStats');
+  const moods = document.getElementById('moodStrip');
+  let fullText = introLines.join('');
+  let i = 0;
+  el.classList.add('visible');
+  el.innerHTML = '<span class="cursor"></span>';
+
+  const interval = setInterval(() => {
+    if (i < fullText.length) {
+      el.innerHTML = fullText.slice(0, i + 1) + '<span class="cursor"></span>';
+      i++;
+    } else {
+      el.innerHTML = fullText;
+      clearInterval(interval);
+      setTimeout(() => {
+        stats.classList.add('visible');
+        moods.classList.add('visible');
+        opts.classList.add('visible');
+        updateStats();
+        // Speak intro aloud
+        ariaVoice.speak("hi. I'm Aria. I write your texts for you — in your voice, not mine. Pick something and I'll take it from there.");
+      }, 300);
+    }
+  }, 16);
+}
+
+window.addEventListener('load', () => {
+  setTimeout(typeIntro, 500);
+  loadFromStorage();
+  renderHistory();
+});
+
+// ── STORAGE ────────────────────────────────────────────────────────
+
+function loadFromStorage() {
+  try {
+    const saved = localStorage.getItem('aria_data');
+    if (saved) {
+      const d = JSON.parse(saved);
+      replyHistory = d.history || [];
+      replySentCount = d.sentCount || 0;
+      streakDays = d.streak || 0;
+      slangWords = d.slang || slangWords;
+      settings = d.settings || settings;
+      currentMood = d.mood || 'chill';
+      defaultTone = d.defaultTone || 'real';
+      energyLevel = d.energy || 40;
+      if (d.contacts) { contacts = d.contacts; nextContactId = Math.max(...contacts.map(c=>c.id))+1; }
+    }
+  } catch(e) {}
+  updateStats();
+  renderSlangPills();
+}
+
+function saveToStorage() {
+  try {
+    localStorage.setItem('aria_data', JSON.stringify({
+      history: replyHistory,
+      sentCount: replySentCount,
+      streak: streakDays,
+      slang: slangWords,
+      settings,
+      mood: currentMood,
+      defaultTone,
+      energy: energyLevel,
+      contacts
+    }));
+  } catch(e) {}
+}
+
+// ── STATS ──────────────────────────────────────────────────────────
+
+function updateStats() {
+  document.getElementById('statReplies').textContent = replySentCount;
+  document.getElementById('statContacts').textContent = contacts.length;
+  document.getElementById('statStreak').textContent = '🔥' + streakDays;
+  document.getElementById('profileStreakNum').textContent = streakDays + ' days';
+  document.getElementById('historyCount').textContent = replyHistory.length;
+
+  // Streak badge
+  const badge = document.getElementById('streakBadge');
+  if (streakDays === 0) badge.textContent = 'just started';
+  else if (streakDays < 3) badge.textContent = 'rising 🌱';
+  else if (streakDays < 7) badge.textContent = 'on fire 🔥';
+  else if (streakDays < 14) badge.textContent = 'unstoppable ⚡';
+  else badge.textContent = 'legendary 👑';
+}
+
+// ── SCREEN NAV ──────────────────────────────────────────────────────
+
+const screensWithNav = ['introScreen','historyScreen','moodScreen','profileScreen'];
+
+function showScreen(id) {
+  ariaVoice.stop();
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+    s.style.display = '';
+  });
+  const el = document.getElementById(id);
+  el.classList.add('active');
+  el.style.display = 'flex';
+  activeScreen = id;
+
+  const navBar = document.getElementById('navBar');
+  navBar.style.display = screensWithNav.includes(id) ? 'flex' : 'none';
+
+  // Update nav active state
+  if (id === 'introScreen') setNavActive('navHome');
+  else if (id === 'historyScreen') { setNavActive('navHistory'); renderHistory(); }
+  else if (id === 'moodScreen') setNavActive('navMood');
+  else if (id === 'profileScreen') { setNavActive('navProfile'); ariaVoice.renderList(); }
+  else navBar.style.display = 'none';
+
+  window.scrollTo(0, 0);
+}
+
+function navTo(screenId, btn) {
+  showScreen(screenId);
+}
+
+function setNavActive(id) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(id);
+  if (btn) btn.classList.add('active');
+}
+
+// ── MOOD ────────────────────────────────────────────────────────────
+
+function setMood(mood, label, el) {
+  currentMood = mood;
+  document.querySelectorAll('.mood-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  saveToStorage();
+  showToast('vibe set to ' + label);
+}
+
+function setMoodFull(mood, emoji, el) {
+  currentMood = mood;
+  document.querySelectorAll('.mood-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  saveToStorage();
+  setTimeout(() => showScreen('introScreen'), 400);
+  showToast('vibe: ' + emoji + ' ' + mood);
+}
+
+// ── CONTACTS ───────────────────────────────────────────────────────
+
+function goToContacts(mode) {
+  currentMode = mode;
+  showScreen('contactScreen');
+
+  const comment = document.getElementById('ariaComment');
+  const commentText = document.getElementById('ariaCommentText');
+  const label = document.getElementById('contactSectionLabel');
+  const status = document.getElementById('contactScreenStatus');
+
+  let list = contacts;
+
+  if (mode === 'check') {
+    label.textContent = 'NEEDS A REPLY';
+    status.textContent = '● flagging who\'s waiting';
+    comment.style.display = 'block';
+    const waiting = contacts.filter(c => c.silent && c.silentHours > 0);
+    const longest = waiting.sort((a,b) => b.silentHours - a.silentHours)[0];
+    const commentStr = longest
+      ? `${longest.name} has been waiting ${longest.silentHours} hours. they probably noticed.`
+      : "you're caught up. for now.";
+    commentText.innerHTML = longest
+      ? `<b style="color:var(--rose)">${longest.name}</b> has been waiting ${longest.silentHours}h. probably noticed.`
+      : "you're caught up. for now.";
+    list = contacts.filter(c => c.silent);
+    ariaVoice.speak(commentStr);
+  } else if (mode === 'start') {
+    label.textContent = 'START A CONVO WITH';
+    status.textContent = '● ready';
+    comment.style.display = 'block';
+    commentText.textContent = "pick someone. i'll say something that sounds like you just thought of them.";
+    list = contacts;
+    ariaVoice.speak("pick someone. i'll say something that sounds like you just thought of them.");
+  } else {
+    label.textContent = 'WHO MESSAGED YOU?';
+    status.textContent = '● listening';
+    comment.style.display = 'none';
+    list = contacts;
+  }
+
+  renderContacts(list);
+}
+
+function filterContacts(query) {
+  const q = query.toLowerCase().trim();
+  const list = q ? contacts.filter(c =>
+    c.name.toLowerCase().includes(q) ||
+    (c.relationship || '').toLowerCase().includes(q) ||
+    (c.platform || '').toLowerCase().includes(q)
+  ) : contacts;
+  renderContacts(list);
+}
+
+function renderContacts(list) {
+  const container = document.getElementById('contactList');
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">no contacts found</div></div>`;
+    return;
+  }
+  container.innerHTML = list.map((c, i) => {
+    let statusClass = c.online ? 'online' : c.silent ? 'needs-reply' : '';
+    return `
+      <div class="contact-card stagger-${Math.min(i+1,5)}" onclick="selectContact(${c.id})" style="animation-delay:${i*0.05}s">
+        <div class="contact-avatar ${statusClass}" data-color="${c.color||''}">${c.initials || c.name[0]}</div>
+        <div class="contact-info">
+          <div class="contact-name">${c.name}</div>
+          <div class="contact-preview">${c.preview || (c.relationship ? '(' + c.relationship + ')' : 'no recent messages')}</div>
+        </div>
+        <div class="contact-meta">
+          <div class="contact-time">${c.time || ''}</div>
+          ${c.silent && c.silentHours > 0
+            ? `<div class="silent-badge">${c.silentHours}h silent</div>`
+            : `<div class="platform-badge ${(c.platform||'').toLowerCase().replace(/\s/,'')}">${c.platform||''}</div>`}
+        </div>
+      </div>
+    `;
+  }).join('') + `
+    <div class="add-contact-card" onclick="openModal('addContactModal')">
+      <div class="contact-avatar" style="background:var(--card2);border:1.5px dashed var(--border);font-size:20px;color:var(--muted);">+</div>
+      <div class="contact-info">
+        <div class="contact-name" style="color:var(--muted);">add a contact</div>
+        <div class="contact-preview">Aria learns their context for better replies</div>
+      </div>
+    </div>
+  `;
+}
+
+function addContact() {
+  const name = document.getElementById('newName').value.trim();
+  if (!name) { showToast('add a name first', 'error'); return; }
+
+  const relationship = document.getElementById('newRelationship').value.trim();
+  const platform = document.getElementById('newPlatform').value;
+  const preview = document.getElementById('newPreview').value.trim();
+  const silentHours = parseInt(document.getElementById('newSilent').value) || 0;
+
+  const colors = ['blue','purple','green','rose','amber'];
+  const newContact = {
+    id: nextContactId++,
+    name,
+    initials: name[0].toUpperCase(),
+    color: colors[Math.floor(Math.random() * colors.length)],
+    relationship: relationship || 'contact',
+    platform,
+    preview: preview || 'no recent messages',
+    time: silentHours > 0 ? silentHours + 'h ago' : 'just now',
+    silent: silentHours > 0,
+    silentHours,
+    online: false
+  };
+
+  contacts.push(newContact);
+  saveToStorage();
+  updateStats();
+  closeModal('addContactModal');
+  renderContacts(contacts);
+  showToast('✓ ' + name + ' added', 'green');
+
+  // Clear form
+  ['newName','newRelationship','newPreview'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('newSilent').value = '0';
+}
+
+// ── SELECT CONTACT & REPLY SCREEN ─────────────────────────────────
+
+function selectContact(id) {
+  currentContact = contacts.find(c => c.id === id);
+  if (!currentContact) return;
+
+  showScreen('replyScreen');
+  document.getElementById('replyTopName').textContent = currentContact.name;
+  document.getElementById('replyTopStatus').textContent = '● replying to ' + currentContact.name.toLowerCase();
+
+  // Set platform from contact
+  const plat = (currentContact.platform || 'Instagram');
+  setPlatformByName(plat);
+
+  // Reset state
+  document.getElementById('ariaThinking').style.display = 'none';
+  document.getElementById('replySection').style.display = 'none';
+  document.getElementById('pasteArea').style.display = 'block';
+  document.getElementById('theirMsgInput').value = '';
+  document.getElementById('genReplyBtn').disabled = false;
+  document.getElementById('genReplyBtn').textContent = 'ask aria to reply →';
+  document.getElementById('floatCopy').classList.remove('visible');
+  currentReplies = [];
+
+  // Populate convo area
+  const convoArea = document.getElementById('convoArea');
+  if (currentContact.preview && currentContact.preview !== 'no recent messages') {
+    convoArea.innerHTML = `
+      <div class="convo-label">LAST FROM ${currentContact.name.toUpperCase()}</div>
+      <div class="convo-thread">
+        <div class="thread-msg them">${currentContact.preview}</div>
+        <div class="thread-timestamp">${currentContact.time}</div>
+      </div>
+    `;
+  } else {
+    convoArea.innerHTML = `<div class="convo-label">PASTE THEIR MESSAGE BELOW</div>`;
+  }
+}
+
+// ── PLATFORM ───────────────────────────────────────────────────────
+
+function setPlatform(el) {
+  document.querySelectorAll('.platform-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  currentPlatform = el.dataset.platform;
+}
+
+function setPlatformByName(name) {
+  const btn = document.querySelector(`.platform-pill[data-platform="${name}"]`);
+  if (btn) {
+    document.querySelectorAll('.platform-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    currentPlatform = name;
+  }
+}
+
+// ── TONE ────────────────────────────────────────────────────────────
+
+function selectTone(el) {
+  document.querySelectorAll('#toneModalPills .tone-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  currentTone = el.dataset.tone;
+}
+
+function updateAltPref() {
+  showAlternatives = document.getElementById('altToggle').classList.contains('on');
+}
+
+// ── BUILD SYSTEM PROMPT ─────────────────────────────────────────────
+
+function buildSystemPrompt() {
+  let system = BASE_VOICE;
+
+  // Inject user's slang
+  if (slangWords.length) {
+    system += `\n\nUSER'S LEARNED VOCABULARY: ${slangWords.join(', ')}`;
+  }
+
+  // Settings
+  if (settings.caps) system += '\n- User sometimes capitalises normally.';
+  if (!settings.punct) system += '\n- User sometimes uses periods.';
+  if (!settings.emoji) system += '\n- User rarely uses any emojis.';
+
+  // Mood modifier
+  if (MOOD_MODIFIERS[currentMood]) system += '\n' + MOOD_MODIFIERS[currentMood];
+
+  // Tone modifier
+  if (currentTone !== 'natural' && TONE_MODIFIERS[currentTone]) {
+    system += '\n\nTONE FOR THIS REPLY: ' + TONE_MODIFIERS[currentTone];
+  }
+
+  // Platform context
+  system += `\n\nPLATFORM: ${currentPlatform}. Adjust message length/energy accordingly.`;
+
+  // Contact relationship
+  if (currentContact?.relationship) {
+    system += `\n\nCONTACT CONTEXT: This person is the user's ${currentContact.relationship}.`;
+  }
+
+  return system;
+}
+
+// ── GENERATE REPLY ──────────────────────────────────────────────────
+
+async function generateReply() {
+  const input = document.getElementById('theirMsgInput').value.trim();
+  const lastMsg = currentContact?.preview;
+  const msg = input || (lastMsg && lastMsg !== 'no recent messages' ? lastMsg : '');
+
+  if (!msg && currentMode !== 'start') {
+    showToast('paste their message first');
+    document.getElementById('theirMsgInput').focus();
+    return;
+  }
+
+  const btn = document.getElementById('genReplyBtn');
+  btn.disabled = true;
+  btn.textContent = 'aria is writing...';
+  document.getElementById('replySection').style.display = 'none';
+  document.getElementById('ariaThinking').style.display = 'flex';
+  document.getElementById('replyAriaOrb').classList.add('thinking');
+  document.getElementById('floatCopy').classList.remove('visible');
+
+  // Animated thinking status messages
+  const statusMsgs = ['reading the vibe', 'channelling your energy', 'finding the right words', 'almost there'];
+  let statusIdx = 0;
+  const statusEl = document.getElementById('thinkingStatus');
+  const statusInterval = setInterval(() => {
+    statusEl.textContent = '— ' + statusMsgs[statusIdx++ % statusMsgs.length];
+  }, 900);
+
+  const modeContext = currentMode === 'start'
+    ? `Open a casual conversation with ${currentContact?.name} — don't reply to anything, just start a convo naturally, like you just randomly thought of them.`
+    : `${currentContact?.name} (${currentContact?.relationship || 'contact'}) sent: "${msg}"\n\nWrite a reply in the user's voice.`;
+
+  const systemPrompt = buildSystemPrompt();
+
+  try {
+    const tasks = [fetchReply(systemPrompt, modeContext + '\n\nSplit into 2-3 short lines. One per line. Output only the messages.')];
+
+    if (showAlternatives) {
+      const altPrompt = modeContext + `\n\nGenerate 3 different alternative replies with different tones (funny, warm, brief). Format as JSON: {"alternatives":[{"tone":"funny","text":"msg1\nmsg2"},{"tone":"warm","text":"msg"},{"tone":"brief","text":"msg"}]}`;
+      tasks.push(fetchReplyJSON(systemPrompt, altPrompt));
+    }
+
+    const [mainText, altData] = await Promise.all(tasks);
+
+    currentReplies = mainText.split('\n').map(l => l.trim()).filter(Boolean);
+    renderReplies(currentReplies);
+
+    if (showAlternatives && altData?.alternatives) {
+      renderAlternatives(altData.alternatives);
+    }
+
+    // Update stats
+    replySentCount++;
+    updateStats();
+    saveToStorage();
+
+  } catch(e) {
+    currentReplies = ['something went wrong', 'try again?'];
+    renderReplies(currentReplies);
+    console.error(e);
+  }
+
+  clearInterval(statusInterval);
+  statusEl.textContent = '';
+  document.getElementById('ariaThinking').style.display = 'none';
+  document.getElementById('replyAriaOrb').classList.remove('thinking');
+  btn.disabled = false;
+  btn.textContent = 'ask aria to reply →';
+}
+
+async function fetchReply(system, userMsg) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      system,
+      messages: [{ role: 'user', content: userMsg }]
+    })
+  });
+  const data = await res.json();
+  return data.content?.find(b => b.type === 'text')?.text || '';
+}
+
+async function fetchReplyJSON(system, userMsg) {
+  try {
+    const text = await fetchReply(system + '\n\nYou must respond ONLY with valid JSON. No markdown, no explanation.', userMsg);
+    const clean = text.replace(/```json|```/g,'').trim();
+    return JSON.parse(clean);
+  } catch(e) { return null; }
+}
+
+// ── RENDER REPLIES ──────────────────────────────────────────────────
+
+function renderReplies(lines) {
+  const container = document.getElementById('replyBubbles');
+  container.innerHTML = lines.map((line, i) => {
+    let cls = lines.length === 1 ? 'only' : i === 0 ? 'first' : i === lines.length-1 ? 'last' : 'middle';
+    return `<div class="reply-bubble ${cls} editable" contenteditable="true" style="animation-delay:${i*0.08}s" data-idx="${i}">${line}</div>`;
+  }).join('');
+
+  // Edit hint
+  const editHint = document.getElementById('editHint');
+  editHint.style.display = 'block';
+
+  // Sync edits back to currentReplies
+  container.querySelectorAll('.reply-bubble').forEach((bubble, i) => {
+    bubble.addEventListener('input', () => {
+      currentReplies[i] = bubble.textContent.trim();
+    });
+  });
+
+  // ARIA opinion
+  const opinion = document.getElementById('ariaOpinion');
+  const opinionText = document.getElementById('ariaOpinionText');
+  const opinionStr = OPINION_PROMPTS[Math.floor(Math.random() * OPINION_PROMPTS.length)];
+  opinionText.textContent = opinionStr;
+  opinion.style.display = 'block';
+
+  // Vibes score (simulated)
+  const score = 70 + Math.floor(Math.random() * 28);
+  animateVibesBar(score);
+
+  document.getElementById('replySection').style.display = 'block';
+  document.getElementById('mainCopyBtn').textContent = 'copy & send →';
+  document.getElementById('mainCopyBtn').classList.remove('copied');
+  document.getElementById('floatCopy').classList.add('visible');
+
+  // Speak: opinion first, then the reply lines
+  const replyReadout = lines.join('. ');
+  ariaVoice.speak(opinionStr + '… ' + replyReadout);
+
+  // Smooth scroll into view
+  setTimeout(() => {
+    document.getElementById('replySection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 200);
+}
+
+function renderAlternatives(alts) {
+  if (!alts || !alts.length) return;
+  const container = document.getElementById('altBubbles');
+  const section = document.getElementById('altSection');
+
+  container.innerHTML = alts.map((alt, i) => {
+    const lines = alt.text.split('\n').filter(Boolean);
+    return `
+      <div class="alt-bubble" style="animation-delay:${i*0.1}s" onclick="useAlternative(${i})">
+        <div class="alt-bubble-tone">${alt.tone}</div>
+        ${lines.map(l => `<div>${l}</div>`).join('<br>')}
+      </div>
+    `;
+  }).join('');
+  section.style.display = 'block';
+  window._altReplies = alts;
+}
+
+function useAlternative(idx) {
+  const alt = window._altReplies?.[idx];
+  if (!alt) return;
+  currentReplies = alt.text.split('\n').map(l => l.trim()).filter(Boolean);
+  renderReplies(currentReplies);
+  showToast('switched to ' + alt.tone + ' version');
+}
+
+function animateVibesBar(score) {
+  const bar = document.getElementById('vibesBar');
+  const num = document.getElementById('vibesNum');
+  bar.style.width = '0%';
+  num.textContent = '—';
+  setTimeout(() => {
+    bar.style.width = score + '%';
+    let current = 0;
+    const interval = setInterval(() => {
+      current = Math.min(current + 3, score);
+      num.textContent = current + '%';
+      if (current >= score) clearInterval(interval);
+    }, 20);
+  }, 400);
+}
+
+// ── COPY ───────────────────────────────────────────────────────────
+
+function copyReply() {
+  if (!currentReplies.length) return;
+  const text = currentReplies.join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('mainCopyBtn');
+    btn.textContent = '✓ copied';
+    btn.classList.add('copied');
+    showToast('copied! go paste it 🚀', 'green');
+    setTimeout(() => {
+      btn.textContent = 'copy & send →';
+      btn.classList.remove('copied');
+    }, 3000);
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('copied!', 'green');
+  });
+}
+
+// ── MODIFY REPLY ───────────────────────────────────────────────────
+
+async function makeFormalerOrCasual(direction) {
+  if (!currentReplies.length) return;
+  showToast('adjusting...');
+  const msg = currentReplies.join('\n');
+  const prompt = direction === 'formal'
+    ? `Make this reply slightly more put-together while keeping it in the user's voice. Not stiff, just a bit more composed.\n\nOriginal:\n${msg}\n\nOne line per message. Output only the messages.`
+    : `Make this reply more casual and raw. More abbreviations, more natural, less polished.\n\nOriginal:\n${msg}\n\nOne line per message. Output only the messages.`;
+
+  try {
+    const text = await fetchReply(buildSystemPrompt(), prompt);
+    currentReplies = text.split('\n').map(l => l.trim()).filter(Boolean);
+    renderReplies(currentReplies);
+  } catch(e) { showToast('something went wrong'); }
+}
+
+async function makeShorterOrLonger(direction) {
+  if (!currentReplies.length) return;
+  showToast('rewriting...');
+  const msg = currentReplies.join('\n');
+  const prompt = direction === 'shorter'
+    ? `Make this much shorter. Could even be one punchy message.\n\nOriginal:\n${msg}\n\nOutput only the final messages, one per line.`
+    : `Expand on this. Add a bit more personality and maybe a question to keep the convo going.\n\nOriginal:\n${msg}\n\nOutput only the messages, one per line.`;
+
+  try {
+    const text = await fetchReply(buildSystemPrompt(), prompt);
+    currentReplies = text.split('\n').map(l => l.trim()).filter(Boolean);
+    renderReplies(currentReplies);
+  } catch(e) { showToast('something went wrong'); }
+}
+
+// ── HISTORY ────────────────────────────────────────────────────────
+
+function saveToHistory() {
+  if (!currentReplies.length) return;
+  const entry = {
+    id: Date.now(),
+    contact: currentContact?.name || 'Unknown',
+    contactInitial: currentContact?.initials || '?',
+    contactColor: currentContact?.color || '',
+    platform: currentPlatform,
+    tone: currentTone,
+    original: document.getElementById('theirMsgInput').value.trim() || currentContact?.preview || '',
+    reply: currentReplies.join('\n'),
+    time: new Date().toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit', hour12:true })
+  };
+  replyHistory.unshift(entry);
+  if (replyHistory.length > 50) replyHistory = replyHistory.slice(0, 50);
+  saveToStorage();
+  updateStats();
+  showToast('saved to history ✓', 'green');
+}
+
+function renderHistory() {
+  const container = document.getElementById('historyList');
+  document.getElementById('historyCount').textContent = replyHistory.length;
+
+  if (!replyHistory.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <div class="empty-state-text">no replies saved yet<br>tap "save to history" after Aria drafts one</div>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = replyHistory.map((entry, i) => `
+    <div class="history-card stagger-${Math.min(i+1,5)}" style="animation-delay:${i*0.05}s" onclick="openHistoryDetail(${entry.id})">
+      <div class="history-card-header">
+        <div class="contact-avatar" data-color="${entry.contactColor}" style="width:32px;height:32px;font-size:13px;flex-shrink:0;">${entry.contactInitial}</div>
+        <span class="history-card-name">${entry.contact}</span>
+        <span class="history-card-time">${entry.time}</span>
+      </div>
+      ${entry.original ? `<div class="history-original">them: ${entry.original.slice(0,80)}${entry.original.length>80?'…':''}</div>` : ''}
+      <div class="history-reply">${entry.reply.slice(0,120)}${entry.reply.length>120?'…':''}</div>
+      <div class="history-meta">
+        <span class="history-tone-tag">${entry.tone}</span>
+        <span class="platform-badge ${(entry.platform||'').toLowerCase().replace(/\s/,'')}" style="font-size:10px;">${entry.platform}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openHistoryDetail(id) {
+  const entry = replyHistory.find(e => e.id === id);
+  if (!entry) return;
+  currentHistoryDetail = entry;
+
+  document.getElementById('histDetailTitle').textContent = 'Reply to ' + entry.contact;
+  document.getElementById('histDetailSub').textContent = entry.time + ' · ' + entry.platform;
+  document.getElementById('histDetailBody').innerHTML = `
+    ${entry.original ? `<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--muted);line-height:1.6;">
+      <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-bottom:6px;">THEY SAID</div>
+      ${entry.original}
+    </div>` : ''}
+    <div style="margin-bottom:8px;">
+      ${entry.reply.split('\n').map((line, i) => `
+        <div style="background:var(--rose-dim);border:1px solid var(--rose-border);border-radius:${i===0?'4px 18px 18px 18px':'4px 18px 4px 18px'};padding:12px 14px;font-size:14px;color:#fce7f3;line-height:1.6;margin-bottom:8px;">${line}</div>
+      `).join('')}
+    </div>
+  `;
+  openModal('historyDetailModal');
+}
+
+function copyHistoryDetail() {
+  if (!currentHistoryDetail) return;
+  navigator.clipboard.writeText(currentHistoryDetail.reply);
+  showToast('copied ✓', 'green');
+  closeModal('historyDetailModal');
+}
+
+function clearHistory() {
+  if (!replyHistory.length) return;
+  replyHistory = [];
+  saveToStorage();
+  renderHistory();
+  updateStats();
+  showToast('history cleared');
+}
+
+// ── PROFILE/VOICE SETTINGS ─────────────────────────────────────────
+
+function toggleSetting(key, toggle) {
+  toggle.classList.toggle('on');
+  settings[key] = toggle.classList.contains('on');
+  saveToStorage();
+}
+
+function addSlang(e) {
+  if (e.key !== 'Enter') return;
+  const input = document.getElementById('slangInput');
+  const word = input.value.trim();
+  if (!word || slangWords.includes(word)) { input.value = ''; return; }
+  slangWords.push(word);
+  input.value = '';
+  renderSlangPills();
+  saveToStorage();
+  showToast('added "' + word + '"', 'green');
+}
+
+function renderSlangPills() {
+  const wrap = document.getElementById('traitPills');
+  wrap.innerHTML = slangWords.map(w =>
+    `<span class="trait-pill" onclick="removeSlang('${w}')" title="tap to remove">${w}</span>`
+  ).join('') + `<span class="trait-pill muted" onclick="document.getElementById('slangInput').focus()">+ add your own</span>`;
+}
+
+function removeSlang(word) {
+  slangWords = slangWords.filter(w => w !== word);
+  renderSlangPills();
+  saveToStorage();
+}
+
+function updateEnergyLabel(val) {
+  energyLevel = parseInt(val);
+  const label = document.getElementById('energyLabel');
+  if (val < 30) label.textContent = 'very much your voice (' + val + '%)';
+  else if (val < 60) label.textContent = 'leaning toward your voice (' + val + '%)';
+  else if (val < 80) label.textContent = 'balancing both (' + val + '%)';
+  else label.textContent = 'mirroring their energy (' + val + '%)';
+  saveToStorage();
+}
+
+function setDefaultTone(tone, el) {
+  defaultTone = tone;
+  document.querySelectorAll('.tone-pills .tone-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  saveToStorage();
+}
+
+function resetProfile() {
+  slangWords = ['bro','u / r u','hnstly','idk','ngl','lmk','💀','🙏'];
+  settings = { caps: false, punct: true, emoji: true };
+  energyLevel = 40;
+  defaultTone = 'real';
+  renderSlangPills();
+  document.getElementById('energySlider').value = 40;
+  updateEnergyLabel(40);
+  saveToStorage();
+  showToast('voice profile reset');
+}
+
+// ── MODALS ──────────────────────────────────────────────────────────
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function handleModalBgClick(e, id) {
+  if (e.target === document.getElementById(id)) closeModal(id);
+}
+
+// ── TOAST ───────────────────────────────────────────────────────────
+
+let toastTimeout;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast';
+  if (type === 'green') t.classList.add('toast-green');
+  if (type === 'blue') t.classList.add('toast-blue');
+  t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── SWIPE BACK GESTURE ───────────────────────────────────────────────
+
+let touchStartX = 0;
+document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (dx > 80 && touchStartX < 30) {
+    if (activeScreen === 'replyScreen') showScreen('contactScreen');
+    else if (activeScreen === 'contactScreen') showScreen('introScreen');
+    else if (['historyScreen','moodScreen','profileScreen'].includes(activeScreen)) showScreen('introScreen');
+  }
+}, { passive: true });
+
+// ── KEYBOARD SHORTCUT ───────────────────────────────────────────────
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    if (activeScreen === 'replyScreen') generateReply();
+  }
+});
+
+window.addEventListener('load', () => {
+  setTimeout(typeIntro, 500);
+  loadFromStorage();
+  renderHistory();
+
+  // Restore ElevenLabs settings
+  const savedKey  = localStorage.getItem('aria_el_key') || '';
+  const savedStab = parseFloat(localStorage.getItem('aria_el_stability')  || '0.45');
+  const savedSim  = parseFloat(localStorage.getItem('aria_el_similarity') || '0.75');
+  const keyEl  = document.getElementById('elApiKey');
+  const stabEl = document.getElementById('elStability');
+  const simEl  = document.getElementById('elSimilarity');
+  if (keyEl)  keyEl.value = savedKey;
+  if (stabEl) { stabEl.value = savedStab; document.getElementById('elStabilityVal').textContent = savedStab.toFixed(2); }
+  if (simEl)  { simEl.value = savedSim;   document.getElementById('elSimilarityVal').textContent = savedSim.toFixed(2); }
+
+  // Initial voice list render
+  ariaVoice.renderList('en');
+
+  // Sync muted state
+  if (ariaVoice.muted) ariaVoice.setMuted(true);
+
+  document.getElementById('navBar').style.display = 'flex';
+});
+
+</script>
+</body>
+</html>
