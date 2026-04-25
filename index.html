@@ -1486,20 +1486,10 @@ input[type=range]::-webkit-slider-thumb {
         </div>
       </div>
 
-      <!-- ElevenLabs API key -->
+      <!-- ElevenLabs via Supabase -->
       <div id="voiceControlsWrap">
-        <div style="margin-top:14px;">
-          <div class="voice-ctrl-label">ELEVENLABS API KEY</div>
-          <div style="display:flex;gap:8px;margin-top:6px;">
-            <input type="password" id="elApiKey" class="profile-input"
-              placeholder="sk-…  paste your key here"
-              style="margin-top:0;flex:1;font-size:12px;"
-              oninput="saveELKey(this.value)"/>
-            <button class="test-voice-btn" style="margin-top:0;width:auto;padding:0 14px;white-space:nowrap;" onclick="testAriaVoice()">▶ test</button>
-          </div>
-          <div style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.6;">
-            free tier at <span style="color:var(--rose)">elevenlabs.io</span> · ~10k chars/month free
-          </div>
+        <div style="margin-top:4px;display:flex;justify-content:flex-end;">
+          <button class="test-voice-btn" style="width:auto;padding:8px 18px;" onclick="testAriaVoice()">▶ preview voice</button>
         </div>
 
         <!-- Sliders: stability + similarity -->
@@ -1808,13 +1798,6 @@ const ariaVoice = (() => {
     const text = rawText.replace(/<[^>]+>/g, '').replace(/&[a-z#0-9]+;/g, '').trim();
     if (!text) { onEnd?.(); return; }
 
-    const apiKey = localStorage.getItem('aria_el_key') || '';
-    if (!apiKey) {
-      // Graceful fallback — silent, don't annoy the user
-      onEnd?.();
-      return;
-    }
-
     stop();
     loading = true;
     setSpeaking(true);
@@ -1824,32 +1807,24 @@ const ariaVoice = (() => {
 
     try {
       const res = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${voice.id}`,
+        'https://mmtdtcmhvbruubrjgjrz.supabase.co/functions/v1/aria-tts',
         {
           method: 'POST',
-          headers: {
-            'xi-api-key': apiKey,
-            'Content-Type': 'application/json',
-            'Accept': 'audio/mpeg'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             text,
-            model_id: voice.model,
-            voice_settings: {
-              stability,
-              similarity_boost: similarity,
-              style: 0.25,
-              use_speaker_boost: true
-            }
+            voiceId:    voice.id,
+            model:      voice.model,
+            stability,
+            similarity,
           })
         }
       );
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        if (res.status === 401) showToast('check your ElevenLabs API key');
-        else if (res.status === 429) showToast('ElevenLabs quota reached');
-        else showToast('voice error — check your key');
+        if (res.status === 429) showToast('❌ quota reached');
+        else showToast(`❌ error ${res.status}${err?.error ? ' — ' + err.error : ''}`);
         setSpeaking(false);
         loading = false;
         onEnd?.();
@@ -1877,6 +1852,7 @@ const ariaVoice = (() => {
     } catch (e) {
       setSpeaking(false);
       loading = false;
+      showToast('❌ ' + (e?.message || 'network error'));
       onEnd?.();
     }
   }
