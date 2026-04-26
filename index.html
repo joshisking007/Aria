@@ -1724,26 +1724,16 @@ const ariaVoice = (() => {
   // model: eleven_turbo_v2_5  → English only, fast, cheap
   // model: eleven_multilingual_v2 → 29 languages incl. Japanese
   const VOICES = [
-    // ── English ──────────────────────────────────────────────
-    {
-      key: 'mimi_en', id: 'zrHiDhphv9ZnVXBqCLjz', lang: 'en',
-      name: 'Mimi', desc: 'sweet · young · breathy',
-      model: 'eleven_turbo_v2_5', recommended: true
-    },
-    {
-      key: 'aria_en', id: '9BWtsMINqrJLrRacOk9x', lang: 'en',
-      name: 'Aria', desc: 'calm · expressive · clear',
-      model: 'eleven_turbo_v2_5', recommended: true
-    },
+    // ── English (premade — free tier) ────────────────────────
     {
       key: 'rachel_en', id: '21m00Tcm4TlvDq8ikWAM', lang: 'en',
-      name: 'Rachel', desc: 'warm · composed · natural',
-      model: 'eleven_turbo_v2_5'
+      name: 'Rachel', desc: 'calm · warm · natural',
+      model: 'eleven_turbo_v2_5', recommended: true
     },
     {
       key: 'bella_en', id: 'EXAVITQu4vr4xnSDxMaL', lang: 'en',
       name: 'Bella', desc: 'soft · gentle · young',
-      model: 'eleven_turbo_v2_5'
+      model: 'eleven_turbo_v2_5', recommended: true
     },
     {
       key: 'elli_en', id: 'MF3mGyEYCl7XYWbV9V6O', lang: 'en',
@@ -1751,36 +1741,31 @@ const ariaVoice = (() => {
       model: 'eleven_turbo_v2_5'
     },
     {
-      key: 'grace_en', id: 'oWAxZDx7w5VEj9dCyTzz', lang: 'en',
-      name: 'Grace', desc: 'serene · refined · mature',
+      key: 'domi_en', id: 'AZnzlk1XvdvUeBnXmlld', lang: 'en',
+      name: 'Domi', desc: 'confident · clear · strong',
       model: 'eleven_turbo_v2_5'
     },
     // ── Japanese (multilingual v2) ────────────────────────────
     {
-      key: 'mimi_ja', id: 'zrHiDhphv9ZnVXBqCLjz', lang: 'ja',
-      name: 'Mimi', desc: 'かわいい · ソフト · 若い',
-      model: 'eleven_multilingual_v2', recommended: true
-    },
-    {
-      key: 'aria_ja', id: '9BWtsMINqrJLrRacOk9x', lang: 'ja',
-      name: 'Aria', desc: '落ち着いた · 表現豊か · クリア',
-      model: 'eleven_multilingual_v2', recommended: true
-    },
-    {
       key: 'rachel_ja', id: '21m00Tcm4TlvDq8ikWAM', lang: 'ja',
-      name: 'Rachel', desc: '温かい · 自然 · 穏やか',
-      model: 'eleven_multilingual_v2'
+      name: 'Rachel', desc: '落ち着いた · 自然 · 温かい',
+      model: 'eleven_multilingual_v2', recommended: true
     },
     {
       key: 'bella_ja', id: 'EXAVITQu4vr4xnSDxMaL', lang: 'ja',
       name: 'Bella', desc: '柔らかい · 優しい · 若々しい',
       model: 'eleven_multilingual_v2'
     },
+    {
+      key: 'elli_ja', id: 'MF3mGyEYCl7XYWbV9V6O', lang: 'ja',
+      name: 'Elli', desc: '明るい · 表現豊か · 親しみやすい',
+      model: 'eleven_multilingual_v2'
+    },
   ];
 
   // ── State ────────────────────────────────────────────────────
   let muted      = localStorage.getItem('aria_voice_muted') === '1';
-  let selectedKey = localStorage.getItem('aria_voice_key') || 'mimi_en';
+  let selectedKey = localStorage.getItem('aria_voice_key') || 'rachel_en';
   let stability  = parseFloat(localStorage.getItem('aria_el_stability')  || '0.45');
   let similarity = parseFloat(localStorage.getItem('aria_el_similarity') || '0.75');
   let currentLang = 'en';
