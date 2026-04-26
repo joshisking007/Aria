@@ -642,6 +642,109 @@ textarea.convo-input {
 textarea.convo-input:focus { border-color: var(--rose-border); outline: none; }
 textarea.convo-input::placeholder { color: var(--muted); }
 
+/* Context section */
+.context-section { padding: 0 20px; margin-bottom: 14px; }
+.context-toggle {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 11px; color: var(--muted); cursor: pointer;
+  margin-bottom: 0; transition: color 0.2s; width: fit-content;
+}
+.context-toggle:active { color: var(--rose); }
+.context-toggle-icon { font-size: 14px; transition: transform 0.2s; }
+.context-toggle.open .context-toggle-icon { transform: rotate(90deg); }
+.context-toggle-label { letter-spacing: 1px; }
+.context-badge {
+  background: var(--rose-dim); border: 1px solid var(--rose-border);
+  color: var(--rose); font-size: 9px; padding: 1px 6px; border-radius: 8px;
+  letter-spacing: 0.5px;
+}
+.context-body {
+  margin-top: 10px; display: none; animation: slide-up 0.2s ease;
+}
+.context-body.open { display: block; }
+.context-tabs {
+  display: flex; gap: 6px; margin-bottom: 10px;
+}
+.context-tab {
+  flex: 1; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 8px;
+  font-size: 11px; color: var(--muted); cursor: pointer;
+  text-align: center; transition: all 0.2s; letter-spacing: 0.3px;
+  font-family: 'DM Sans', sans-serif;
+}
+.context-tab.active { background: var(--rose-dim); border-color: var(--rose-border); color: var(--rose); }
+.context-panel { display: none; }
+.context-panel.active { display: block; }
+textarea.context-input {
+  width: 100%; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 12px 14px;
+  color: var(--text); font-size: 12px; font-family: 'DM Sans', sans-serif;
+  resize: none; line-height: 1.65; transition: border-color 0.2s;
+  min-height: 80px;
+}
+textarea.context-input:focus { border-color: var(--rose-border); outline: none; }
+textarea.context-input::placeholder { color: var(--muted); }
+.screenshot-drop {
+  background: var(--card); border: 1.5px dashed var(--border);
+  border-radius: var(--radius-md); padding: 20px;
+  text-align: center; cursor: pointer; transition: all 0.2s; position: relative;
+}
+.screenshot-drop:active, .screenshot-drop.dragover { border-color: var(--rose-border); background: var(--rose-dim); }
+.screenshot-drop-icon { font-size: 24px; margin-bottom: 6px; }
+.screenshot-drop-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.screenshot-drop input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.screenshot-preview {
+  width: 100%; border-radius: var(--radius-md); margin-top: 8px;
+  max-height: 160px; object-fit: cover; border: 1px solid var(--rose-border);
+  display: none;
+}
+.context-clear {
+  font-size: 11px; color: var(--muted); margin-top: 6px;
+  cursor: pointer; display: none; text-align: right;
+}
+.context-clear:active { color: var(--rose); }
+
+/* Aria reaction bubble — shown BEFORE replies */
+.aria-reaction {
+  margin: 0 20px 16px;
+  padding: 16px 18px;
+  background: var(--card); border: 1px solid var(--rose-border);
+  border-radius: 4px 18px 18px 18px;
+  display: none; animation: slide-up 0.35s ease;
+  position: relative;
+}
+.aria-reaction::before {
+  content: '';
+  position: absolute; top: -1px; left: -1px;
+  width: 100%; height: 100%;
+  border-radius: 4px 18px 18px 18px;
+  background: linear-gradient(135deg, rgba(244,114,182,0.06), transparent 60%);
+  pointer-events: none;
+}
+.aria-reaction-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+.aria-reaction-orb {
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+  background: radial-gradient(circle at 35% 35%, #f9a8d4, #ec4899);
+  box-shadow: 0 0 10px rgba(244,114,182,0.35);
+}
+.aria-reaction-tag {
+  font-size: 9px; color: var(--rose); letter-spacing: 1.5px; font-weight: 600;
+}
+.aria-reaction-text {
+  font-size: 14px; color: var(--text); line-height: 1.65;
+  font-style: italic;
+}
+.aria-reaction-divider {
+  margin: 12px 0 0;
+  font-size: 10px; color: var(--muted); letter-spacing: 1.5px;
+  display: flex; align-items: center; gap: 8px;
+}
+.aria-reaction-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
 .gen-reply-btn {
   width: 100%; padding: 16px;
   background: linear-gradient(135deg, #831843, #be185d, #db2777, #f472b6);
@@ -1264,6 +1367,34 @@ input[type=range]::-webkit-slider-thumb {
   <div class="paste-area" id="pasteArea">
     <div class="paste-label">PASTE THEIR MESSAGE (OR ADD CONTEXT)</div>
     <textarea class="convo-input" id="theirMsgInput" rows="3" placeholder="paste what they said... or give context"></textarea>
+
+    <!-- Context accordion -->
+    <div class="context-section" style="padding:0;margin-bottom:12px;">
+      <div class="context-toggle" id="contextToggle" onclick="toggleContextPanel()">
+        <span class="context-toggle-icon">▶</span>
+        <span class="context-toggle-label">ADD CONVERSATION CONTEXT</span>
+        <span class="context-badge" id="contextBadge" style="display:none;">✓ added</span>
+      </div>
+      <div class="context-body" id="contextBody">
+        <div class="context-tabs">
+          <button class="context-tab active" onclick="switchContextTab('paste', this)">📋 Paste convo</button>
+          <button class="context-tab" onclick="switchContextTab('screenshot', this)">📷 Screenshot</button>
+        </div>
+        <div class="context-panel active" id="ctxPanelPaste">
+          <textarea class="context-input" id="contextPasteInput" rows="4" placeholder="paste the previous messages here so Aria can read the whole vibe of the convo..."></textarea>
+        </div>
+        <div class="context-panel" id="ctxPanelScreenshot">
+          <div class="screenshot-drop" id="screenshotDrop">
+            <input type="file" accept="image/*" onchange="handleScreenshotUpload(this)" />
+            <div class="screenshot-drop-icon">📷</div>
+            <div class="screenshot-drop-text">tap to upload a screenshot<br><span style="font-size:10px;opacity:0.6;">jpg, png — Aria will read the convo</span></div>
+          </div>
+          <img class="screenshot-preview" id="screenshotPreview" />
+          <div class="context-clear" id="screenshotClearBtn" onclick="clearScreenshot()">✕ remove screenshot</div>
+        </div>
+      </div>
+    </div>
+
     <button class="gen-reply-btn" id="genReplyBtn" onclick="generateReply()">let aria respond →</button>
   </div>
 
@@ -1277,17 +1408,22 @@ input[type=range]::-webkit-slider-thumb {
     <span class="thinking-status" id="thinkingStatus"></span>
   </div>
 
+  <!-- Aria reaction (shown FIRST, before reply bubbles) -->
+  <div class="aria-reaction" id="ariaReaction">
+    <div class="aria-reaction-header">
+      <div class="aria-reaction-orb"></div>
+      <span class="aria-reaction-tag">ARIA</span>
+    </div>
+    <div class="aria-reaction-text" id="ariaReactionText"></div>
+    <div class="aria-reaction-divider">HERE'S WHAT TO SEND</div>
+  </div>
+
   <!-- Reply section -->
   <div id="replySection" style="display:none;">
     <div class="reply-section">
       <div class="reply-from-label">ARIA'S DRAFT</div>
       <div class="edit-hint" id="editHint" style="display:none;">✏️ TAP ANY BUBBLE TO EDIT</div>
       <div id="replyBubbles"></div>
-
-      <div class="aria-opinion" id="ariaOpinion" style="display:none;">
-        <span class="name">ARIA</span>
-        <span id="ariaOpinionText"></span>
-      </div>
     </div>
 
     <!-- Vibes score -->
@@ -2392,12 +2528,21 @@ function selectContact(id) {
   // Reset state
   document.getElementById('ariaThinking').style.display = 'none';
   document.getElementById('replySection').style.display = 'none';
+  document.getElementById('ariaReaction').style.display = 'none';
   document.getElementById('pasteArea').style.display = 'block';
   document.getElementById('theirMsgInput').value = '';
   document.getElementById('genReplyBtn').disabled = false;
   document.getElementById('genReplyBtn').textContent = 'ask aria to reply →';
   document.getElementById('floatCopy').classList.remove('visible');
   currentReplies = [];
+  // Reset context panel
+  const ctxBody = document.getElementById('contextBody');
+  const ctxToggle = document.getElementById('contextToggle');
+  if (ctxBody) { ctxBody.classList.remove('open'); ctxToggle.classList.remove('open'); }
+  const ctxPaste = document.getElementById('contextPasteInput');
+  if (ctxPaste) ctxPaste.value = '';
+  document.getElementById('contextBadge').style.display = 'none';
+  clearScreenshot();
 
   // Populate convo area
   const convoArea = document.getElementById('convoArea');
@@ -2477,6 +2622,61 @@ function buildSystemPrompt() {
   return system;
 }
 
+// ── CONTEXT PANEL ──────────────────────────────────────────────────
+
+let screenshotBase64 = null;
+let activeContextTab = 'paste';
+
+function toggleContextPanel() {
+  const toggle = document.getElementById('contextToggle');
+  const body = document.getElementById('contextBody');
+  toggle.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+function switchContextTab(tab, el) {
+  activeContextTab = tab;
+  document.querySelectorAll('.context-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.context-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(tab === 'paste' ? 'ctxPanelPaste' : 'ctxPanelScreenshot').classList.add('active');
+}
+
+function handleScreenshotUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    screenshotBase64 = e.target.result.split(',')[1];
+    const preview = document.getElementById('screenshotPreview');
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    document.getElementById('screenshotClearBtn').style.display = 'block';
+    document.getElementById('contextBadge').style.display = 'inline';
+    showToast('screenshot loaded ✓', 'green');
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearScreenshot() {
+  screenshotBase64 = null;
+  document.getElementById('screenshotPreview').style.display = 'none';
+  document.getElementById('screenshotPreview').src = '';
+  document.getElementById('screenshotClearBtn').style.display = 'none';
+  const badge = document.getElementById('contextBadge');
+  const pasteCtx = document.getElementById('contextPasteInput').value.trim();
+  if (!pasteCtx) badge.style.display = 'none';
+}
+
+function getContextString() {
+  const pasteCtx = document.getElementById('contextPasteInput')?.value.trim() || '';
+  if (pasteCtx) {
+    document.getElementById('contextBadge').style.display = 'inline';
+    return `\n\nPREVIOUS CONVERSATION CONTEXT:\n${pasteCtx}`;
+  }
+  return '';
+}
+
 // ── GENERATE REPLY ──────────────────────────────────────────────────
 
 async function generateReply() {
@@ -2494,6 +2694,7 @@ async function generateReply() {
   btn.disabled = true;
   btn.textContent = 'aria is writing...';
   document.getElementById('replySection').style.display = 'none';
+  document.getElementById('ariaReaction').style.display = 'none';
   document.getElementById('ariaThinking').style.display = 'flex';
   document.getElementById('replyAriaOrb').classList.add('thinking');
   document.getElementById('floatCopy').classList.remove('visible');
@@ -2506,23 +2707,37 @@ async function generateReply() {
     statusEl.textContent = '— ' + statusMsgs[statusIdx++ % statusMsgs.length];
   }, 900);
 
+  const contextStr = getContextString();
+
   const modeContext = currentMode === 'start'
-    ? `Open a casual conversation with ${currentContact?.name} — don't reply to anything, just start a convo naturally, like you just randomly thought of them.`
-    : `${currentContact?.name} (${currentContact?.relationship || 'contact'}) sent: "${msg}"\n\nWrite a reply in the user's voice.`;
+    ? `Open a casual conversation with ${currentContact?.name} — don't reply to anything, just start a convo naturally, like you just randomly thought of them.${contextStr}`
+    : `${currentContact?.name} (${currentContact?.relationship || 'contact'}) sent: "${msg}"${contextStr}\n\nWrite a reply in the user's voice.`;
 
   const systemPrompt = buildSystemPrompt();
 
+  // Reaction prompt — Aria's personality-first comment
+  const reactionPrompt = currentMode === 'start'
+    ? `You are Aria, a witty and alive reply assistant. React to the user wanting to start a conversation with ${currentContact?.name} (${currentContact?.relationship || 'contact'}). Be short, playful, and reactive — like a friend who's in on it. 1-2 sentences max. Don't be generic. Be spicy, fun, or clever. No labels, no quotes.`
+    : `You are Aria, a witty and alive reply assistant. React to this message from ${currentContact?.name} (${currentContact?.relationship || 'contact'}): "${msg}"${contextStr ? '\n\n' + contextStr : ''}. Give your hot take / reaction — be short, playful, a little cheeky. Like "oop, looks like they're testing the waters 👀" or "classic ${currentContact?.name} energy lol". 1-2 punchy sentences max. No labels, no quotes. Just your reaction.`;
+
   try {
-    const tasks = [fetchReply(systemPrompt, modeContext + '\n\nSplit into 2-3 short lines. One per line. Output only the messages.')];
+    const tasks = [
+      fetchReply(systemPrompt, modeContext + '\n\nSplit into 2-3 short lines. One per line. Output only the messages.'),
+      fetchReply('You are Aria, a sharp witty assistant. Be brief, fun, reactive, alive.', reactionPrompt)
+    ];
 
     if (showAlternatives) {
       const altPrompt = modeContext + `\n\nGenerate 3 different alternative replies with different tones (funny, warm, brief). Format as JSON: {"alternatives":[{"tone":"funny","text":"msg1\nmsg2"},{"tone":"warm","text":"msg"},{"tone":"brief","text":"msg"}]}`;
       tasks.push(fetchReplyJSON(systemPrompt, altPrompt));
     }
 
-    const [mainText, altData] = await Promise.all(tasks);
+    const [mainText, reactionText, altData] = await Promise.all(tasks);
 
     currentReplies = mainText.split('\n').map(l => l.trim()).filter(Boolean);
+
+    // Show Aria's reaction FIRST
+    showAriaReaction(reactionText?.trim() || '');
+
     renderReplies(currentReplies);
 
     if (showAlternatives && altData?.alternatives) {
@@ -2546,6 +2761,16 @@ async function generateReply() {
   document.getElementById('replyAriaOrb').classList.remove('thinking');
   btn.disabled = false;
   btn.textContent = 'ask aria to reply →';
+}
+
+function showAriaReaction(text) {
+  if (!text) return;
+  const el = document.getElementById('ariaReaction');
+  const textEl = document.getElementById('ariaReactionText');
+  textEl.textContent = text;
+  el.style.display = 'block';
+  // Speak the reaction
+  ariaVoice.speak(text);
 }
 
 async function fetchReply(system, userMsg) {
@@ -2590,13 +2815,6 @@ function renderReplies(lines) {
     });
   });
 
-  // ARIA opinion
-  const opinion = document.getElementById('ariaOpinion');
-  const opinionText = document.getElementById('ariaOpinionText');
-  const opinionStr = OPINION_PROMPTS[Math.floor(Math.random() * OPINION_PROMPTS.length)];
-  opinionText.textContent = opinionStr;
-  opinion.style.display = 'block';
-
   // Vibes score (simulated)
   const score = 70 + Math.floor(Math.random() * 28);
   animateVibesBar(score);
@@ -2606,13 +2824,14 @@ function renderReplies(lines) {
   document.getElementById('mainCopyBtn').classList.remove('copied');
   document.getElementById('floatCopy').classList.add('visible');
 
-  // Speak: opinion first, then the reply lines
-  const replyReadout = lines.join('. ');
-  ariaVoice.speak(opinionStr + '… ' + replyReadout);
-
-  // Smooth scroll into view
+  // Smooth scroll into view — scroll to reaction bubble
   setTimeout(() => {
-    document.getElementById('replySection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    const reaction = document.getElementById('ariaReaction');
+    if (reaction && reaction.style.display !== 'none') {
+      reaction.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+      document.getElementById('replySection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   }, 200);
 }
 
