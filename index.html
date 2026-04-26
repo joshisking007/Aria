@@ -1724,48 +1724,38 @@ const ariaVoice = (() => {
   // model: eleven_turbo_v2_5  → English only, fast, cheap
   // model: eleven_multilingual_v2 → 29 languages incl. Japanese
   const VOICES = [
-    // ── English (premade — free tier) ────────────────────────
-    {
-      key: 'rachel_en', id: '21m00Tcm4TlvDq8ikWAM', lang: 'en',
-      name: 'Rachel', desc: 'calm · warm · natural',
-      model: 'eleven_turbo_v2_5', recommended: true
-    },
+    // ── English (confirmed free tier premade) ────────────────
     {
       key: 'bella_en', id: 'EXAVITQu4vr4xnSDxMaL', lang: 'en',
       name: 'Bella', desc: 'soft · gentle · young',
       model: 'eleven_turbo_v2_5', recommended: true
     },
     {
-      key: 'elli_en', id: 'MF3mGyEYCl7XYWbV9V6O', lang: 'en',
-      name: 'Elli', desc: 'bright · emotive · friendly',
+      key: 'adam_en', id: 'pNInz6obpgDQGcFmaJgB', lang: 'en',
+      name: 'Adam', desc: 'deep · clear · neutral',
       model: 'eleven_turbo_v2_5'
     },
     {
-      key: 'domi_en', id: 'AZnzlk1XvdvUeBnXmlld', lang: 'en',
-      name: 'Domi', desc: 'confident · clear · strong',
+      key: 'sam_en', id: 'yoZ06aMxZJJ28mfd3POQ', lang: 'en',
+      name: 'Sam', desc: 'friendly · warm · conversational',
       model: 'eleven_turbo_v2_5'
     },
     // ── Japanese (multilingual v2) ────────────────────────────
     {
-      key: 'rachel_ja', id: '21m00Tcm4TlvDq8ikWAM', lang: 'ja',
-      name: 'Rachel', desc: '落ち着いた · 自然 · 温かい',
+      key: 'bella_ja', id: 'EXAVITQu4vr4xnSDxMaL', lang: 'ja',
+      name: 'Bella', desc: '柔らかい · 優しい · 若々しい',
       model: 'eleven_multilingual_v2', recommended: true
     },
     {
-      key: 'bella_ja', id: 'EXAVITQu4vr4xnSDxMaL', lang: 'ja',
-      name: 'Bella', desc: '柔らかい · 優しい · 若々しい',
-      model: 'eleven_multilingual_v2'
-    },
-    {
-      key: 'elli_ja', id: 'MF3mGyEYCl7XYWbV9V6O', lang: 'ja',
-      name: 'Elli', desc: '明るい · 表現豊か · 親しみやすい',
+      key: 'adam_ja', id: 'pNInz6obpgDQGcFmaJgB', lang: 'ja',
+      name: 'Adam', desc: 'クリア · ニュートラル · 深い',
       model: 'eleven_multilingual_v2'
     },
   ];
 
   // ── State ────────────────────────────────────────────────────
   let muted      = localStorage.getItem('aria_voice_muted') === '1';
-  let selectedKey = localStorage.getItem('aria_voice_key') || 'rachel_en';
+  let selectedKey = localStorage.getItem('aria_voice_key') || 'bella_en';
   let stability  = parseFloat(localStorage.getItem('aria_el_stability')  || '0.45');
   let similarity = parseFloat(localStorage.getItem('aria_el_similarity') || '0.75');
   let currentLang = 'en';
@@ -1821,6 +1811,16 @@ const ariaVoice = (() => {
 
       const blob = await res.blob();
       const url  = URL.createObjectURL(blob);
+
+      // Kill any previous audio completely before creating new one
+      if (currentAudio) {
+        currentAudio.onended = null;
+        currentAudio.onerror = null;
+        currentAudio.pause();
+        currentAudio.src = '';
+        currentAudio = null;
+      }
+
       currentAudio = new Audio(url);
 
       currentAudio.onended = () => {
@@ -2125,7 +2125,8 @@ function typeIntro() {
         opts.classList.add('visible');
         updateStats();
         // Speak intro aloud
-        ariaVoice.speak("hi. I'm Aria. I write your texts for you — in your voice, not mine. Pick something and I'll take it from there.");
+        // Don't auto-speak intro — saves free tier characters
+        // ariaVoice.speak(...) removed intentionally
       }, 300);
     }
   }, 16);
@@ -2548,18 +2549,17 @@ async function generateReply() {
 }
 
 async function fetchReply(system, userMsg) {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch('https://mmtdtcmhvbruubrjgjrz.supabase.co/functions/v1/aria-ai', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      system,
-      messages: [{ role: 'user', content: userMsg }]
-    })
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tdGR0Y21odmJydXVicmpnanJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMTU2MDUsImV4cCI6MjA5MjY5MTYwNX0.f2FXAA8GaUeXXE8V8dnwq4NXz3_22H7d5jVA9rAWsTo'
+    },
+    body: JSON.stringify({ system, userMsg })
   });
   const data = await res.json();
-  return data.content?.find(b => b.type === 'text')?.text || '';
+  if (!res.ok) throw new Error(data?.error || 'request failed');
+  return data.text || '';
 }
 
 async function fetchReplyJSON(system, userMsg) {
