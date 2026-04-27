@@ -8,6 +8,14 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <title>ARIA</title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://mmtdtcmhvbruubrjgjrz.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tdGR0Y21odmJydXVicmpnanJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMTU2MDUsImV4cCI6MjA5MjY5MTYwNX0.f2FXAA8GaUeXXE8V8dnwq4NXz3_22H7d5jVA9rAWsTo';
+  // Named `db` to avoid collision with the `window.supabase` namespace the CDN sets
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  let currentUserId = null;
+</script>
 <style>
 /* ─── RESET & ROOT ─────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -2524,7 +2532,6 @@ textarea.chat-input::placeholder { color: var(--muted); }
     </div>
     <div class="chat-header-info">
       <div class="chat-header-name">Aria</div>
-      <div class="chat-header-status" id="chatStatusText">● here for you</div>
     </div>
     <div class="chat-mood-pill" id="chatMoodPill">chill</div>
     <button class="back-btn" onclick="showScreen('introScreen')">←</button>
@@ -2949,7 +2956,7 @@ function testAriaVoice() {
 
 // ── ARIA'S RELATIONSHIP STAGE ─────────────────────────────────────
 // Tracks how well Aria knows the user. Starts at 0, grows with use.
-let ariaRelationshipXP = parseInt(localStorage.getItem('aria_rxp') || '0');
+let ariaRelationshipXP = 0; // loaded from Supabase user_profiles
 
 function getRelationshipStage() {
   if (ariaRelationshipXP < 5)  return 'stranger';
@@ -2960,7 +2967,7 @@ function getRelationshipStage() {
 
 function gainRelationshipXP(n = 1) {
   ariaRelationshipXP = Math.min(ariaRelationshipXP + n, 99);
-  localStorage.setItem('aria_rxp', ariaRelationshipXP);
+  // persisted via saveProfile() which is called after each generation
 }
 
 // ── ARIA'S CORE CHARACTER PROMPT ──────────────────────────────────
@@ -3158,8 +3165,7 @@ function typeIntro() {
 
 window.addEventListener('load', () => {
   setTimeout(typeIntro, 500);
-  loadFromStorage();
-  renderHistory();
+  initAuth(); // loads from Supabase; falls back to localStorage if not authed
   checkOnboarding();
   setTimeout(loadHomeInsight, 2000);
 
@@ -3186,19 +3192,76 @@ window.addEventListener('load', () => {
 
 // ── STORAGE ────────────────────────────────────────────────────────
 
-function loadFromStorage() {
+// ── AUTH ────────────────────────────────────────────────────────────
+
+async function initAuth() {
+  const { data: { session } } = await db.auth.getSession();
+  if (!session) {
+    const email = prompt('Enter your email to sign in to Aria:');
+    if (!email) return;
+    const { error } = await db.auth.signInWithOtp({ email });
+    if (error) {
+      showToast('sign-in failed: ' + error.message);
+    } else {
+      showToast('check your email for a magic link ✉️', 'blue');
+    }
+    return;
+  }
+  currentUserId = session.user.id;
+  await loadFromSupabase();
+}
+
+// ── STORAGE ────────────────────────────────────────────────────────
+
+async function loadFromSupabase() {
+  try {
+    const [profileRes, contactsRes, historyRes] = await Promise.all([
+      db.from('user_profiles').select('*').single(),
+      db.from('contacts').select('*').eq('archived', false),
+      db.from('reply_history').select('*').order('created_at', { ascending: false }).limit(50)
+    ]);
+
+    const p = profileRes.data;
+    if (p) {
+      slangWords         = p.slang_words        || slangWords;
+      settings           = { caps: p.setting_caps, punct: p.setting_punct, emoji: p.setting_emoji };
+      currentMood        = p.current_mood        || 'chill';
+      defaultTone        = p.default_tone        || 'real';
+      energyLevel        = p.energy_level        ?? 40;
+      replySentCount     = p.reply_sent_count    || 0;
+      streakDays         = p.streak_days         || 0;
+      ariaRelationshipXP = p.aria_relationship_xp || 0;
+    }
+
+    if (contactsRes.data && contactsRes.data.length) {
+      contacts      = contactsRes.data;
+      nextContactId = Math.max(...contacts.map(c => c.id)) + 1;
+    }
+    replyHistory = historyRes.data || [];
+
+    updateStats();
+    renderSlangPills();
+    renderHistory();
+  } catch(e) {
+    console.warn('Supabase load error — falling back to localStorage', e);
+    loadFromLocalStorage();
+  }
+}
+
+// Legacy localStorage fallback (used when not authenticated)
+function loadFromLocalStorage() {
   try {
     const saved = localStorage.getItem('aria_data');
     if (saved) {
       const d = JSON.parse(saved);
-      replyHistory = d.history || [];
-      replySentCount = d.sentCount || 0;
-      streakDays = d.streak || 0;
-      slangWords = d.slang || slangWords;
-      settings = d.settings || settings;
-      currentMood = d.mood || 'chill';
-      defaultTone = d.defaultTone || 'real';
-      energyLevel = d.energy || 40;
+      replyHistory   = d.history    || [];
+      replySentCount = d.sentCount  || 0;
+      streakDays     = d.streak     || 0;
+      slangWords     = d.slang      || slangWords;
+      settings       = d.settings   || settings;
+      currentMood    = d.mood       || 'chill';
+      defaultTone    = d.defaultTone || 'real';
+      energyLevel    = d.energy     || 40;
       if (d.contacts) { contacts = d.contacts; nextContactId = Math.max(...contacts.map(c=>c.id))+1; }
     }
   } catch(e) {}
@@ -3206,20 +3269,70 @@ function loadFromStorage() {
   renderSlangPills();
 }
 
-function saveToStorage() {
+// Kept for non-authenticated fallback writes (onboarding flag etc.)
+function loadFromStorage() {
+  if (currentUserId) {
+    loadFromSupabase();
+  } else {
+    loadFromLocalStorage();
+  }
+}
+
+// ── TARGETED SUPABASE SAVES ─────────────────────────────────────────
+
+// Profile preferences — called by toggleSetting, addSlang, removeSlang,
+// setMood, setMoodFull, updateEnergyLabel, setDefaultTone, resetProfile
+async function saveProfile() {
+  if (!currentUserId) { saveToLocalStorage(); return; }
+  try {
+    await db.from('user_profiles').upsert({
+      id:                  currentUserId,
+      slang_words:         slangWords,
+      setting_caps:        settings.caps,
+      setting_punct:       settings.punct,
+      setting_emoji:       settings.emoji,
+      current_mood:        currentMood,
+      default_tone:        defaultTone,
+      energy_level:        energyLevel,
+      aria_relationship_xp: ariaRelationshipXP
+    });
+  } catch(e) { console.warn('saveProfile error', e); }
+}
+
+// Refresh stats from DB after a trigger may have updated streak / replySentCount
+async function refreshStats() {
+  if (!currentUserId) return;
+  try {
+    const { data } = await db.from('user_profiles').select('reply_sent_count, streak_days').single();
+    if (data) {
+      replySentCount = data.reply_sent_count || replySentCount;
+      streakDays     = data.streak_days      || streakDays;
+      updateStats();
+    }
+  } catch(e) {}
+}
+
+// Non-authenticated local fallback write
+function saveToLocalStorage() {
   try {
     localStorage.setItem('aria_data', JSON.stringify({
-      history: replyHistory,
-      sentCount: replySentCount,
-      streak: streakDays,
-      slang: slangWords,
-      settings,
-      mood: currentMood,
-      defaultTone,
-      energy: energyLevel,
-      contacts
+      history: replyHistory, sentCount: replySentCount, streak: streakDays,
+      slang: slangWords, settings, mood: currentMood, defaultTone,
+      energy: energyLevel, contacts
     }));
   } catch(e) {}
+}
+
+// Legacy alias — routes to the right place depending on auth state.
+// Still called from clearHistory() and obFinish() for contacts.
+function saveToStorage() {
+  if (currentUserId) {
+    // These callers only modify profile-type data or contacts;
+    // history writes go through saveToHistory() directly.
+    saveProfile();
+  } else {
+    saveToLocalStorage();
+  }
 }
 
 // ── STATS ──────────────────────────────────────────────────────────
@@ -3310,7 +3423,7 @@ function setMood(mood, label, el) {
   applyMoodGlow(mood);
   document.querySelectorAll('.mood-pill').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
-  saveToStorage();
+  saveProfile();
   showToast('vibe set to ' + label);
 }
 
@@ -3318,7 +3431,7 @@ function setMoodFull(mood, emoji, el) {
   currentMood = mood;
   document.querySelectorAll('.mood-card').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
-  saveToStorage();
+  saveProfile();
   setTimeout(() => showScreen('introScreen'), 400);
   showToast('vibe: ' + emoji + ' ' + mood);
 }
@@ -3411,32 +3524,52 @@ function renderContacts(list) {
   `;
 }
 
-function addContact() {
+async function addContact() {
   const name = document.getElementById('newName').value.trim();
   if (!name) { showToast('add a name first', 'error'); return; }
 
   const relationship = document.getElementById('newRelationship').value.trim();
-  const platform = document.getElementById('newPlatform').value;
-  const preview = document.getElementById('newPreview').value.trim();
-  const silentHours = parseInt(document.getElementById('newSilent').value) || 0;
+  const platform     = document.getElementById('newPlatform').value;
+  const preview      = document.getElementById('newPreview').value.trim();
+  const silentHours  = parseInt(document.getElementById('newSilent').value) || 0;
 
-  const colors = ['blue','purple','green','rose','amber'];
-  const newContact = {
-    id: nextContactId++,
-    name,
-    initials: name[0].toUpperCase(),
-    color: colors[Math.floor(Math.random() * colors.length)],
-    relationship: relationship || 'contact',
-    platform,
-    preview: preview || 'no recent messages',
-    time: silentHours > 0 ? silentHours + 'h ago' : 'just now',
-    silent: silentHours > 0,
-    silentHours,
-    online: false
-  };
+  const colors     = ['blue','purple','green','rose','amber'];
+  const color      = colors[Math.floor(Math.random() * colors.length)];
+  const initials   = name[0].toUpperCase();
+  const silent     = silentHours > 0;
+  const time       = silentHours > 0 ? silentHours + 'h ago' : 'just now';
 
-  contacts.push(newContact);
-  saveToStorage();
+  if (currentUserId) {
+    const { data, error } = await db.from('contacts').insert({
+      user_id:      currentUserId,
+      name,
+      initials,
+      color,
+      relationship: relationship || 'contact',
+      platform,
+      preview:      preview || 'no recent messages',
+      time,
+      silent,
+      silent_hours: silentHours,
+      online:       false
+    }).select().single();
+
+    if (error) { showToast('could not save contact'); console.error(error); return; }
+    contacts.push({ ...data, silentHours: data.silent_hours });
+  } else {
+    const newContact = {
+      id: nextContactId++,
+      name, initials, color,
+      relationship: relationship || 'contact',
+      platform,
+      preview: preview || 'no recent messages',
+      time, silent, silentHours,
+      online: false
+    };
+    contacts.push(newContact);
+    saveToLocalStorage();
+  }
+
   updateStats();
   closeModal('addContactModal');
   renderContacts(contacts);
@@ -3707,7 +3840,22 @@ async function generateReply() {
     replySentCount++;
     gainRelationshipXP(1);
     updateStats();
-    saveToStorage();
+
+    // Fire-and-forget: log generation event
+    if (currentUserId) {
+      db.from('generation_events').insert({
+        user_id:    currentUserId,
+        event_type: 'generate_reply',
+        platform:   currentPlatform,
+        tone:       currentTone,
+        mood:       currentMood,
+        contact_id: currentContact?.id || null
+      }).then(() => {}).catch(() => {});
+    }
+
+    // Save profile (XP, replySentCount) then refresh from DB (trigger may update streak)
+    await saveProfile();
+    await refreshStats();
 
   } catch(e) {
     currentReplies = ['something went wrong', 'try again?'];
@@ -3912,23 +4060,45 @@ async function makeShorterOrLonger(direction) {
 
 // ── HISTORY ────────────────────────────────────────────────────────
 
-function saveToHistory() {
+async function saveToHistory() {
   if (!currentReplies.length) return;
-  const entry = {
-    id: Date.now(),
-    contact: currentContact?.name || 'Unknown',
-    contactInitial: currentContact?.initials || '?',
-    contactColor: currentContact?.color || '',
-    platform: currentPlatform,
-    tone: currentTone,
-    original: document.getElementById('theirMsgInput').value.trim() || currentContact?.preview || '',
-    reply: currentReplies.join('\n'),
-    time: new Date().toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit', hour12:true })
-  };
-  replyHistory.unshift(entry);
-  if (replyHistory.length > 50) replyHistory = replyHistory.slice(0, 50);
-  saveToStorage();
-  updateStats();
+
+  if (currentUserId) {
+    const { error } = await db.from('reply_history').insert({
+      user_id:         currentUserId,
+      contact_id:      currentContact?.id || null,
+      contact_name:    currentContact?.name || 'Unknown',
+      contact_initial: currentContact?.initials || '?',
+      contact_color:   currentContact?.color || '',
+      platform:        currentPlatform,
+      tone:            currentTone,
+      mood:            currentMood,
+      original_msg:    document.getElementById('theirMsgInput').value.trim() || currentContact?.preview || '',
+      generated_reply: currentReplies.join('\n'),
+      alternatives:    window._altReplies || null
+    });
+    if (error) { showToast('could not save to history'); console.error(error); return; }
+    // DB trigger handles streak / replySentCount — just refresh
+    await refreshStats();
+  } else {
+    // Local fallback
+    const entry = {
+      id: Date.now(),
+      contact:        currentContact?.name || 'Unknown',
+      contactInitial: currentContact?.initials || '?',
+      contactColor:   currentContact?.color || '',
+      platform:       currentPlatform,
+      tone:           currentTone,
+      original:       document.getElementById('theirMsgInput').value.trim() || currentContact?.preview || '',
+      reply:          currentReplies.join('\n'),
+      time:           new Date().toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit', hour12:true })
+    };
+    replyHistory.unshift(entry);
+    if (replyHistory.length > 50) replyHistory = replyHistory.slice(0, 50);
+    saveToLocalStorage();
+    updateStats();
+  }
+
   showToast('saved to history ✓', 'green');
 }
 
@@ -3990,10 +4160,13 @@ function copyHistoryDetail() {
   closeModal('historyDetailModal');
 }
 
-function clearHistory() {
+async function clearHistory() {
   if (!replyHistory.length) return;
+  if (currentUserId) {
+    await db.from('reply_history').delete().eq('user_id', currentUserId);
+  }
   replyHistory = [];
-  saveToStorage();
+  saveToStorage(); // also clears local fallback if not authed
   renderHistory();
   updateStats();
   showToast('history cleared');
@@ -4004,7 +4177,7 @@ function clearHistory() {
 function toggleSetting(key, toggle) {
   toggle.classList.toggle('on');
   settings[key] = toggle.classList.contains('on');
-  saveToStorage();
+  saveProfile();
 }
 
 function addSlang(e) {
@@ -4015,7 +4188,7 @@ function addSlang(e) {
   slangWords.push(word);
   input.value = '';
   renderSlangPills();
-  saveToStorage();
+  saveProfile();
   showToast('added "' + word + '"', 'green');
 }
 
@@ -4029,7 +4202,7 @@ function renderSlangPills() {
 function removeSlang(word) {
   slangWords = slangWords.filter(w => w !== word);
   renderSlangPills();
-  saveToStorage();
+  saveProfile();
 }
 
 function updateEnergyLabel(val) {
@@ -4039,14 +4212,14 @@ function updateEnergyLabel(val) {
   else if (val < 60) label.textContent = 'leaning toward your voice (' + val + '%)';
   else if (val < 80) label.textContent = 'balancing both (' + val + '%)';
   else label.textContent = 'mirroring their energy (' + val + '%)';
-  saveToStorage();
+  saveProfile();
 }
 
 function setDefaultTone(tone, el) {
   defaultTone = tone;
   document.querySelectorAll('.tone-pills .tone-pill').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
-  saveToStorage();
+  saveProfile();
 }
 
 function resetProfile() {
@@ -4057,7 +4230,7 @@ function resetProfile() {
   renderSlangPills();
   document.getElementById('energySlider').value = 40;
   updateEnergyLabel(40);
-  saveToStorage();
+  saveProfile();
   showToast('voice profile reset');
 }
 
@@ -4113,9 +4286,7 @@ document.addEventListener('keydown', e => {
 });
 
 window.addEventListener('load', () => {
-  setTimeout(typeIntro, 500);
-  loadFromStorage();
-  renderHistory();
+  // Note: initAuth() handles data loading (called in the first load listener above)
 
   // Restore ElevenLabs settings
   const savedKey  = localStorage.getItem('aria_el_key') || '';
@@ -4420,25 +4591,43 @@ function obNext(step) {
   }
 }
 
-function obFinish() {
+async function obFinish() {
   const cName = document.getElementById('obContactName').value.trim();
   const cRel  = document.getElementById('obContactRel').value.trim();
   if (cName) {
     const colors = ['rose','blue','green','purple','amber'];
-    const newC = {
-      id: nextContactId++,
-      name: cName,
-      initials: cName.slice(0,2).toUpperCase(),
-      color: colors[contacts.length % colors.length],
-      preview: 'no recent messages',
-      time: 'just added',
-      silent: false, silentHours: 0,
-      platform: 'iMessage',
-      relationship: cRel || 'contact',
-      online: false
-    };
-    contacts.unshift(newC);
-    saveToStorage();
+    const color  = colors[contacts.length % colors.length];
+    if (currentUserId) {
+      const { data } = await db.from('contacts').insert({
+        user_id:      currentUserId,
+        name:         cName,
+        initials:     cName.slice(0,2).toUpperCase(),
+        color,
+        preview:      'no recent messages',
+        time:         'just added',
+        silent:       false,
+        silent_hours: 0,
+        platform:     'iMessage',
+        relationship: cRel || 'contact',
+        online:       false
+      }).select().single().then(r => r.data);
+      if (data) contacts.unshift({ ...data, silentHours: 0 });
+    } else {
+      const newC = {
+        id: nextContactId++,
+        name: cName,
+        initials: cName.slice(0,2).toUpperCase(),
+        color,
+        preview: 'no recent messages',
+        time: 'just added',
+        silent: false, silentHours: 0,
+        platform: 'iMessage',
+        relationship: cRel || 'contact',
+        online: false
+      };
+      contacts.unshift(newC);
+      saveToLocalStorage();
+    }
   }
   localStorage.setItem('aria_onboarded', '1');
   if (userName && userName !== 'you') {
@@ -4679,9 +4868,6 @@ function updateChatMoodPill(emotion) {
   const meta = EMOTION_META[emotion] || EMOTION_META.neutral;
   pill.textContent = meta.emoji + ' ' + meta.label;
   pill.style.background = meta.color.replace('0.7)', '0.12)').replace('0.5)', '0.08)').replace('0.8)', '0.15)').replace('0.6)', '0.1)');
-
-  const statusEl = document.getElementById('chatStatusText');
-  statusEl.textContent = '● ' + meta.label;
 }
 
 function appendAriaMessage(text, emotion, doSpeak = true) {
@@ -4807,6 +4993,12 @@ async function sendChatMessage() {
   appendUserMessage(text);
   chatHistory.push({ role: 'user', content: text });
 
+  // Persist user message (fire-and-forget)
+  if (currentUserId) {
+    db.from('chat_messages').insert({ user_id: currentUserId, role: 'user', content: text })
+      .then(() => {}).catch(() => {});
+  }
+
   try {
     // Build conversation transcript for the proxy (which takes system + single userMsg)
     const transcript = chatHistory.map(m =>
@@ -4832,6 +5024,16 @@ async function sendChatMessage() {
 
     chatAriaEmotion = emotion;
     chatHistory.push({ role: 'assistant', content: rawText });
+
+    // Persist Aria's reply (fire-and-forget)
+    if (currentUserId) {
+      db.from('chat_messages').insert({
+        user_id:     currentUserId,
+        role:        'aria',
+        content:     replyText,
+        emotion_tag: emotion !== 'neutral' ? emotion : null
+      }).then(() => {}).catch(() => {});
+    }
 
     appendAriaMessage(replyText, emotion, true);
 
@@ -4969,9 +5171,22 @@ function scheduleFollowup(contactName) {
   }, 8000);
 }
 
-function followupRate(rating) {
+async function followupRate(rating) {
   const nudge = document.getElementById('followupNudge');
   nudge.classList.remove('visible');
+
+  if (currentUserId) {
+    db.from('followup_ratings').insert({
+      user_id:      currentUserId,
+      contact_id:   currentContact?.id || null,
+      rating,
+      contact_name: currentContact?.name
+    }).then(() => {}).catch(() => {});
+    // DB trigger syncs rating back to contacts.last_rating automatically
+  } else if (currentContact && rating) {
+    currentContact.lastRating = rating;
+    saveToLocalStorage();
+  }
 
   const msgs = {
     good: ["okay i'm good 😌", "let's go 🔥", "that's what i'm here for"],
@@ -4980,12 +5195,6 @@ function followupRate(rating) {
   };
   const list = msgs[rating] || msgs.meh;
   showToast(list[Math.floor(Math.random() * list.length)], rating === 'good' ? 'green' : '');
-
-  // Save rating to contact history for smarter future replies
-  if (currentContact && rating) {
-    currentContact.lastRating = rating;
-    saveToStorage();
-  }
 }
 
 // ═══════════════════════════════════════════════════
