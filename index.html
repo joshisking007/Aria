@@ -3203,7 +3203,7 @@ function updateStats() {
 
 // ── SCREEN NAV ──────────────────────────────────────────────────────
 
-const screensWithNav = ['introScreen','historyScreen','moodScreen','profileScreen','glowupScreen','redflagScreen','vibeScreen','queueScreen','contactProfileScreen','onboardScreen','chatScreen'];
+const screensWithNav = ['introScreen','historyScreen','moodScreen','profileScreen','glowupScreen','redflagScreen','vibeScreen','queueScreen','contactProfileScreen','onboardScreen'];
 
 function showScreen(id) {
   ariaVoice.stop();
@@ -4775,7 +4775,6 @@ async function sendChatMessage() {
     chatAriaEmotion = emotion;
     chatHistory.push({ role: 'assistant', content: rawText });
 
-    maybeMoodShift(emotion);
     appendAriaMessage(replyText, emotion, true);
 
     if (suggestions.length) {
