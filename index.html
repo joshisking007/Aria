@@ -894,22 +894,68 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 /* ─── NAV BAR ─────────────────────────────────────────────────── */
-.nav-bar {
-  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-  width: 100%; max-width: 480px; z-index: 50;
-  background: rgba(10,10,10,0.9); backdrop-filter: blur(16px);
-  border-top: 1px solid var(--border);
-  display: flex; padding: 8px 0 16px;
+/* ─── HAMBURGER BUTTON ───────────────────────────────────────── */
+.hamburger-btn {
+  position: fixed; bottom: 24px; right: 20px; z-index: 100;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: linear-gradient(135deg, #be185d, #f472b6);
+  border: none; cursor: pointer;
+  display: none; align-items: center; justify-content: center;
+  flex-direction: column; gap: 5px;
+  box-shadow: 0 4px 20px rgba(244,114,182,0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
-.nav-btn {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; gap: 4px; padding: 8px;
-  background: none; border: none; cursor: pointer;
-  color: var(--muted); font-size: 10px; letter-spacing: 0.5px;
-  font-family: 'DM Sans', sans-serif; transition: color 0.2s;
+.hamburger-btn.visible { display: flex; }
+.hamburger-btn:active { transform: scale(0.92); }
+.hamburger-btn.open { box-shadow: 0 4px 30px rgba(244,114,182,0.6); }
+.hb-line {
+  width: 20px; height: 2px; background: #fff; border-radius: 2px;
+  transition: all 0.25s ease;
+  transform-origin: center;
 }
-.nav-btn.active { color: var(--rose); }
-.nav-btn-icon { font-size: 20px; }
+.hamburger-btn.open .hb-line:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger-btn.open .hb-line:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger-btn.open .hb-line:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ─── MENU DRAWER ────────────────────────────────────────────── */
+.menu-drawer {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%);
+  width: 100%; max-width: 480px; z-index: 99;
+  background: rgba(12,12,12,0.97); backdrop-filter: blur(24px);
+  border-top: 1px solid var(--border); border-radius: 24px 24px 0 0;
+  padding: 12px 0 40px;
+  transition: transform 0.35s cubic-bezier(0.32,0,0.15,1);
+}
+.menu-drawer.open { transform: translateX(-50%) translateY(0); }
+.menu-drawer-handle {
+  width: 36px; height: 4px; background: var(--border);
+  border-radius: 2px; margin: 0 auto 20px;
+}
+.menu-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 28px; cursor: pointer;
+  transition: background 0.15s; border: none;
+  background: none; width: 100%; text-align: left;
+  font-family: 'DM Sans', sans-serif;
+}
+.menu-item:active { background: rgba(244,114,182,0.06); }
+.menu-item.active .menu-item-label { color: var(--rose); }
+.menu-item.active .menu-item-icon { filter: saturate(2); }
+.menu-item-icon { font-size: 22px; width: 32px; text-align: center; flex-shrink: 0; }
+.menu-item-label {
+  font-size: 15px; color: var(--text); letter-spacing: 0.2px;
+}
+.menu-item-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.menu-divider { height: 1px; background: var(--border); margin: 8px 20px; }
+
+/* Overlay */
+.menu-overlay {
+  position: fixed; inset: 0; z-index: 98;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s;
+}
+.menu-overlay.open { opacity: 1; pointer-events: all; }
 
 /* ─── ADD CONTACT MODAL ──────────────────────────────────────── */
 .form-field { margin-bottom: 14px; }
@@ -2430,23 +2476,41 @@ textarea.chat-input::placeholder { color: var(--muted); }
   </div>
 </div>
 
-<nav class="nav-bar" id="navBar" style="display:none;">
-  <button class="nav-btn active" id="navHome" onclick="navTo('introScreen',this)">
-    <span class="nav-btn-icon">🏠</span>home
+<!-- Hamburger button -->
+<button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMenu()">
+  <div class="hb-line"></div>
+  <div class="hb-line"></div>
+  <div class="hb-line"></div>
+</button>
+
+<!-- Menu overlay -->
+<div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+
+<!-- Menu drawer -->
+<div class="menu-drawer" id="menuDrawer">
+  <div class="menu-drawer-handle"></div>
+  <button class="menu-item active" id="navHome" onclick="menuNavTo('introScreen','navHome')">
+    <span class="menu-item-icon">🏠</span>
+    <div><div class="menu-item-label">Home</div><div class="menu-item-sub">Aria's main screen</div></div>
   </button>
-  <button class="nav-btn" id="navChat" onclick="navTo('chatScreen',this)">
-    <span class="nav-btn-icon">💬</span>chat
+  <button class="menu-item" id="navChat" onclick="menuNavTo('chatScreen','navChat')">
+    <span class="menu-item-icon">💬</span>
+    <div><div class="menu-item-label">Chat with Aria</div><div class="menu-item-sub">Talk to her directly</div></div>
   </button>
-  <button class="nav-btn" id="navHistory" onclick="navTo('historyScreen',this)">
-    <span class="nav-btn-icon">📋</span>history
+  <button class="menu-item" id="navHistory" onclick="menuNavTo('historyScreen','navHistory')">
+    <span class="menu-item-icon">📋</span>
+    <div><div class="menu-item-label">History</div><div class="menu-item-sub">Past replies you've saved</div></div>
   </button>
-  <button class="nav-btn" id="navMood" onclick="navTo('moodScreen',this)">
-    <span class="nav-btn-icon">🎭</span>vibe
+  <div class="menu-divider"></div>
+  <button class="menu-item" id="navMood" onclick="menuNavTo('moodScreen','navMood')">
+    <span class="menu-item-icon">🎭</span>
+    <div><div class="menu-item-label">Vibe</div><div class="menu-item-sub">Set your mood & energy</div></div>
   </button>
-  <button class="nav-btn" id="navProfile" onclick="navTo('profileScreen',this)">
-    <span class="nav-btn-icon">🎛️</span>voice
+  <button class="menu-item" id="navProfile" onclick="menuNavTo('profileScreen','navProfile')">
+    <span class="menu-item-icon">🎛️</span>
+    <div><div class="menu-item-label">Voice & Settings</div><div class="menu-item-sub">Aria's voice, tone, profile</div></div>
   </button>
-</nav>
+</div>
 
 <!-- ═══════════════════════════════════════════════
      SCREEN: CHAT WITH ARIA
@@ -3077,7 +3141,7 @@ window.addEventListener('load', () => {
   // Sync muted state
   if (typeof ariaVoice !== 'undefined' && ariaVoice.muted) ariaVoice.setMuted(true);
 
-  document.getElementById('navBar').style.display = 'flex';
+  document.getElementById('hamburgerBtn').classList.add('visible');
   applyMoodGlow(currentMood);
 });
 
@@ -3152,10 +3216,12 @@ function showScreen(id) {
   el.style.display = 'flex';
   activeScreen = id;
 
-  const navBar = document.getElementById('navBar');
-  navBar.style.display = screensWithNav.includes(id) ? 'flex' : 'none';
+  // Show hamburger on nav screens, hide on sub-screens
+  const hamburger = document.getElementById('hamburgerBtn');
+  const showHamburger = screensWithNav.includes(id);
+  hamburger.classList.toggle('visible', showHamburger);
 
-  // Update nav active state
+  // Update active menu item
   if (id === 'introScreen') setNavActive('navHome');
   else if (id === 'historyScreen') { setNavActive('navHistory'); renderHistory(); }
   else if (id === 'moodScreen') setNavActive('navMood');
@@ -3163,7 +3229,6 @@ function showScreen(id) {
   else if (id === 'vibeScreen') { renderVibeContactGrid(); }
   else if (id === 'queueScreen') { renderQueue(); }
   else if (id === 'chatScreen') { setNavActive('navChat'); initChat(); }
-  else navBar.style.display = 'none';
 
   window.scrollTo(0, 0);
 }
@@ -3172,10 +3237,31 @@ function navTo(screenId, btn) {
   showScreen(screenId);
 }
 
+function toggleMenu() {
+  const btn = document.getElementById('hamburgerBtn');
+  const drawer = document.getElementById('menuDrawer');
+  const overlay = document.getElementById('menuOverlay');
+  const open = drawer.classList.toggle('open');
+  btn.classList.toggle('open', open);
+  overlay.classList.toggle('open', open);
+}
+
+function closeMenu() {
+  document.getElementById('hamburgerBtn').classList.remove('open');
+  document.getElementById('menuDrawer').classList.remove('open');
+  document.getElementById('menuOverlay').classList.remove('open');
+}
+
+function menuNavTo(screenId, navId) {
+  closeMenu();
+  setTimeout(() => showScreen(screenId), 180);
+  setNavActive(navId);
+}
+
 function setNavActive(id) {
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById(id);
-  if (btn) btn.classList.add('active');
+  document.querySelectorAll('.menu-item').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
 }
 
 // ── MOOD ────────────────────────────────────────────────────────────
@@ -3996,7 +4082,7 @@ window.addEventListener('load', () => {
   // Sync muted state
   if (ariaVoice.muted) ariaVoice.setMuted(true);
 
-  document.getElementById('navBar').style.display = 'flex';
+  document.getElementById('hamburgerBtn').classList.add('visible');
 });
 
 
