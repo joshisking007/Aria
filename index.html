@@ -3549,11 +3549,11 @@ async function runGlowup() {
   document.getElementById('glowupCopyRow').style.display = 'none';
   document.getElementById('glowupThinking').style.display = 'flex';
 
-  const reactionPrompt = \`You are Aria. A user just showed you their rough draft text message: "\${draft}". React to it with personality — be honest, a little sassy, maybe amused. Something like "ok... we have some work to do 😭" or "not bad actually, just needs a little edge". Keep it to 1-2 sentences. No labels.\`;
+  const reactionPrompt = `You are Aria. A user just showed you their rough draft text message: "${draft}". React to it with personality — be honest, a little sassy, maybe amused. Something like "ok... we have some work to do 😭" or "not bad actually, just needs a little edge". Keep it to 1-2 sentences. No labels.`;
 
-  const rewritePrompt = \`The user wrote this draft message: "\${draft}"\n\${goal ? 'They want it to: ' + goal + '\n' : ''}\nRewrite it in their voice — more natural, more them, less try-hard. Output ONLY the final rewritten message. No explanation, no labels.\`;
+  const rewritePrompt = `The user wrote this draft message: "${draft}"\n${goal ? 'They want it to: ' + goal + '\n' : ''}\nRewrite it in their voice — more natural, more them, less try-hard. Output ONLY the final rewritten message. No explanation, no labels.`;
 
-  const variantPrompt = \`Draft: "\${draft}"\n\${goal ? 'Goal: ' + goal + '\n' : ''}\nGive 3 different rewrites with different energies. JSON only: {"variants":[{"tone":"more chill","text":"..."},{"tone":"funnier","text":"..."},{"tone":"more direct","text":"..."}]}\`;
+  const variantPrompt = `Draft: "${draft}"\n${goal ? 'Goal: ' + goal + '\n' : ''}\nGive 3 different rewrites with different energies. JSON only: {"variants":[{"tone":"more chill","text":"..."},{"tone":"funnier","text":"..."},{"tone":"more direct","text":"..."}]}`;
 
   try {
     const [reaction, rewrite, varData] = await Promise.all([
@@ -3577,12 +3577,12 @@ async function runGlowup() {
     // Show variants
     if (varData?.variants?.length) {
       const varList = document.getElementById('glowupVarList');
-      varList.innerHTML = varData.variants.map((v, i) => \`
-        <div class="glowup-var-card" onclick="selectGlowupVariant(\${i})">
-          <div class="glowup-var-tone">\${v.tone}</div>
-          <div class="glowup-var-text">\${v.text}</div>
+      varList.innerHTML = varData.variants.map((v, i) => `
+        <div class="glowup-var-card" onclick="selectGlowupVariant(${i})">
+          <div class="glowup-var-tone">${v.tone}</div>
+          <div class="glowup-var-text">${v.text}</div>
         </div>
-      \`).join('');
+      `).join('');
       document.getElementById('glowupVariants').style.display = 'block';
       window._glowupVariants = varData.variants;
     }
@@ -3630,7 +3630,7 @@ async function runRedflag() {
   document.getElementById('redflagResult').style.display = 'none';
   document.getElementById('redflagThinking').style.display = 'flex';
 
-  const prompt = \`You are Aria, a sharp text analyst. Analyse this message\${who ? ' from ' + who : ''} for any concerning patterns, red flags, or green flags.\n\nMessage: "\${msg}"\n\nRespond ONLY in this exact JSON:\n{"verdict":"safe|caution|danger","emoji":"emoji","headline":"short verdict e.g. lowkey sus ngl","sub":"1 brief line","flags":[{"icon":"emoji","text":"observation"}],"suggestion":"Aria's personal hot take in 1-2 sentences, in character — honest, maybe a little sassy"}\n\nFlags should be 2-4 items — mix of red flags, yellow flags, or green flags depending on actual content. Be honest but fair.\`;
+  const prompt = `You are Aria, a sharp text analyst. Analyse this message${who ? ' from ' + who : ''} for any concerning patterns, red flags, or green flags.\n\nMessage: "${msg}"\n\nRespond ONLY in this exact JSON:\n{"verdict":"safe|caution|danger","emoji":"emoji","headline":"short verdict e.g. lowkey sus ngl","sub":"1 brief line","flags":[{"icon":"emoji","text":"observation"}],"suggestion":"Aria's personal hot take in 1-2 sentences, in character — honest, maybe a little sassy"}\n\nFlags should be 2-4 items — mix of red flags, yellow flags, or green flags depending on actual content. Be honest but fair.`;
 
   try {
     const data = await fetchReplyJSON('You are Aria, a sharp honest text analyst. Respond ONLY in valid JSON.', prompt);
@@ -3657,12 +3657,12 @@ function renderRedflagResult(data) {
   emoji.textContent = data.emoji || '🟢';
   sub.textContent = data.sub || '';
 
-  breakdown.innerHTML = (data.flags || []).map(f => \`
+  breakdown.innerHTML = (data.flags || []).map(f => `
     <div class="redflag-item">
-      <span class="redflag-item-icon">\${f.icon || '•'}</span>
-      <span class="redflag-item-text">\${f.text}</span>
+      <span class="redflag-item-icon">${f.icon || '•'}</span>
+      <span class="redflag-item-text">${f.text}</span>
     </div>
-  \`).join('');
+  `).join('');
 
   if (data.suggestion) {
     suggestionText.textContent = data.suggestion;
@@ -3683,15 +3683,15 @@ let selectedVibeContact = null;
 function renderVibeContactGrid() {
   const grid = document.getElementById('vibeContactGrid');
   if (!grid) return;
-  grid.innerHTML = contacts.map(c => \`
-    <div class="vibe-contact-chip \${selectedVibeContact?.id === c.id ? 'selected' : ''}" onclick="selectVibeContact(\${c.id})">
-      <div class="contact-avatar" data-color="\${c.color||''}" style="width:32px;height:32px;font-size:13px;flex-shrink:0;">\${c.initials||c.name[0]}</div>
+  grid.innerHTML = contacts.map(c => `
+    <div class="vibe-contact-chip ${selectedVibeContact?.id === c.id ? 'selected' : ''}" onclick="selectVibeContact(${c.id})">
+      <div class="contact-avatar" data-color="${c.color||''}" style="width:32px;height:32px;font-size:13px;flex-shrink:0;">${c.initials||c.name[0]}</div>
       <div>
-        <div class="vibe-contact-chip-name">\${c.name}</div>
-        <div class="vibe-contact-chip-rel">\${c.relationship||'contact'}</div>
+        <div class="vibe-contact-chip-name">${c.name}</div>
+        <div class="vibe-contact-chip-rel">${c.relationship||'contact'}</div>
       </div>
     </div>
-  \`).join('');
+  `).join('');
 }
 
 async function selectVibeContact(id) {
@@ -3718,25 +3718,25 @@ async function selectVibeContact(id) {
   document.getElementById('vibeReportAvatar').setAttribute('data-color', selectedVibeContact.color || '');
   document.getElementById('vibeReportName').textContent = selectedVibeContact.name;
   document.getElementById('vibeReportRel').textContent = selectedVibeContact.relationship || 'contact';
-  document.getElementById('vibeStatRow').innerHTML = \`
-    <div class="vibe-stat-box"><div class="vibe-stat-box-num">\${replyCount}</div><div class="vibe-stat-box-label">REPLIES SAVED</div></div>
-    <div class="vibe-stat-box"><div class="vibe-stat-box-num">\${selectedVibeContact.silentHours || 0}h</div><div class="vibe-stat-box-label">LEFT ON READ</div></div>
-    <div class="vibe-stat-box"><div class="vibe-stat-box-num">\${topTone}</div><div class="vibe-stat-box-label">TOP TONE</div></div>
-  \`;
+  document.getElementById('vibeStatRow').innerHTML = `
+    <div class="vibe-stat-box"><div class="vibe-stat-box-num">${replyCount}</div><div class="vibe-stat-box-label">REPLIES SAVED</div></div>
+    <div class="vibe-stat-box"><div class="vibe-stat-box-num">${selectedVibeContact.silentHours || 0}h</div><div class="vibe-stat-box-label">LEFT ON READ</div></div>
+    <div class="vibe-stat-box"><div class="vibe-stat-box-num">${topTone}</div><div class="vibe-stat-box-label">TOP TONE</div></div>
+  `;
   card.style.display = 'block';
 
   // AI insight
-  const insightPrompt = \`You are Aria. Analyse the user's texting dynamic with \${selectedVibeContact.name} (\${selectedVibeContact.relationship || 'contact'}).\nFacts:\n- \${replyCount} replies saved\n- Left them on read for \${selectedVibeContact.silentHours || 0} hours\n- Platforms used: \${platforms.join(', ') || selectedVibeContact.platform || 'unknown'}\n- Most used tone: \${topTone}\n- Their last message: "\${selectedVibeContact.preview || 'unknown'}"\n\nGive a short sharp vibe read on this dynamic in 2-3 sentences — be real, a little cheeky, insightful. Then list 2-3 patterns you notice as JSON:\n{"insight":"...","patterns":[{"icon":"emoji","text":"..."}]}\`;
+  const insightPrompt = `You are Aria. Analyse the user's texting dynamic with ${selectedVibeContact.name} (${selectedVibeContact.relationship || 'contact'}).\nFacts:\n- ${replyCount} replies saved\n- Left them on read for ${selectedVibeContact.silentHours || 0} hours\n- Platforms used: ${platforms.join(', ') || selectedVibeContact.platform || 'unknown'}\n- Most used tone: ${topTone}\n- Their last message: "${selectedVibeContact.preview || 'unknown'}"\n\nGive a short sharp vibe read on this dynamic in 2-3 sentences — be real, a little cheeky, insightful. Then list 2-3 patterns you notice as JSON:\n{"insight":"...","patterns":[{"icon":"emoji","text":"..."}]}`;
 
   try {
     const data = await fetchReplyJSON('You are Aria, a sharp social analyst. JSON only.', insightPrompt);
     if (data) {
-      document.getElementById('vibePatternList').innerHTML = (data.patterns || []).map(p => \`
+      document.getElementById('vibePatternList').innerHTML = (data.patterns || []).map(p => `
         <div class="vibe-pattern-item">
-          <span class="vibe-pattern-icon">\${p.icon || '•'}</span>
-          <span class="vibe-pattern-text">\${p.text}</span>
+          <span class="vibe-pattern-icon">${p.icon || '•'}</span>
+          <span class="vibe-pattern-text">${p.text}</span>
         </div>
-      \`).join('');
+      `).join('');
       document.getElementById('vibeInsightText').textContent = data.insight || '';
       document.getElementById('vibeInsight').style.display = 'block';
       ariaVoice.speak(data.insight || '');
