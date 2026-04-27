@@ -326,7 +326,16 @@ body::after {
 }
 .option-btn:active::before { opacity: 1; }
 .option-btn:active { border-color: var(--rose-border); }
-.option-icon { font-size: 20px; flex-shrink: 0; }
+.option-icon {
+  width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+  background: var(--card2); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--rose); transition: background 0.2s, border-color 0.2s;
+}
+.option-icon svg { width: 18px; height: 18px; stroke-width: 1.6; }
+.option-btn:active .option-icon, .option-btn:focus .option-icon {
+  background: var(--rose-dim); border-color: var(--rose-border);
+}
 .option-label { flex: 1; }
 .option-label > div:first-child { font-weight: 500; margin-bottom: 2px; }
 .option-sub { font-size: 11px; color: var(--muted); }
@@ -948,11 +957,10 @@ input[type=range]::-webkit-slider-thumb {
 }
 .menu-item:active { background: rgba(244,114,182,0.06); }
 .menu-item.active .menu-item-label { color: var(--rose); }
-.menu-item.active .menu-item-icon { filter: saturate(2); }
-.menu-item-icon { font-size: 22px; width: 32px; text-align: center; flex-shrink: 0; }
-.menu-item-label {
-  font-size: 15px; color: var(--text); letter-spacing: 0.2px;
-}
+.menu-item-icon { font-size: 22px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: var(--card2); border: 1px solid var(--border); flex-shrink: 0; color: var(--muted); transition: all 0.2s; }
+.menu-item-icon svg { width: 16px; height: 16px; stroke-width: 1.6; }
+.menu-item.active .menu-item-icon { background: var(--rose-dim); border-color: var(--rose-border); color: var(--rose); }
+.menu-item-label { font-size: 15px; color: var(--text); letter-spacing: 0.2px; }
 .menu-item-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
 .menu-divider { height: 1px; background: var(--border); margin: 8px 20px; }
 
@@ -1545,7 +1553,329 @@ textarea.chat-input::placeholder { color: var(--muted); }
 .ask-aria-btn:active { background: var(--rose-dim); }
 
 
-/* ─── ONBOARDING ─────────────────────────────── */
+/* ─── AUTH MODAL ─────────────────────────────────────────────── */
+#authModal .modal-sheet { position: relative; }
+.auth-orb-wrap {
+  display: flex; justify-content: center; margin-bottom: 20px; padding-top: 4px;
+}
+.auth-orb {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fce7f3 0%, #f9a8d4 30%, #ec4899 65%, #be185d 100%);
+  box-shadow: 0 0 32px rgba(244,114,182,0.45), 0 0 64px rgba(244,114,182,0.12);
+}
+.auth-tabs {
+  display: flex; gap: 0; margin-bottom: 24px;
+  background: var(--card2); border-radius: var(--radius-sm);
+  padding: 3px; border: 1px solid var(--border);
+}
+.auth-tab {
+  flex: 1; padding: 8px; background: none; border: none;
+  border-radius: calc(var(--radius-sm) - 2px);
+  font-size: 13px; font-family: 'DM Sans', sans-serif;
+  color: var(--muted); cursor: pointer; transition: all 0.2s;
+  font-weight: 500; letter-spacing: 0.3px;
+}
+.auth-tab.active {
+  background: var(--card); color: var(--text);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+.auth-field { margin-bottom: 14px; }
+.auth-field-label {
+  font-size: 10px; color: var(--muted); letter-spacing: 1.5px;
+  margin-bottom: 6px; font-weight: 500;
+}
+.auth-input {
+  width: 100%; background: var(--card2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 13px 14px;
+  color: var(--text); font-size: 14px; font-family: 'DM Sans', sans-serif;
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+}
+.auth-input:focus {
+  border-color: var(--rose-border2);
+  box-shadow: 0 0 0 3px rgba(244,114,182,0.08);
+}
+.auth-input::placeholder { color: var(--muted); }
+.auth-btn {
+  width: 100%; padding: 15px;
+  background: linear-gradient(135deg, #be185d, #db2777, #f472b6);
+  border: none; border-radius: var(--radius-md);
+  color: #fff; font-size: 14px; font-family: 'DM Sans', sans-serif;
+  font-weight: 500; cursor: pointer; letter-spacing: 0.4px;
+  margin-top: 6px; transition: all 0.2s;
+  box-shadow: 0 6px 20px rgba(190,24,93,0.28);
+}
+.auth-btn:active { transform: scale(0.98); opacity: 0.92; }
+.auth-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+.auth-divider {
+  display: flex; align-items: center; gap: 10px;
+  margin: 16px 0; font-size: 11px; color: var(--muted);
+}
+.auth-divider::before, .auth-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.auth-skip {
+  display: block; width: 100%; padding: 13px;
+  background: none; border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--muted); font-size: 13px; font-family: 'DM Sans', sans-serif;
+  cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
+  text-align: center;
+}
+.auth-skip:active { border-color: var(--border-hover); color: var(--text2); }
+.auth-note { font-size: 11px; color: var(--muted); text-align: center; margin-top: 12px; line-height: 1.6; }
+.auth-note a { color: var(--rose); text-decoration: none; }
+
+/* Sent state */
+.auth-sent { text-align: center; padding: 12px 0 4px; animation: slide-up 0.35s ease; }
+.auth-sent-icon {
+  width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 16px;
+  background: var(--green-dim); border: 1.5px solid rgba(52,211,153,0.3);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--green);
+}
+.auth-sent-icon svg { width: 22px; height: 22px; stroke-width: 2; }
+.auth-sent-title { font-family: 'Instrument Serif', serif; font-size: 22px; margin-bottom: 8px; }
+.auth-sent-sub { font-size: 13px; color: var(--muted); line-height: 1.65; margin-bottom: 24px; }
+.auth-sent-email {
+  display: inline-block; background: var(--card2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 6px 14px;
+  font-size: 13px; color: var(--text); margin-bottom: 20px;
+}
+
+
+/* ─── PRE-SEND SCREEN ────────────────────────────────────────── */
+#presendScreen { padding-bottom: 80px; }
+
+.presend-header-banner {
+  margin: 0 20px 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(244,114,182,0.06), rgba(190,24,93,0.04));
+  border: 1px solid var(--rose-border);
+  border-radius: var(--radius-lg);
+  position: relative; overflow: hidden;
+}
+.presend-header-banner::before {
+  content: '';
+  position: absolute; top: -1px; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--rose), transparent);
+}
+.presend-banner-label {
+  font-size: 9px; color: var(--rose); letter-spacing: 2.5px;
+  margin-bottom: 6px; font-weight: 500;
+}
+.presend-banner-title {
+  font-family: 'Instrument Serif', serif; font-size: 20px; color: var(--text);
+  margin-bottom: 4px;
+}
+.presend-banner-sub {
+  font-size: 12px; color: var(--muted); line-height: 1.55;
+}
+
+.presend-mode-strip {
+  padding: 0 20px; margin-bottom: 16px;
+  display: flex; gap: 8px;
+}
+.presend-mode-pill {
+  flex: 1; padding: 9px 12px; text-align: center;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); font-size: 12px; color: var(--muted);
+  cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+}
+.presend-mode-pill.active {
+  background: var(--rose-dim); border-color: var(--rose-border); color: var(--rose);
+}
+.presend-mode-pill .pill-icon { display: block; font-size: 16px; margin-bottom: 3px; }
+
+.presend-who-row {
+  padding: 0 20px; margin-bottom: 12px;
+  display: flex; gap: 8px; align-items: center;
+}
+.presend-who-label { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.presend-who-input {
+  flex: 1; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 9px 12px;
+  color: var(--text); font-size: 13px; font-family: 'DM Sans', sans-serif;
+  outline: none; transition: border-color 0.2s;
+}
+.presend-who-input:focus { border-color: var(--rose-border); }
+.presend-who-input::placeholder { color: var(--muted); }
+
+.presend-textarea-wrap { padding: 0 20px; margin-bottom: 12px; }
+.presend-textarea-label {
+  font-size: 10px; color: var(--muted); letter-spacing: 2px; margin-bottom: 8px;
+}
+textarea.presend-input {
+  width: 100%; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 14px 16px;
+  color: var(--text); font-size: 14px; font-family: 'DM Sans', sans-serif;
+  resize: none; line-height: 1.65; transition: border-color 0.2s; min-height: 100px;
+}
+textarea.presend-input:focus { border-color: var(--rose-border); outline: none; }
+textarea.presend-input::placeholder { color: var(--muted); }
+.presend-char-hint {
+  font-size: 10px; color: var(--muted); text-align: right; margin-top: 4px;
+}
+
+.presend-context-wrap { padding: 0 20px; margin-bottom: 16px; }
+textarea.presend-context-input {
+  width: 100%; background: var(--card2); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 12px 14px;
+  color: var(--text); font-size: 13px; font-family: 'DM Sans', sans-serif;
+  resize: none; line-height: 1.6; transition: border-color 0.2s;
+}
+textarea.presend-context-input:focus { border-color: var(--rose-border); outline: none; }
+textarea.presend-context-input::placeholder { color: var(--muted); }
+
+.presend-run-btn {
+  margin: 0 20px 12px; width: calc(100% - 40px);
+  padding: 15px; background: linear-gradient(135deg, #be185d, #db2777, #f472b6);
+  border: none; border-radius: var(--radius-md);
+  color: #fff; font-size: 14px; font-family: 'DM Sans', sans-serif;
+  font-weight: 500; cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
+  box-shadow: 0 4px 20px rgba(219,39,119,0.25);
+}
+.presend-run-btn:active { transform: scale(0.98); opacity: 0.92; }
+.presend-run-btn:disabled { opacity: 0.5; cursor: default; transform: none; }
+
+/* Pre-send result */
+.presend-result { padding: 0 20px; animation: slide-up 0.3s ease; }
+
+.presend-verdict-card {
+  border-radius: var(--radius-lg); padding: 20px;
+  margin-bottom: 14px; border: 1px solid var(--border);
+  position: relative; overflow: hidden;
+}
+.presend-verdict-card.send-it {
+  background: rgba(52,211,153,0.06); border-color: rgba(52,211,153,0.25);
+}
+.presend-verdict-card.pause {
+  background: rgba(251,191,36,0.06); border-color: rgba(251,191,36,0.25);
+}
+.presend-verdict-card.dont-send {
+  background: rgba(244,63,94,0.06); border-color: rgba(244,63,94,0.25);
+}
+.presend-verdict-emoji { font-size: 36px; margin-bottom: 10px; }
+.presend-verdict-label {
+  font-size: 9px; letter-spacing: 2px; margin-bottom: 4px; font-weight: 600;
+}
+.presend-verdict-card.send-it .presend-verdict-label { color: var(--green); }
+.presend-verdict-card.pause .presend-verdict-label { color: var(--amber); }
+.presend-verdict-card.dont-send .presend-verdict-label { color: #f43f5e; }
+.presend-verdict-headline {
+  font-family: 'Instrument Serif', serif; font-size: 22px; color: var(--text);
+  margin-bottom: 6px;
+}
+.presend-verdict-sub { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+.presend-flags-wrap {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 16px;
+  margin-bottom: 12px;
+}
+.presend-flags-title {
+  font-size: 10px; color: var(--muted); letter-spacing: 2px; margin-bottom: 12px;
+}
+.presend-flag-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+}
+.presend-flag-item:last-child { border-bottom: none; padding-bottom: 0; }
+.presend-flag-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.presend-flag-text { font-size: 13px; color: var(--text2); line-height: 1.55; flex: 1; }
+.presend-flag-severity {
+  font-size: 9px; letter-spacing: 1px; padding: 2px 7px;
+  border-radius: 8px; flex-shrink: 0; margin-top: 2px;
+}
+.presend-flag-severity.watch { background: rgba(251,191,36,0.1); color: var(--amber); border: 1px solid rgba(251,191,36,0.2); }
+.presend-flag-severity.fix { background: rgba(244,63,94,0.1); color: #f43f5e; border: 1px solid rgba(244,63,94,0.2); }
+.presend-flag-severity.good { background: rgba(52,211,153,0.1); color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
+
+.presend-aria-take {
+  background: var(--rose-dim); border: 1px solid var(--rose-border);
+  border-radius: 6px var(--radius-md) var(--radius-md) var(--radius-md);
+  padding: 14px 16px; margin-bottom: 14px;
+  animation: slide-up 0.3s ease 0.2s both;
+}
+.presend-aria-take-label {
+  font-size: 10px; color: var(--rose); letter-spacing: 1.5px; margin-bottom: 6px;
+}
+.presend-aria-take-text {
+  font-size: 13px; color: var(--text2); line-height: 1.65; font-style: italic;
+}
+
+.presend-rewrite-wrap {
+  margin-bottom: 14px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 16px;
+  animation: slide-up 0.3s ease 0.3s both;
+}
+.presend-rewrite-label {
+  font-size: 10px; color: var(--muted); letter-spacing: 2px; margin-bottom: 10px;
+}
+.presend-rewrite-toggle {
+  display: flex; gap: 6px; margin-bottom: 10px;
+}
+.presend-rewrite-tab {
+  flex: 1; padding: 7px 8px; background: var(--card2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 11px; color: var(--muted); cursor: pointer;
+  transition: all 0.2s; font-family: 'DM Sans', sans-serif; text-align: center;
+}
+.presend-rewrite-tab.active {
+  background: var(--rose-dim); border-color: var(--rose-border); color: var(--rose);
+}
+.presend-rewrite-item {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px 14px;
+  font-size: 13px; color: var(--text2); line-height: 1.65;
+  margin-bottom: 6px; cursor: pointer; transition: all 0.2s;
+  display: none;
+}
+.presend-rewrite-item.visible { display: block; }
+.presend-rewrite-item:active { border-color: var(--rose-border); background: var(--rose-dim); }
+.presend-rewrite-tone {
+  font-size: 10px; color: var(--muted); letter-spacing: 1px; margin-bottom: 5px;
+}
+
+.presend-action-row {
+  display: flex; gap: 8px; margin-bottom: 20px;
+}
+.presend-action-row button {
+  flex: 1; padding: 12px;
+  font-size: 12px; font-family: 'DM Sans', sans-serif;
+  border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s;
+}
+.presend-copy-fixed { background: linear-gradient(135deg, #be185d, #f472b6); border: none; color: #fff; font-weight: 500; box-shadow: 0 4px 16px rgba(190,24,93,0.25); }
+.presend-copy-fixed:active { transform: scale(0.97); }
+.presend-retry-btn { background: var(--card); border: 1px solid var(--border); color: var(--muted); }
+.presend-retry-btn:active { border-color: var(--rose-border); color: var(--rose); }
+
+/* ─── FULL THREAD MODE (reply screen) ──────────── */
+.thread-mode-banner {
+  margin: 0 20px 12px;
+  padding: 12px 14px;
+  background: var(--rose-dim); border: 1px solid var(--rose-border);
+  border-radius: var(--radius-md);
+  font-size: 12px; color: var(--rose); line-height: 1.5;
+  display: none; animation: slide-up 0.25s ease;
+}
+.thread-mode-banner.visible { display: block; }
+.thread-mode-banner strong { font-weight: 600; }
+
+.thread-toggle-btn {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--muted); cursor: pointer;
+  padding: 6px 0; margin-bottom: 8px; transition: color 0.2s;
+  background: none; border: none; font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.5px;
+}
+.thread-toggle-btn.active { color: var(--rose); }
+.thread-toggle-btn .tt-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--muted); transition: background 0.2s;
+}
+.thread-toggle-btn.active .tt-dot { background: var(--rose); }
+
 #onboardScreen { background: var(--bg); z-index: 999; justify-content: flex-start; }
 .onboard-wrap { flex: 1; display: flex; flex-direction: column; padding: 48px 24px 32px; overflow-y: auto; }
 .onboard-step { display: none; flex-direction: column; gap: 20px; animation: slide-up 0.35s ease both; }
@@ -1740,7 +2070,9 @@ textarea.chat-input::placeholder { color: var(--muted); }
     <!-- Options -->
     <div class="intro-options" id="introOptions">
       <button class="option-btn" onclick="goToContacts('reply')">
-        <span class="option-icon">💬</span>
+        <span class="option-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </span>
         <div class="option-label">
           <div>someone messaged me</div>
           <div class="option-sub">i'll write back in your voice</div>
@@ -1748,7 +2080,9 @@ textarea.chat-input::placeholder { color: var(--muted); }
         <span class="option-arrow">›</span>
       </button>
       <button class="option-btn" onclick="goToContacts('start')">
-        <span class="option-icon">✨</span>
+        <span class="option-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 5v14M5 12h14"/></svg>
+        </span>
         <div class="option-label">
           <div>start a conversation</div>
           <div class="option-sub">i'll say something so you don't have to</div>
@@ -1756,15 +2090,29 @@ textarea.chat-input::placeholder { color: var(--muted); }
         <span class="option-arrow">›</span>
       </button>
       <button class="option-btn" onclick="showScreen('queueScreen')">
-        <span class="option-icon">🔍</span>
+        <span class="option-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+        </span>
         <div class="option-label">
           <div>check who needs a reply</div>
           <div class="option-sub">swipeable queue — who's been left on read</div>
         </div>
         <span class="option-arrow">›</span>
       </button>
+      <button class="option-btn" onclick="showScreen('presendScreen')" style="border-color:rgba(244,114,182,0.18);background:rgba(244,114,182,0.04);">
+        <span class="option-icon" style="background:var(--rose-dim);border-color:var(--rose-border);color:var(--rose);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </span>
+        <div class="option-label">
+          <div>check before you send</div>
+          <div class="option-sub" style="color:var(--rose);opacity:0.75;">aria reads your draft — flags what could backfire</div>
+        </div>
+        <span class="option-arrow" style="color:var(--rose);">›</span>
+      </button>
       <button class="option-btn" onclick="showScreen('historyScreen')">
-        <span class="option-icon">📋</span>
+        <span class="option-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+        </span>
         <div class="option-label">
           <div>view reply history</div>
           <div class="option-sub">what i've drafted before</div>
@@ -1856,7 +2204,15 @@ textarea.chat-input::placeholder { color: var(--muted); }
 
   <!-- Paste area -->
   <div class="paste-area" id="pasteArea">
-    <div class="paste-label">PASTE THEIR MESSAGE (OR ADD CONTEXT)</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div class="paste-label" style="margin-bottom:0;">THEIR MESSAGE</div>
+      <button class="thread-toggle-btn" id="threadModeToggle" onclick="toggleThreadMode()">
+        <span class="tt-dot"></span> full thread mode
+      </button>
+    </div>
+    <div class="thread-mode-banner" id="threadModeBanner">
+      <strong>Thread mode on.</strong> Paste the full conversation below — include both sides. Aria will read the whole arc, not just the last message.
+    </div>
     <textarea class="convo-input" id="theirMsgInput" rows="3" placeholder="paste what they said... or give context"></textarea>
 
     <!-- Context accordion -->
@@ -2221,6 +2577,111 @@ textarea.chat-input::placeholder { color: var(--muted); }
 
 
 <!-- ═══════════════════════════════════════════════
+     SCREEN: PRE-SEND (don't send that)
+════════════════════════════════════════════════ -->
+<div class="screen" id="presendScreen" style="display:none;">
+  <div class="top-bar">
+    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <div class="aria-mini" style="background:radial-gradient(circle at 35% 35%,#f9a8d4,#ec4899);box-shadow:0 0 16px rgba(244,114,182,0.35);flex-shrink:0;border-radius:50%;"></div>
+    <div class="top-bar-info">
+      <div class="top-bar-name">Pre-Send Check</div>
+      <div class="top-bar-status">🛑 aria reads it before you do</div>
+    </div>
+    <button class="mute-btn" onclick="toggleMute()">🔊</button>
+  </div>
+
+  <!-- Header banner -->
+  <div class="presend-header-banner">
+    <div class="presend-banner-label">DON'T SEND THAT (YET)</div>
+    <div class="presend-banner-title">Let Aria read it first.</div>
+    <div class="presend-banner-sub">She'll catch the passive aggression you didn't notice, flag if you're coming across as too available, and tell you if it's going to land the way you think it will.</div>
+  </div>
+
+  <!-- Mode pills -->
+  <div class="presend-mode-strip">
+    <div class="presend-mode-pill active" id="psMode_check" onclick="setPresendMode('check',this)">
+      <span class="pill-icon">🔍</span>just check it
+    </div>
+    <div class="presend-mode-pill" id="psMode_fix" onclick="setPresendMode('fix',this)">
+      <span class="pill-icon">✏️</span>also fix it
+    </div>
+    <div class="presend-mode-pill" id="psMode_roast" onclick="setPresendMode('roast',this)">
+      <span class="pill-icon">🔥</span>be brutal
+    </div>
+  </div>
+
+  <!-- Who's it for -->
+  <div class="presend-who-row">
+    <span class="presend-who-label">TO:</span>
+    <input class="presend-who-input" id="psWhoInput" placeholder='e.g. "my ex" or "someone i like"' />
+  </div>
+
+  <!-- Draft textarea -->
+  <div class="presend-textarea-wrap">
+    <div class="presend-textarea-label">YOUR DRAFT</div>
+    <textarea class="presend-input" id="psDraftInput" rows="4" placeholder="paste the message you're about to send... or type it out"></textarea>
+    <div class="presend-char-hint" id="psCharHint">0 words</div>
+  </div>
+
+  <!-- Optional context -->
+  <div class="presend-context-wrap">
+    <div class="presend-textarea-label">SITUATION CONTEXT (optional)</div>
+    <textarea class="presend-context-input" id="psContextInput" rows="2" placeholder='e.g. "we had a fight two days ago" or "they've been hot and cold"'></textarea>
+  </div>
+
+  <!-- Run button -->
+  <button class="presend-run-btn" id="psRunBtn" onclick="runPresend()">🛑 let aria check it →</button>
+
+  <!-- Thinking -->
+  <div class="aria-thinking" id="psThinking" style="display:none;">
+    <div class="thinking-orb" style="background:radial-gradient(circle at 35% 35%,#f9a8d4,#ec4899);box-shadow:0 0 16px rgba(244,114,182,0.3);"></div>
+    <div class="thinking-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <span class="thinking-text">aria is reading between the lines...</span>
+  </div>
+
+  <!-- Result -->
+  <div class="presend-result" id="psResult" style="display:none;">
+    <!-- Verdict card -->
+    <div class="presend-verdict-card" id="psVerdictCard">
+      <div class="presend-verdict-emoji" id="psVerdictEmoji">✅</div>
+      <div class="presend-verdict-label" id="psVerdictLabel">VERDICT</div>
+      <div class="presend-verdict-headline" id="psVerdictHeadline">looks good</div>
+      <div class="presend-verdict-sub" id="psVerdictSub"></div>
+    </div>
+
+    <!-- Flags list -->
+    <div class="presend-flags-wrap" id="psFlagsWrap" style="display:none;">
+      <div class="presend-flags-title">WHAT ARIA CAUGHT</div>
+      <div id="psFlagsList"></div>
+    </div>
+
+    <!-- Aria's hot take -->
+    <div class="presend-aria-take" id="psAriaTake" style="display:none;">
+      <div class="presend-aria-take-label">ARIA'S TAKE</div>
+      <div class="presend-aria-take-text" id="psAriaTakeText"></div>
+    </div>
+
+    <!-- Rewrites (shown when mode = fix or roast) -->
+    <div class="presend-rewrite-wrap" id="psRewriteWrap" style="display:none;">
+      <div class="presend-rewrite-label">ARIA'S REWRITES</div>
+      <div class="presend-rewrite-toggle" id="psRewriteTabs"></div>
+      <div id="psRewriteItems"></div>
+      <div class="presend-action-row">
+        <button class="presend-retry-btn" onclick="runPresend()">↺ retry</button>
+        <button class="presend-copy-fixed" id="psCopyRewriteBtn" onclick="copyPresendRewrite()">copy rewrite →</button>
+      </div>
+    </div>
+
+    <!-- Copy original (check mode) -->
+    <div class="presend-action-row" id="psActionOriginal" style="display:none;">
+      <button class="presend-retry-btn" onclick="runPresend()">↺ check again</button>
+      <button class="presend-copy-fixed" onclick="copyPresendOriginal()">send it anyway →</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════
      SCREEN: GLOW-UP
 ════════════════════════════════════════════════ -->
 <div class="screen" id="glowupScreen" style="display:none;">
@@ -2498,25 +2959,34 @@ textarea.chat-input::placeholder { color: var(--muted); }
 <div class="menu-drawer" id="menuDrawer">
   <div class="menu-drawer-handle"></div>
   <button class="menu-item active" id="navHome" onclick="menuNavTo('introScreen','navHome')">
-    <span class="menu-item-icon">🏠</span>
+    <span class="menu-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
     <div><div class="menu-item-label">Home</div><div class="menu-item-sub">Aria's main screen</div></div>
   </button>
   <button class="menu-item" id="navChat" onclick="menuNavTo('chatScreen','navChat')">
-    <span class="menu-item-icon">💬</span>
+    <span class="menu-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
     <div><div class="menu-item-label">Chat with Aria</div><div class="menu-item-sub">Talk to her directly</div></div>
   </button>
   <button class="menu-item" id="navHistory" onclick="menuNavTo('historyScreen','navHistory')">
-    <span class="menu-item-icon">📋</span>
+    <span class="menu-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg></span>
     <div><div class="menu-item-label">History</div><div class="menu-item-sub">Past replies you've saved</div></div>
   </button>
   <div class="menu-divider"></div>
   <button class="menu-item" id="navMood" onclick="menuNavTo('moodScreen','navMood')">
-    <span class="menu-item-icon">🎭</span>
+    <span class="menu-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
     <div><div class="menu-item-label">Vibe</div><div class="menu-item-sub">Set your mood & energy</div></div>
   </button>
   <button class="menu-item" id="navProfile" onclick="menuNavTo('profileScreen','navProfile')">
-    <span class="menu-item-icon">🎛️</span>
+    <span class="menu-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></span>
     <div><div class="menu-item-label">Voice & Settings</div><div class="menu-item-sub">Aria's voice, tone, profile</div></div>
+  </button>
+  <button class="menu-item" id="navPresend" onclick="menuNavTo('presendScreen','navPresend')">
+    <span class="menu-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+    <div><div class="menu-item-label">Pre-Send Check</div><div class="menu-item-sub">Aria reviews your draft first</div></div>
+  </button>
+  <div class="menu-divider"></div>
+  <button class="menu-item" id="navSignin" onclick="closeMenu();openAuthModal()">
+    <span class="menu-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></span>
+    <div><div class="menu-item-label">Sign in / Save data</div><div class="menu-item-sub">Sync across devices</div></div>
   </button>
 </div>
 
@@ -2676,7 +3146,68 @@ textarea.chat-input::placeholder { color: var(--muted); }
   </div>
 </div>
 
+<!-- Auth Modal -->
+<div class="modal-overlay" id="authModal" onclick="handleModalBgClick(event,'authModal')">
+  <div class="modal-sheet" style="position:relative;">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('authModal')">×</button>
+
+    <!-- Default state -->
+    <div id="authDefault">
+      <div class="auth-orb-wrap">
+        <div class="auth-orb"></div>
+      </div>
+      <div class="modal-title" style="text-align:center;">welcome to Aria</div>
+      <div class="modal-sub" style="text-align:center;">sign in to save your contacts, history & settings across devices.</div>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabSignin" onclick="switchAuthTab('signin')">Sign in</button>
+        <button class="auth-tab" id="tabSignup" onclick="switchAuthTab('signup')">Create account</button>
+      </div>
+
+      <!-- Sign-in fields -->
+      <div id="authSigninFields">
+        <div class="auth-field">
+          <div class="auth-field-label">EMAIL</div>
+          <input class="auth-input" id="authEmail" type="email" placeholder="your@email.com" autocomplete="email"/>
+        </div>
+        <button class="auth-btn" id="authSubmitBtn" onclick="handleAuthSubmit()">Send magic link</button>
+        <p class="auth-note">We'll email you a one-tap sign-in link. No password needed.</p>
+      </div>
+
+      <!-- Sign-up extra fields (hidden by default) -->
+      <div id="authSignupFields" style="display:none;">
+        <div class="auth-field">
+          <div class="auth-field-label">EMAIL</div>
+          <input class="auth-input" id="authEmailSignup" type="email" placeholder="your@email.com" autocomplete="email"/>
+        </div>
+        <button class="auth-btn" id="authSignupBtn" onclick="handleAuthSubmit('signup')">Create account</button>
+        <p class="auth-note">We'll send a magic link to verify your email and create your account.</p>
+      </div>
+
+      <div class="auth-divider">or</div>
+      <button class="auth-skip" onclick="closeModal('authModal')">Continue without account</button>
+    </div>
+
+    <!-- Sent state -->
+    <div id="authSent" style="display:none;">
+      <div class="auth-sent">
+        <div class="auth-sent-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.28h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.28 16z"/></svg>
+        </div>
+        <div class="auth-sent-title">Check your inbox</div>
+        <div class="auth-sent-sub">We sent a magic link to</div>
+        <div class="auth-sent-email" id="authSentEmail">—</div>
+        <div class="auth-sent-sub">Tap the link in that email to sign in. You can close this for now.</div>
+        <button class="auth-btn" onclick="closeModal('authModal')" style="margin-top:0;">Got it</button>
+        <button class="auth-skip" style="margin-top:10px;" onclick="resetAuthModal()">Use a different email</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Floating copy button -->
+
 <button class="float-copy" id="floatCopy" onclick="copyReply()" title="Copy reply">📋</button>
 
 <!-- Toast -->
@@ -3024,6 +3555,15 @@ function buildAriaReactionPrompt(contact, msg, contextInput, mode) {
     return `You are Aria, a teenage girl AI assistant. The user wants to start a conversation with ${contact?.name} (${contact?.relationship || 'someone'}). React as yourself — not as the user. Short, real, teenage energy. ${stageVoice} Max 2 sentences. No quotes. Don't be generic.`;
   }
 
+  if (threadModeActive) {
+    return `You are Aria, a teenage girl AI assistant. The user just pasted a full conversation thread with ${contact?.name} (${contact?.relationship || 'contact'}). Read the whole arc and react as yourself — notice what's changed, what's building, what's going unsaid. ${stageVoice}
+
+Full thread:
+"${msg.slice(0, 600)}${msg.length > 600 ? '…' : ''}"
+
+React in max 2 sentences. Notice the arc, not just the last line. Sound like a teenager, not an assistant.`;
+  }
+
   return `You are Aria, a teenage girl AI assistant. ${contact?.name} (${contact?.relationship || 'contact'}) just texted: "${msg}"${silentNote}${lateNote}${contextInput ? '\n\nConvo context: ' + contextInput : ''}
 
 React to this message as yourself — like you're reading it over the user's shoulder. Be perceptive. Notice what's actually going on beneath the surface if something's there. ${stageVoice}
@@ -3196,20 +3736,56 @@ window.addEventListener('load', () => {
 
 async function initAuth() {
   const { data: { session } } = await db.auth.getSession();
-  if (!session) {
-    const email = prompt('Enter your email to sign in to Aria:');
-    if (!email) return;
-    const { error } = await db.auth.signInWithOtp({ email });
-    if (error) {
-      showToast('sign-in failed: ' + error.message);
-    } else {
-      showToast('check your email for a magic link ✉️', 'blue');
-    }
-    return;
+  if (session?.user) {
+    currentUserId = session.user.id;
+    await loadFromSupabase();
   }
-  currentUserId = session.user.id;
-  await loadFromSupabase();
+  // No blocking prompt — user can trigger sign-in from menu when ready
 }
+
+function openAuthModal() {
+  resetAuthModal();
+  openModal('authModal');
+}
+
+function resetAuthModal() {
+  document.getElementById('authDefault').style.display = '';
+  document.getElementById('authSent').style.display = 'none';
+  const emailEl = document.getElementById('authEmail');
+  const emailSuEl = document.getElementById('authEmailSignup');
+  if (emailEl) emailEl.value = '';
+  if (emailSuEl) emailSuEl.value = '';
+  switchAuthTab('signin');
+}
+
+function switchAuthTab(tab) {
+  const isSignin = tab === 'signin';
+  document.getElementById('tabSignin').classList.toggle('active', isSignin);
+  document.getElementById('tabSignup').classList.toggle('active', !isSignin);
+  document.getElementById('authSigninFields').style.display = isSignin ? '' : 'none';
+  document.getElementById('authSignupFields').style.display = isSignin ? 'none' : '';
+}
+
+async function handleAuthSubmit(mode) {
+  const emailField = mode === 'signup'
+    ? document.getElementById('authEmailSignup')
+    : document.getElementById('authEmail');
+  const email = (emailField?.value || '').trim();
+  if (!email || !email.includes('@')) { showToast('enter a valid email'); return; }
+  const btnId = mode === 'signup' ? 'authSignupBtn' : 'authSubmitBtn';
+  const btn = document.getElementById(btnId);
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  const { error } = await db.auth.signInWithOtp({ email });
+  btn.disabled = false;
+  btn.textContent = origText;
+  if (error) { showToast('sign-in failed: ' + error.message); return; }
+  document.getElementById('authSentEmail').textContent = email;
+  document.getElementById('authDefault').style.display = 'none';
+  document.getElementById('authSent').style.display = '';
+}
+
 
 // ── STORAGE ────────────────────────────────────────────────────────
 
@@ -3355,10 +3931,18 @@ function updateStats() {
 
 // ── SCREEN NAV ──────────────────────────────────────────────────────
 
-const screensWithNav = ['introScreen','historyScreen','moodScreen','profileScreen','glowupScreen','redflagScreen','vibeScreen','queueScreen','contactProfileScreen','onboardScreen'];
+const screensWithNav = ['introScreen','historyScreen','moodScreen','profileScreen','glowupScreen','redflagScreen','vibeScreen','queueScreen','contactProfileScreen','onboardScreen','presendScreen'];
 
 function showScreen(id) {
   ariaVoice.stop();
+  // Reset thread mode when leaving reply screen
+  if (id !== 'replyScreen' && threadModeActive) {
+    threadModeActive = false;
+    const btn = document.getElementById('threadModeToggle');
+    const banner = document.getElementById('threadModeBanner');
+    if (btn) btn.classList.remove('active');
+    if (banner) banner.classList.remove('visible');
+  }
   document.querySelectorAll('.screen').forEach(s => {
     s.classList.remove('active');
     s.style.display = '';
@@ -3799,7 +4383,14 @@ async function generateReply() {
 
   const modeContext = currentMode === 'start'
     ? `Open a casual conversation with ${currentContact?.name} — don't reply to anything, just start a convo naturally, like you just randomly thought of them.${contextStr}${clarifyExtra}`
-    : `${currentContact?.name} (${currentContact?.relationship || 'contact'}) sent: "${msg}"${contextStr}${clarifyExtra}${getThreadContext()}\n\nWrite a reply in the user's voice.`;
+    : threadModeActive
+      ? `You are reading a FULL CONVERSATION THREAD between the user and ${currentContact?.name} (${currentContact?.relationship || 'contact'}).${contextStr}${clarifyExtra}
+
+FULL THREAD:
+${msg}
+
+Read the entire arc. Notice the tone shift, what's been building, what the other person almost said but didn't. Then write the user's NEXT reply — informed by the full thread, not just the last message. Write in the user's voice.`
+      : `${currentContact?.name} (${currentContact?.relationship || 'contact'}) sent: "${msg}"${contextStr}${clarifyExtra}${getThreadContext()}\n\nWrite a reply in the user's voice.`;
 
   const systemPrompt = buildSystemPrompt();
 
@@ -4767,6 +5358,24 @@ function continueConvo() {
   showToast('thread saved — paste their reply ↑', 'green');
 }
 
+let threadModeActive = false;
+
+function toggleThreadMode() {
+  threadModeActive = !threadModeActive;
+  const btn = document.getElementById('threadModeToggle');
+  const banner = document.getElementById('threadModeBanner');
+  const ta = document.getElementById('theirMsgInput');
+  btn.classList.toggle('active', threadModeActive);
+  banner.classList.toggle('visible', threadModeActive);
+  if (threadModeActive) {
+    ta.rows = 7;
+    ta.placeholder = 'paste the full conversation here — both sides. format: "them: [msg]" and "me: [msg]", or just paste it raw. aria will figure it out.';
+  } else {
+    ta.rows = 3;
+    ta.placeholder = 'paste what they said... or give context';
+  }
+}
+
 function getThreadContext() {
   if (!replyThread.length) return '';
   return '\n\nCONVERSATION THREAD SO FAR:\n' + replyThread.map(m =>
@@ -5195,6 +5804,207 @@ async function followupRate(rating) {
   };
   const list = msgs[rating] || msgs.meh;
   showToast(list[Math.floor(Math.random() * list.length)], rating === 'good' ? 'green' : '');
+}
+
+// ═══════════════════════════════════════════════════
+// PRE-SEND MODE — "Don't send that"
+// ═══════════════════════════════════════════════════
+
+let presendMode = 'check'; // 'check' | 'fix' | 'roast'
+let presendRewriteItems = [];
+let presendActiveRewrite = 0;
+let presendOriginalDraft = '';
+
+function setPresendMode(mode, el) {
+  presendMode = mode;
+  document.querySelectorAll('.presend-mode-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  // Update button label
+  const btn = document.getElementById('psRunBtn');
+  if (mode === 'check') btn.textContent = '🛑 let aria check it →';
+  else if (mode === 'fix') btn.textContent = '✏️ check & rewrite it →';
+  else btn.textContent = '🔥 be brutal →';
+}
+
+// Live word count
+document.addEventListener('DOMContentLoaded', () => {
+  const ta = document.getElementById('psDraftInput');
+  if (ta) {
+    ta.addEventListener('input', () => {
+      const words = ta.value.trim().split(/\s+/).filter(Boolean).length;
+      document.getElementById('psCharHint').textContent = words + (words === 1 ? ' word' : ' words');
+    });
+  }
+});
+
+async function runPresend() {
+  const draft = document.getElementById('psDraftInput').value.trim();
+  const who = document.getElementById('psWhoInput').value.trim();
+  const context = document.getElementById('psContextInput').value.trim();
+
+  if (!draft) {
+    showToast('paste your draft first');
+    document.getElementById('psDraftInput').focus();
+    return;
+  }
+
+  presendOriginalDraft = draft;
+
+  const btn = document.getElementById('psRunBtn');
+  btn.disabled = true;
+  document.getElementById('psResult').style.display = 'none';
+  document.getElementById('psThinking').style.display = 'flex';
+
+  const modeInstructions = {
+    check: 'Be honest but balanced. Flag issues, but also note what works.',
+    fix:   'Be honest. Flag issues AND provide 3 rewritten versions that fix them.',
+    roast: 'Be brutally honest. No softening. Call out every problem. Still provide 3 fixes.'
+  }[presendMode];
+
+  const includeRewrites = presendMode !== 'check';
+
+  const prompt = `You are Aria, a sharp social AI. A user is about to send this message${who ? ' to ' + who : ''}:
+
+DRAFT: "${draft}"${context ? '\nCONTEXT: ' + context : ''}
+
+Analyse this draft for: passive aggression they didn't notice, coming across as too available or desperate, an apology that buries their actual point, a joke that might not land, anything that could backfire or be misread.
+
+${modeInstructions}
+
+${includeRewrites ? `Include 3 rewritten versions with different approaches.` : ''}
+
+Respond ONLY in this exact JSON (no markdown):
+{
+  "verdict": "send-it|pause|dont-send",
+  "emoji": "emoji",
+  "headline": "short punchy verdict",
+  "sub": "1-sentence explanation",
+  "flags": [
+    {"icon": "emoji", "text": "observation", "severity": "watch|fix|good"}
+  ],
+  "ariaTake": "Aria's personal hot take in 1-2 sentences, honest and in character"${includeRewrites ? `,
+  "rewrites": [
+    {"label": "label", "text": "rewritten message"}
+  ]` : ''}
+}
+
+Flags should be 2-5 items. Be specific to THIS draft, not generic.`;
+
+  try {
+    const data = await fetchReplyJSON('You are Aria, a sharp social analyst. Respond ONLY in valid JSON. No markdown.', prompt);
+    if (data) renderPresendResult(data);
+    else showToast('try again?');
+  } catch(e) {
+    console.error(e);
+    showToast('something went wrong');
+  }
+
+  document.getElementById('psThinking').style.display = 'none';
+  btn.disabled = false;
+}
+
+function renderPresendResult(data) {
+  const result = document.getElementById('psResult');
+
+  // Verdict card
+  const verdictCard = document.getElementById('psVerdictCard');
+  const classMap = { 'send-it': 'send-it', 'pause': 'pause', 'dont-send': 'dont-send' };
+  verdictCard.className = 'presend-verdict-card ' + (classMap[data.verdict] || 'pause');
+  document.getElementById('psVerdictEmoji').textContent = data.emoji || '⚠️';
+  document.getElementById('psVerdictLabel').textContent = ({
+    'send-it': 'LOOKS GOOD',
+    'pause': 'WAIT A SEC',
+    'dont-send': 'DON\'T SEND THAT'
+  })[data.verdict] || 'ARIA\'S TAKE';
+  document.getElementById('psVerdictHeadline').textContent = data.headline || '';
+  document.getElementById('psVerdictSub').textContent = data.sub || '';
+
+  // Flags
+  const flagsWrap = document.getElementById('psFlagsWrap');
+  const flagsList = document.getElementById('psFlagsList');
+  if (data.flags && data.flags.length) {
+    flagsList.innerHTML = data.flags.map(f => `
+      <div class="presend-flag-item">
+        <span class="presend-flag-icon">${f.icon || '•'}</span>
+        <span class="presend-flag-text">${f.text}</span>
+        <span class="presend-flag-severity ${f.severity || 'watch'}">${f.severity || 'watch'}</span>
+      </div>
+    `).join('');
+    flagsWrap.style.display = 'block';
+  } else {
+    flagsWrap.style.display = 'none';
+  }
+
+  // Aria's take
+  const ariaTakeEl = document.getElementById('psAriaTake');
+  if (data.ariaTake) {
+    document.getElementById('psAriaTakeText').textContent = data.ariaTake;
+    ariaTakeEl.style.display = 'block';
+    ariaVoice.speak(data.ariaTake);
+  } else {
+    ariaTakeEl.style.display = 'none';
+  }
+
+  // Rewrites
+  const rewriteWrap = document.getElementById('psRewriteWrap');
+  const actionOriginal = document.getElementById('psActionOriginal');
+  if (data.rewrites && data.rewrites.length) {
+    presendRewriteItems = data.rewrites;
+    presendActiveRewrite = 0;
+    renderPresendRewrites(data.rewrites);
+    rewriteWrap.style.display = 'block';
+    actionOriginal.style.display = 'none';
+  } else {
+    rewriteWrap.style.display = 'none';
+    actionOriginal.style.display = 'flex';
+  }
+
+  result.style.display = 'block';
+  setTimeout(() => {
+    verdictCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 200);
+}
+
+function renderPresendRewrites(rewrites) {
+  const tabs = document.getElementById('psRewriteTabs');
+  const items = document.getElementById('psRewriteItems');
+
+  tabs.innerHTML = rewrites.map((r, i) => `
+    <div class="presend-rewrite-tab ${i === 0 ? 'active' : ''}" onclick="switchPresendRewrite(${i}, this)">${r.label}</div>
+  `).join('');
+
+  items.innerHTML = rewrites.map((r, i) => `
+    <div class="presend-rewrite-item ${i === 0 ? 'visible' : ''}" id="psRw_${i}">
+      <div class="presend-rewrite-tone">${r.label.toUpperCase()}</div>
+      ${r.text}
+    </div>
+  `).join('');
+}
+
+function switchPresendRewrite(idx, el) {
+  presendActiveRewrite = idx;
+  document.querySelectorAll('.presend-rewrite-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.presend-rewrite-item').forEach((item, i) => {
+    item.classList.toggle('visible', i === idx);
+  });
+}
+
+function copyPresendRewrite() {
+  const item = presendRewriteItems[presendActiveRewrite];
+  if (!item) return;
+  navigator.clipboard.writeText(item.text).then(() => {
+    const btn = document.getElementById('psCopyRewriteBtn');
+    btn.textContent = '✓ copied';
+    setTimeout(() => { btn.textContent = 'copy rewrite →'; }, 2500);
+    showToast('rewrite copied ✓', 'green');
+  });
+}
+
+function copyPresendOriginal() {
+  navigator.clipboard.writeText(presendOriginalDraft).then(() => {
+    showToast('copied — go send it 🚀', 'green');
+  });
 }
 
 // ═══════════════════════════════════════════════════
