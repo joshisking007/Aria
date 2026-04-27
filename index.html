@@ -2457,6 +2457,15 @@ EXAMPLE LINES IN THIS VOICE:
 - "i think so"
 - "we can talk about it later if you want"
 
+SCREENSHOT READING RULES — CRITICAL:
+When the user uploads a screenshot of a conversation (WhatsApp, iMessage, Instagram, etc.):
+- Messages on the RIGHT side (darker/coloured bubble, no sender name) = sent BY THE USER
+- Messages on the LEFT side (lighter bubble, may show sender name/number) = sent BY THE OTHER PERSON
+- NEVER confuse which side is which — getting this wrong makes your reaction and reply completely wrong
+- Before reacting, mentally note: "They said X, the user already replied with Y"
+- If the user has already replied in the screenshot, acknowledge that context — don't suggest a reply they already sent
+- Read the FULL thread chronologically top to bottom before forming any opinion
+
 GOLDEN RULES:
 - NEVER sound cheerful, corporate, or artificially warm
 - NEVER use exclamation marks or hype language
@@ -3062,14 +3071,21 @@ async function generateReply() {
   const systemPrompt = buildSystemPrompt();
 
   // Reaction prompt — Aria's personality-first comment
+  const screenshotNote = screenshotBase64
+    ? '\n\nIMPORTANT: A screenshot of the conversation has been included. RIGHT-side bubbles = sent by the USER. LEFT-side bubbles = sent by the other person. Read carefully before reacting — do not confuse who said what.'
+    : '';
+
   const reactionPrompt = currentMode === 'start'
     ? `You are Aria, a witty and alive reply assistant. React to the user wanting to start a conversation with ${currentContact?.name} (${currentContact?.relationship || 'contact'}). Be short, playful, and reactive — like a friend who's in on it. 1-2 sentences max. Don't be generic. Be spicy, fun, or clever. No labels, no quotes.`
-    : `You are Aria, a witty and alive reply assistant. React to this message from ${currentContact?.name} (${currentContact?.relationship || 'contact'}): "${msg}"${contextStr ? '\n\n' + contextStr : ''}. Give your hot take / reaction — be short, playful, a little cheeky. Like "oop, looks like they're testing the waters 👀" or "classic ${currentContact?.name} energy lol". 1-2 punchy sentences max. No labels, no quotes. Just your reaction.`;
+    : `You are Aria, a witty and alive reply assistant. React to this message from ${currentContact?.name} (${currentContact?.relationship || 'contact'}): "${msg}"${contextStr ? '\n\n' + contextStr : ''}${screenshotNote}. Give your hot take / reaction — be short, playful, a little cheeky. Like "oop, looks like they're testing the waters 👀" or "classic ${currentContact?.name} energy lol". 1-2 punchy sentences max. No labels, no quotes. Just your reaction.`;
 
   try {
+    // Pass screenshot to API if one was uploaded
+    const imgPayload = screenshotBase64 || null;
+
     const tasks = [
-      fetchReply(systemPrompt, modeContext + '\n\nSplit into 2-3 short lines. One per line. Output only the messages.'),
-      fetchReply('You are Aria, a sharp witty assistant. Be brief, fun, reactive, alive.', reactionPrompt)
+      fetchReply(systemPrompt, modeContext + '\n\nSplit into 2-3 short lines. One per line. Output only the messages.', imgPayload),
+      fetchReply('You are Aria, a sharp witty assistant. Be brief, fun, reactive, alive.', reactionPrompt, imgPayload)
     ];
 
     if (showAlternatives) {
@@ -3119,14 +3135,28 @@ function showAriaReaction(text) {
   ariaVoice.speak(text);
 }
 
-async function fetchReply(system, userMsg) {
+async function fetchReply(system, userMsg, imageB64 = null) {
+  // Build message content — include screenshot if provided
+  let content;
+  if (imageB64) {
+    content = [
+      {
+        type: 'image',
+        source: { type: 'base64', media_type: 'image/jpeg', data: imageB64 }
+      },
+      { type: 'text', text: userMsg }
+    ];
+  } else {
+    content = userMsg;
+  }
+
   const res = await fetch('https://mmtdtcmhvbruubrjgjrz.supabase.co/functions/v1/aria-ai', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tdGR0Y21odmJydXVicmpnanJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMTU2MDUsImV4cCI6MjA5MjY5MTYwNX0.f2FXAA8GaUeXXE8V8dnwq4NXz3_22H7d5jVA9rAWsTo'
     },
-    body: JSON.stringify({ system, userMsg })
+    body: JSON.stringify({ system, userMsg: content })
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data?.error || 'request failed');
