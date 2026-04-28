@@ -202,6 +202,157 @@ body::after {
 @keyframes fade-in { from{opacity:0} to{opacity:1} }
 @keyframes scale-in { from{opacity:0;transform:scale(0.94)} to{opacity:1;transform:scale(1)} }
 
+/* ─── AUTH GATE ─────────────────────────────────────────────── */
+#authGate {
+  position: fixed; inset: 0; z-index: 2000;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 40px 28px;
+  transition: opacity 0.4s ease;
+}
+#authGate.hiding { opacity: 0; pointer-events: none; }
+
+.gate-orb-wrap { position: relative; margin-bottom: 32px; }
+.gate-orb {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #f9a8d4, #ec4899);
+  box-shadow: 0 0 60px rgba(244,114,182,0.5), 0 0 120px rgba(244,114,182,0.18);
+  animation: breathe 3.5s ease-in-out infinite;
+}
+.gate-ring { position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(244,114,182,0.22);animation:ring-pulse 3.5s ease-in-out infinite; }
+.gate-ring-2 { position:absolute;inset:-18px;border-radius:50%;border:1px solid rgba(244,114,182,0.1);animation:ring-pulse 3.5s ease-in-out infinite 0.5s; }
+
+.gate-title { font-family: 'Instrument Serif', serif; font-size: 38px; letter-spacing: 3px; margin-bottom: 6px; text-align: center; }
+.gate-sub { font-size: 13px; color: var(--muted); text-align: center; line-height: 1.7; margin-bottom: 32px; max-width: 280px; }
+
+.gate-memory-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--rose-dim); border: 1px solid var(--rose-border);
+  border-radius: 20px; padding: 5px 12px;
+  font-size: 11px; color: var(--rose); letter-spacing: 0.5px;
+  margin-bottom: 28px;
+}
+
+.gate-field { width: 100%; max-width: 340px; margin-bottom: 10px; }
+.gate-input {
+  width: 100%; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 14px 16px;
+  color: var(--text); font-size: 15px; font-family: 'DM Sans', sans-serif;
+  outline: none; transition: border-color 0.2s;
+}
+.gate-input:focus { border-color: var(--rose-border); }
+.gate-input::placeholder { color: var(--muted); }
+
+.gate-btn {
+  width: 100%; max-width: 340px;
+  background: linear-gradient(135deg, #f472b6, #ec4899);
+  border: none; border-radius: var(--radius-md);
+  padding: 15px; color: white; font-size: 15px; font-weight: 600;
+  font-family: 'DM Sans', sans-serif; cursor: pointer;
+  transition: opacity 0.2s; margin-bottom: 12px;
+}
+.gate-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.gate-btn:active { opacity: 0.85; }
+
+.gate-sent-wrap { text-align: center; max-width: 320px; }
+.gate-sent-icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--green-dim); border: 1px solid rgba(52,211,153,0.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; margin: 0 auto 16px;
+}
+.gate-sent-title { font-family: 'Instrument Serif', serif; font-size: 22px; margin-bottom: 8px; }
+.gate-sent-email { color: var(--rose); font-size: 14px; margin: 6px 0; font-weight: 500; }
+.gate-sent-sub { font-size: 12px; color: var(--muted); line-height: 1.7; margin-bottom: 20px; }
+
+.gate-skip {
+  background: none; border: none; color: var(--muted);
+  font-size: 12px; font-family: 'DM Sans', sans-serif;
+  cursor: pointer; margin-top: 8px; padding: 8px 16px;
+  border-radius: 20px; transition: color 0.2s;
+}
+.gate-skip:active { color: var(--text2); }
+
+/* ─── MEMORY SCREEN ─────────────────────────────────────────── */
+#memoryScreen { padding-bottom: 80px; }
+
+.memory-header-card {
+  margin: 0 20px 20px;
+  background: linear-gradient(135deg, rgba(244,114,182,0.08), rgba(96,165,250,0.05));
+  border: 1px solid var(--rose-border);
+  border-radius: var(--radius-lg); padding: 20px;
+  display: flex; align-items: center; gap: 16px;
+}
+.memory-orb {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #f9a8d4, #ec4899);
+  box-shadow: 0 0 24px rgba(244,114,182,0.4);
+  flex-shrink: 0;
+}
+.memory-header-info { flex: 1; }
+.memory-header-title { font-family: 'Instrument Serif', serif; font-size: 18px; margin-bottom: 4px; }
+.memory-header-sub { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+.memory-sql-notice {
+  margin: 0 20px 20px;
+  background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.2);
+  border-radius: var(--radius-md); padding: 14px 16px;
+  font-size: 12px; color: var(--amber); line-height: 1.7;
+  display: none;
+}
+.memory-sql-notice code {
+  display: block; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.4);
+  border-radius: 8px; font-size: 10px; color: var(--text2);
+  white-space: pre-wrap; word-break: break-all;
+  font-family: monospace; letter-spacing: 0;
+}
+
+.memory-section { margin: 0 20px 16px; }
+.memory-section-label {
+  font-size: 10px; color: var(--muted); letter-spacing: 2px;
+  margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+}
+.memory-section-label span { flex: 1; }
+.memory-count-badge {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 2px 8px; font-size: 10px; color: var(--muted);
+}
+
+.memory-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 14px 16px;
+  margin-bottom: 8px; transition: border-color 0.2s;
+}
+.memory-card:last-child { margin-bottom: 0; }
+.memory-card-key { font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-bottom: 5px; text-transform: uppercase; }
+.memory-card-value { font-size: 14px; color: var(--text); line-height: 1.55; }
+.memory-card-meta { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.memory-card-source {
+  font-size: 10px; padding: 2px 8px; border-radius: 8px;
+  background: var(--card2); color: var(--muted);
+}
+.memory-card-source.observed { background: var(--blue-dim); color: var(--blue); }
+.memory-card-source.explicit { background: var(--green-dim); color: var(--green); }
+.memory-card-source.inferred { background: var(--rose-dim); color: var(--rose); }
+.memory-confidence-bar { flex: 1; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.memory-confidence-fill { height: 100%; background: var(--rose); border-radius: 2px; transition: width 0.4s ease; }
+
+.memory-empty {
+  text-align: center; padding: 40px 20px;
+  color: var(--muted); font-size: 13px; line-height: 1.7;
+}
+.memory-empty-icon { font-size: 36px; margin-bottom: 12px; }
+
+.memory-learn-btn {
+  width: calc(100% - 40px); margin: 0 20px 20px;
+  background: var(--card); border: 1px solid var(--rose-border);
+  border-radius: var(--radius-md); padding: 14px;
+  color: var(--rose); font-size: 13px; font-family: 'DM Sans', sans-serif;
+  cursor: pointer; transition: all 0.2s;
+}
+.memory-learn-btn:active { background: var(--rose-dim); }
+
 /* ─── INTRO SCREEN ──────────────────────────────────────────── */
 #introScreen { padding-bottom: 0; min-height: 100vh; }
 
@@ -645,6 +796,45 @@ body::after {
 }
 .action-btn-sm:active { border-color: var(--rose-border); color: var(--rose); }
 .action-btn-sm .btn-icon { display: block; font-size: 16px; margin-bottom: 3px; }
+
+/* ─── CONTACT MEMORY CARD ─────────────────────────────────────────── */
+.contact-memory-card {
+  background: linear-gradient(135deg, rgba(244,114,182,0.06), rgba(96,165,250,0.04));
+  border: 1px solid var(--rose-border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  animation: slide-up 0.3s ease both;
+}
+.contact-memory-card:active { background: var(--rose-dim); }
+.contact-memory-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.contact-memory-label {
+  font-size: 10px; color: var(--rose); letter-spacing: 1.5px; font-weight: 500;
+}
+.contact-memory-toggle { font-size: 12px; color: var(--rose); transition: transform 0.2s; }
+.contact-memory-card.expanded .contact-memory-toggle { transform: rotate(180deg); }
+.contact-memory-body {
+  font-size: 12.5px; color: var(--text2); line-height: 1.65; font-style: italic;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  transition: all 0.3s ease;
+}
+.contact-memory-card.expanded .contact-memory-body {
+  -webkit-line-clamp: unset; overflow: visible;
+}
+.contact-memory-events {
+  margin-top: 10px; display: none; flex-direction: column; gap: 4px;
+}
+.contact-memory-card.expanded .contact-memory-events { display: flex; }
+.contact-memory-event {
+  font-size: 10.5px; color: var(--muted); line-height: 1.5;
+  padding: 5px 8px; background: var(--card2); border-radius: 6px;
+  border-left: 2px solid var(--rose-border);
+}
 
 /* Paste area */
 .paste-area { padding: 0 20px; margin-bottom: 12px; }
@@ -2013,6 +2203,215 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 <div class="ambient ambient-3"></div>
 
 <!-- ═══════════════════════════════════════════════
+     AUTH GATE (full-screen lock)
+════════════════════════════════════════════════ -->
+<div id="authGate">
+  <div id="gateDefault">
+    <div class="gate-orb-wrap">
+      <div class="gate-orb"></div>
+      <div class="gate-ring"></div>
+      <div class="gate-ring-2"></div>
+    </div>
+    <div class="gate-title">Aria</div>
+    <div class="gate-sub">your AI texting co-pilot.<br>sign in to unlock memory.</div>
+    <div class="gate-memory-badge"><span>🧠</span> memory engine enabled</div>
+
+    <!-- tab switcher -->
+    <div style="display:flex;gap:0;max-width:340px;width:100%;margin-bottom:20px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:3px;">
+      <button id="gateTabSignin" onclick="gateTab('signin')"
+        style="flex:1;padding:9px;border:none;border-radius:10px;background:var(--rose-dim);color:var(--rose);font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:all 0.2s;">sign in</button>
+      <button id="gateTabSignup" onclick="gateTab('signup')"
+        style="flex:1;padding:9px;border:none;border-radius:10px;background:transparent;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;">create account</button>
+    </div>
+
+    <div class="gate-field">
+      <input class="gate-input" id="gateEmail" type="email" placeholder="email" autocomplete="email"
+        onkeydown="if(event.key==='Enter')document.getElementById('gatePassword').focus()"/>
+    </div>
+    <div class="gate-field">
+      <input class="gate-input" id="gatePassword" type="password" placeholder="password" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')gateSubmit()"/>
+    </div>
+    <div class="gate-field" id="gateConfirmWrap" style="display:none;">
+      <input class="gate-input" id="gateConfirm" type="password" placeholder="confirm password"
+        onkeydown="if(event.key==='Enter')gateSubmit()"/>
+    </div>
+
+    <div id="gateError" style="font-size:12px;color:#f87171;max-width:340px;width:100%;margin-bottom:8px;min-height:18px;text-align:center;"></div>
+
+    <button class="gate-btn" id="gateBtn" onclick="gateSubmit()">sign in →</button>
+    <button class="gate-skip" onclick="gateSkip()">continue without account</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: ARIA'S MEMORY
+════════════════════════════════════════════════ -->
+<div class="screen" id="memoryScreen" style="display:none;">
+  <div class="top-bar">
+    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <div class="aria-mini"></div>
+    <div class="top-bar-info">
+      <div class="top-bar-name">Aria's Memory</div>
+      <div class="top-bar-status" id="memoryStatus">● loading…</div>
+    </div>
+  </div>
+  <div class="memory-header-card">
+    <div class="memory-orb"></div>
+    <div class="memory-header-info">
+      <div class="memory-header-title">What Aria knows about you</div>
+      <div class="memory-header-sub">Every reply teaches Aria more. The more you use her, the better she mirrors your voice.</div>
+    </div>
+  </div>
+  <div class="memory-sql-notice" id="memorySqlNotice">
+    ⚠️ Run this SQL once in your Supabase editor (SQL Editor → New query → paste → Run):
+    <code>-- ════════════════════════════════════════════
+-- ARIA — complete database setup
+-- paste this entire block into the Supabase
+-- SQL Editor and click Run once.
+-- ════════════════════════════════════════════
+
+-- 1. USER PROFILES
+create table if not exists user_profiles (
+  id uuid references auth.users(id) on delete cascade primary key,
+  slang_words text[] default '{}',
+  setting_caps boolean default false,
+  setting_punct boolean default true,
+  setting_emoji boolean default false,
+  current_mood text default 'chill',
+  default_tone text default 'real',
+  energy_level integer default 40,
+  reply_sent_count integer default 0,
+  streak_days integer default 0,
+  last_active_date date,
+  aria_relationship_xp integer default 0,
+  created_at timestamptz default now()
+);
+alter table user_profiles enable row level security;
+create policy "profiles_own" on user_profiles for all using (auth.uid() = id);
+
+-- 2. CONTACTS
+create table if not exists contacts (
+  id bigserial primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  name text not null,
+  initials text,
+  color text default 'rose',
+  relationship text default 'contact',
+  platform text default 'Instagram',
+  preview text default 'no recent messages',
+  time text,
+  silent boolean default false,
+  silent_hours integer default 0,
+  online boolean default false,
+  archived boolean default false,
+  created_at timestamptz default now()
+);
+alter table contacts enable row level security;
+create policy "contacts_own" on contacts for all using (auth.uid() = user_id);
+
+-- 3. REPLY HISTORY
+create table if not exists reply_history (
+  id bigserial primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  contact text,
+  contact_id bigint,
+  original text,
+  reply text,
+  tone text,
+  platform text,
+  time text,
+  created_at timestamptz default now()
+);
+alter table reply_history enable row level security;
+create policy "history_own" on reply_history for all using (auth.uid() = user_id);
+
+-- 4. ARIA MEMORY (user-level writing style + patterns)
+create table if not exists aria_memory (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  category text not null,
+  key text not null,
+  value text not null,
+  confidence real default 0.7,
+  source text default 'observed',
+  updated_at timestamptz default now(),
+  unique(user_id, category, key)
+);
+alter table aria_memory enable row level security;
+create policy "mem_own" on aria_memory for all using (auth.uid() = user_id);
+
+-- 5. CONTACT MEMORIES (per-contact relationship narrative)
+create table if not exists contact_memories (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  contact_id bigint not null,
+  narrative text default '',
+  events jsonb default '[]',
+  signal_counts jsonb default '{}',
+  updated_at timestamptz default now(),
+  unique(user_id, contact_id)
+);
+alter table contact_memories enable row level security;
+create policy "contact_mem_own" on contact_memories for all using (auth.uid() = user_id);
+
+-- 6. GENERATION EVENTS (usage analytics)
+create table if not exists generation_events (
+  id bigserial primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  event_type text,
+  platform text,
+  tone text,
+  mood text,
+  contact_id bigint,
+  created_at timestamptz default now()
+);
+alter table generation_events enable row level security;
+create policy "gen_own" on generation_events for all using (auth.uid() = user_id);
+
+-- 7. AUTO-CREATE PROFILE ON SIGN-UP
+create or replace function handle_new_user()
+returns trigger language plpgsql security definer as $$
+begin
+  insert into user_profiles (id) values (new.id) on conflict do nothing;
+  return new;
+end;
+$$;
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure handle_new_user();
+
+-- 8. STREAK TRIGGER (auto-updates streak_days on reply insert)
+create or replace function update_streak()
+returns trigger language plpgsql security definer as $$
+declare
+  last_date date;
+begin
+  select last_active_date into last_date from user_profiles where id = new.user_id;
+  if last_date is null or last_date < current_date - 1 then
+    update user_profiles set streak_days = 1, last_active_date = current_date,
+      reply_sent_count = reply_sent_count + 1 where id = new.user_id;
+  elsif last_date = current_date - 1 then
+    update user_profiles set streak_days = streak_days + 1, last_active_date = current_date,
+      reply_sent_count = reply_sent_count + 1 where id = new.user_id;
+  else
+    update user_profiles set last_active_date = current_date,
+      reply_sent_count = reply_sent_count + 1 where id = new.user_id;
+  end if;
+  return new;
+end;
+$$;
+drop trigger if exists on_reply_insert on reply_history;
+create trigger on_reply_insert
+  after insert on reply_history
+  for each row execute procedure update_streak();</code>
+  </div>
+  <div id="memoryBody"></div>
+  <button class="memory-learn-btn" onclick="forceMemoryLearn()">🔁 re-learn from my history</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════
      SCREEN: INTRO
 ════════════════════════════════════════════════ -->
 <div class="screen active" id="introScreen">
@@ -2988,6 +3387,10 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
     <span class="menu-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></span>
     <div><div class="menu-item-label">Sign in / Save data</div><div class="menu-item-sub">Sync across devices</div></div>
   </button>
+  <button class="menu-item" id="navMemory" onclick="menuNavTo('memoryScreen','navMemory')">
+    <span class="menu-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></span>
+    <div><div class="menu-item-label">Aria's Memory</div><div class="menu-item-sub">What she knows about you</div></div>
+  </button>
 </div>
 
 <!-- ═══════════════════════════════════════════════
@@ -3152,55 +3555,61 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
     <div class="modal-handle"></div>
     <button class="modal-close" onclick="closeModal('authModal')">×</button>
 
-    <!-- Default state -->
     <div id="authDefault">
-      <div class="auth-orb-wrap">
-        <div class="auth-orb"></div>
-      </div>
+      <div class="auth-orb-wrap"><div class="auth-orb"></div></div>
       <div class="modal-title" style="text-align:center;">welcome to Aria</div>
-      <div class="modal-sub" style="text-align:center;">sign in to save your contacts, history & settings across devices.</div>
+      <div class="modal-sub" style="text-align:center;">sign in to save contacts, history & settings.</div>
 
       <div class="auth-tabs">
         <button class="auth-tab active" id="tabSignin" onclick="switchAuthTab('signin')">Sign in</button>
         <button class="auth-tab" id="tabSignup" onclick="switchAuthTab('signup')">Create account</button>
       </div>
 
-      <!-- Sign-in fields -->
       <div id="authSigninFields">
         <div class="auth-field">
           <div class="auth-field-label">EMAIL</div>
-          <input class="auth-input" id="authEmail" type="email" placeholder="your@email.com" autocomplete="email"/>
+          <input class="auth-input" id="authEmail" type="email" placeholder="your@email.com" autocomplete="email"
+            onkeydown="if(event.key==='Enter')document.getElementById('authPassword').focus()"/>
         </div>
-        <button class="auth-btn" id="authSubmitBtn" onclick="handleAuthSubmit()">Send magic link</button>
-        <p class="auth-note">We'll email you a one-tap sign-in link. No password needed.</p>
+        <div class="auth-field">
+          <div class="auth-field-label">PASSWORD</div>
+          <input class="auth-input" id="authPassword" type="password" placeholder="••••••••" autocomplete="current-password"
+            onkeydown="if(event.key==='Enter')handleAuthSubmit('signin')"/>
+        </div>
+        <div id="authSigninError" style="font-size:12px;color:#f87171;margin-bottom:8px;min-height:16px;"></div>
+        <button class="auth-btn" id="authSubmitBtn" onclick="handleAuthSubmit('signin')">Sign in →</button>
       </div>
 
-      <!-- Sign-up extra fields (hidden by default) -->
       <div id="authSignupFields" style="display:none;">
         <div class="auth-field">
           <div class="auth-field-label">EMAIL</div>
-          <input class="auth-input" id="authEmailSignup" type="email" placeholder="your@email.com" autocomplete="email"/>
+          <input class="auth-input" id="authEmailSignup" type="email" placeholder="your@email.com" autocomplete="email"
+            onkeydown="if(event.key==='Enter')document.getElementById('authPasswordSignup').focus()"/>
         </div>
-        <button class="auth-btn" id="authSignupBtn" onclick="handleAuthSubmit('signup')">Create account</button>
-        <p class="auth-note">We'll send a magic link to verify your email and create your account.</p>
+        <div class="auth-field">
+          <div class="auth-field-label">PASSWORD</div>
+          <input class="auth-input" id="authPasswordSignup" type="password" placeholder="min 6 characters" autocomplete="new-password"
+            onkeydown="if(event.key==='Enter')document.getElementById('authPasswordConfirm').focus()"/>
+        </div>
+        <div class="auth-field">
+          <div class="auth-field-label">CONFIRM PASSWORD</div>
+          <input class="auth-input" id="authPasswordConfirm" type="password" placeholder="repeat password"
+            onkeydown="if(event.key==='Enter')handleAuthSubmit('signup')"/>
+        </div>
+        <div id="authSignupError" style="font-size:12px;color:#f87171;margin-bottom:8px;min-height:16px;"></div>
+        <button class="auth-btn" id="authSignupBtn" onclick="handleAuthSubmit('signup')">Create account →</button>
       </div>
 
       <div class="auth-divider">or</div>
       <button class="auth-skip" onclick="closeModal('authModal')">Continue without account</button>
     </div>
 
-    <!-- Sent state -->
     <div id="authSent" style="display:none;">
       <div class="auth-sent">
-        <div class="auth-sent-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.28h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 21.28 16z"/></svg>
-        </div>
-        <div class="auth-sent-title">Check your inbox</div>
-        <div class="auth-sent-sub">We sent a magic link to</div>
-        <div class="auth-sent-email" id="authSentEmail">—</div>
-        <div class="auth-sent-sub">Tap the link in that email to sign in. You can close this for now.</div>
-        <button class="auth-btn" onclick="closeModal('authModal')" style="margin-top:0;">Got it</button>
-        <button class="auth-skip" style="margin-top:10px;" onclick="resetAuthModal()">Use a different email</button>
+        <div class="auth-sent-icon" style="background:var(--green-dim);border:1px solid rgba(52,211,153,0.25);font-size:28px;">✓</div>
+        <div class="auth-sent-title">you're in</div>
+        <div class="auth-sent-sub">welcome to Aria.</div>
+        <button class="auth-btn" onclick="closeModal('authModal')" style="margin-top:0;">let's go →</button>
       </div>
     </div>
   </div>
@@ -3732,15 +4141,443 @@ window.addEventListener('load', () => {
 
 // ── STORAGE ────────────────────────────────────────────────────────
 
+// ── ARIA MEMORY ENGINE ──────────────────────────────────────────────
+
+const ariaMemory = (() => {
+
+  // In-memory store: { category: { key: { value, confidence, source } } }
+  let store = {};
+  let tableExists = true;
+
+  // ── Load from Supabase ──────────────────────────────────────────
+  async function load() {
+    if (!currentUserId) return;
+    try {
+      const { data, error } = await db.from('aria_memory').select('*').eq('user_id', currentUserId);
+      if (error) {
+        if (error.code === '42P01') { tableExists = false; return; } // table doesn't exist yet
+        throw error;
+      }
+      store = {};
+      (data || []).forEach(row => {
+        if (!store[row.category]) store[row.category] = {};
+        store[row.category][row.key] = { value: row.value, confidence: row.confidence, source: row.source };
+      });
+    } catch(e) { console.warn('ariaMemory.load error', e); }
+  }
+
+  // ── Save a single memory ────────────────────────────────────────
+  async function remember(category, key, value, confidence = 0.7, source = 'observed') {
+    if (!store[category]) store[category] = {};
+    store[category][key] = { value: String(value), confidence, source };
+    if (!currentUserId || !tableExists) return;
+    try {
+      await db.from('aria_memory').upsert({
+        user_id: currentUserId, category, key,
+        value: String(value), confidence, source,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id,category,key' });
+    } catch(e) {
+      if (e?.code === '42P01') tableExists = false;
+      else console.warn('ariaMemory.remember error', e);
+    }
+  }
+
+  // ── Get a value ─────────────────────────────────────────────────
+  function get(category, key) {
+    return store[category]?.[key]?.value || null;
+  }
+
+  // ── Get all memories in a category ─────────────────────────────
+  function getCategory(category) {
+    return store[category] || {};
+  }
+
+  // ── Build rich memory context string for prompts ────────────────
+  function buildContext() {
+    const lines = [];
+    const style = store.writing_style || {};
+    const patterns = store.patterns || {};
+    const emotional = store.emotional || {};
+    const facts = store.facts || {};
+
+    if (Object.keys(style).length) {
+      lines.push('WRITING STYLE:');
+      Object.entries(style).forEach(([k, v]) => lines.push(`  - ${k}: ${v.value}`));
+    }
+    if (Object.keys(patterns).length) {
+      lines.push('BEHAVIORAL PATTERNS:');
+      Object.entries(patterns).forEach(([k, v]) => lines.push(`  - ${k}: ${v.value}`));
+    }
+    if (Object.keys(emotional).length) {
+      lines.push('EMOTIONAL CONTEXT:');
+      Object.entries(emotional).forEach(([k, v]) => lines.push(`  - ${k}: ${v.value}`));
+    }
+    if (Object.keys(facts).length) {
+      lines.push('KNOWN FACTS ABOUT USER:');
+      Object.entries(facts).forEach(([k, v]) => lines.push(`  - ${k}: ${v.value}`));
+    }
+
+    if (!lines.length) return '';
+    return '\n\nARIA\'S MEMORY OF THIS USER:\n' + lines.join('\n');
+  }
+
+  // ── Auto-learn from a generation event ─────────────────────────
+  async function learnFromGeneration({ tone, mood, platform, contact, msg, regen }) {
+    // Track tone preferences
+    const prevToneCount = parseInt(get('patterns', `tone_${tone}_count`) || '0');
+    await remember('patterns', `tone_${tone}_count`, prevToneCount + 1, 0.8, 'observed');
+
+    // Track platform preferences
+    const prevPlatCount = parseInt(get('patterns', `platform_${platform}_count`) || '0');
+    await remember('patterns', `platform_${platform}_count`, prevPlatCount + 1, 0.75, 'observed');
+
+    // Track regeneration behaviour
+    if (regen) {
+      const regenCount = parseInt(get('patterns', 'regen_count') || '0');
+      await remember('patterns', 'regen_count', regenCount + 1, 0.7, 'observed');
+    }
+
+    // Track mood patterns
+    if (mood) {
+      await remember('emotional', 'current_mood_pattern', `often feels ${mood}`, 0.6, 'inferred');
+    }
+
+    // Infer preferred tone from counts
+    const toneCounts = {};
+    Object.entries(store.patterns || {}).forEach(([k, v]) => {
+      if (k.startsWith('tone_') && k.endsWith('_count')) {
+        const t = k.replace('tone_', '').replace('_count', '');
+        toneCounts[t] = parseInt(v.value);
+      }
+    });
+    const maxTone = Object.entries(toneCounts).sort((a,b) => b[1]-a[1])[0];
+    if (maxTone && maxTone[1] >= 3) {
+      await remember('patterns', 'preferred_tone', maxTone[0], 0.85, 'inferred');
+    }
+
+    // Infer platform from counts
+    const platformCounts = {};
+    Object.entries(store.patterns || {}).forEach(([k, v]) => {
+      if (k.startsWith('platform_') && k.endsWith('_count')) {
+        const p = k.replace('platform_', '').replace('_count', '');
+        platformCounts[p] = parseInt(v.value);
+      }
+    });
+    const maxPlatform = Object.entries(platformCounts).sort((a,b) => b[1]-a[1])[0];
+    if (maxPlatform && maxPlatform[1] >= 3) {
+      await remember('patterns', 'preferred_platform', maxPlatform[0], 0.85, 'inferred');
+    }
+  }
+
+  // ── Learn writing style from settings ──────────────────────────
+  async function learnWritingStyle() {
+    if (typeof settings !== 'undefined') {
+      await remember('writing_style', 'uses_capitals', settings.caps ? 'yes' : 'no', 0.9, 'explicit');
+      await remember('writing_style', 'uses_punctuation', settings.punct ? 'yes' : 'no', 0.9, 'explicit');
+      await remember('writing_style', 'uses_emoji', settings.emoji ? 'yes' : 'no', 0.9, 'explicit');
+    }
+    if (typeof slangWords !== 'undefined' && slangWords.length) {
+      await remember('writing_style', 'slang_vocabulary', slangWords.join(', '), 0.95, 'explicit');
+    }
+  }
+
+  // ── Learn from reply history ────────────────────────────────────
+  async function learnFromHistory(history) {
+    if (!history || !history.length) return;
+    await remember('patterns', 'total_replies_sent', history.length, 0.99, 'observed');
+    const recentPlatforms = history.slice(0, 20).map(h => h.platform).filter(Boolean);
+    const platFreq = {};
+    recentPlatforms.forEach(p => platFreq[p] = (platFreq[p] || 0) + 1);
+    const topPlat = Object.entries(platFreq).sort((a,b) => b[1]-a[1])[0];
+    if (topPlat) await remember('patterns', 'most_used_platform', topPlat[0], 0.8, 'inferred');
+  }
+
+  // ── Get full store for rendering ────────────────────────────────
+  function getAll() { return store; }
+
+  // ── Whether table is known to exist ────────────────────────────
+  function isTableAvailable() { return tableExists; }
+
+  return { load, remember, get, getCategory, buildContext, learnFromGeneration, learnWritingStyle, learnFromHistory, getAll, isTableAvailable };
+})();
+
+// ═══════════════════════════════════════════════════════════════════
+//  CONTACT MEMORY ENGINE — persistent per-contact relationship narrative
+// ═══════════════════════════════════════════════════════════════════
+const contactMemory = (() => {
+  // store: { [contactId]: { narrative, events: [], lastUpdated, signalCounts } }
+  let store = {};
+  let tableExists = false;
+
+  // ── Load all contact memories from Supabase ─────────────────────
+  async function load() {
+    if (!currentUserId) return;
+    try {
+      const { data, error } = await db.from('contact_memories').select('*').eq('user_id', currentUserId);
+      if (error) {
+        if (error.code === '42P01') { tableExists = false; return; }
+        throw error;
+      }
+      tableExists = true;
+      store = {};
+      (data || []).forEach(row => {
+        store[row.contact_id] = {
+          narrative:    row.narrative    || '',
+          events:       row.events       || [],
+          signalCounts: row.signal_counts || {},
+          lastUpdated:  row.updated_at
+        };
+      });
+    } catch(e) {
+      tableExists = false;
+      // Silently fall back — try localStorage
+      try {
+        const saved = localStorage.getItem('aria_contact_memories');
+        if (saved) store = JSON.parse(saved);
+        tableExists = true; // use local as source of truth
+      } catch(_) {}
+    }
+  }
+
+  // ── Save a single contact's memory ──────────────────────────────
+  async function saveContact(contactId) {
+    const mem = store[contactId];
+    if (!mem) return;
+    const payload = {
+      contact_id:    contactId,
+      user_id:       currentUserId,
+      narrative:     mem.narrative,
+      events:        mem.events,
+      signal_counts: mem.signalCounts,
+      updated_at:    new Date().toISOString()
+    };
+    if (currentUserId && tableExists) {
+      try {
+        await db.from('contact_memories').upsert(payload, { onConflict: 'user_id,contact_id' });
+      } catch(e) { console.warn('contactMemory save error', e); }
+    }
+    // Always mirror to localStorage as fallback
+    try {
+      localStorage.setItem('aria_contact_memories', JSON.stringify(store));
+    } catch(_) {}
+  }
+
+  // ── Get memory for a contact ─────────────────────────────────────
+  function get(contactId) {
+    return store[contactId] || null;
+  }
+
+  // ── Build a concise context string for the prompt ────────────────
+  function buildContext(contactId) {
+    const mem = store[contactId];
+    if (!mem || !mem.narrative) return '';
+    const lines = [`RELATIONSHIP MEMORY FOR THIS CONTACT:\n${mem.narrative}`];
+    if (mem.events && mem.events.length) {
+      const recent = mem.events.slice(-4);
+      lines.push(`\nRECENT INTERACTION HISTORY:\n${recent.map(e => `  • ${e}`).join('\n')}`);
+    }
+    const sc = mem.signalCounts || {};
+    const signals = [];
+    if (sc.initiated_count > 0) signals.push(`they've started ${sc.initiated_count} of your recent conversations`);
+    if (sc.left_on_read_count > 0) signals.push(`you've left them on read ${sc.left_on_read_count} times`);
+    if (sc.late_night_count > 0) signals.push(`${sc.late_night_count} late-night exchanges`);
+    if (signals.length) lines.push(`\nPATTERNS ARIA HAS NOTICED:\n${signals.map(s => `  • ${s}`).join('\n')}`);
+    return '\n\n' + lines.join('');
+  }
+
+  // ── Push a new narrative event and regenerate the narrative ─────
+  async function recordInteraction(contactId, contactName, relationship, msg, reply, context) {
+    if (!store[contactId]) {
+      store[contactId] = { narrative: '', events: [], signalCounts: {}, lastUpdated: null };
+    }
+    const mem = store[contactId];
+
+    // Build a compact event string
+    const hour = new Date().getHours();
+    const timeHint = hour >= 23 || hour < 4 ? ' (late night)' : '';
+    const eventLine = `[${new Date().toLocaleDateString('en',{month:'short',day:'numeric'})}${timeHint}] They said: "${msg.slice(0,80)}${msg.length>80?'…':''}" — you replied`;
+    mem.events.push(eventLine);
+    if (mem.events.length > 20) mem.events.shift(); // keep rolling 20
+
+    // Track signal counts
+    const sc = mem.signalCounts;
+    if (hour >= 23 || hour < 4) sc.late_night_count = (sc.late_night_count || 0) + 1;
+
+    // Every 3 interactions (or first time), regenerate the narrative via Claude
+    const totalEvents = mem.events.length;
+    if (totalEvents === 1 || totalEvents % 3 === 0) {
+      await regenerateNarrative(contactId, contactName, relationship, mem);
+    }
+
+    await saveContact(contactId);
+  }
+
+  // ── Record when user leaves someone on read ──────────────────────
+  function recordSilent(contactId, hours) {
+    if (!store[contactId]) store[contactId] = { narrative: '', events: [], signalCounts: {}, lastUpdated: null };
+    const sc = store[contactId].signalCounts;
+    if (hours >= 2) sc.left_on_read_count = (sc.left_on_read_count || 0) + 1;
+  }
+
+  // ── Use Claude to synthesise a narrative from events ────────────
+  async function regenerateNarrative(contactId, contactName, relationship, mem) {
+    const apiKey = document.getElementById('apiKeyInput')?.value?.trim() || localStorage.getItem('aria_api_key') || '';
+    if (!apiKey) return;
+
+    const oldNarrative = mem.narrative || 'No prior narrative — this is the first one.';
+    const eventsText = mem.events.join('\n');
+    const sc = mem.signalCounts || {};
+
+    const prompt = `You are building a private relationship memory for an AI texting assistant called Aria.
+
+Contact: ${contactName} (${relationship || 'contact'})
+Prior narrative: ${oldNarrative}
+
+Recent interactions logged:
+${eventsText}
+
+Signal counts:
+- Times they initiated: ${sc.initiated_count || 0}
+- Times left on read: ${sc.left_on_read_count || 0}
+- Late-night exchanges: ${sc.late_night_count || 0}
+
+Write an updated relationship narrative in 2-4 sentences. First person from Aria's perspective ("You and ${contactName}…"). Be specific and honest — name real patterns, tensions, warmth, or distance. Don't be generic. This is a private internal note, so be candid. Examples of good narrative: "You and Maya have been drifting lately — she's been the one texting first for the last month and your replies have been getting shorter. There's warmth there but something feels unresolved." Output ONLY the narrative paragraph. No labels, no preamble.`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 200,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.content?.[0]?.text?.trim();
+        if (text) mem.narrative = text;
+      }
+    } catch(e) { console.warn('contactMemory narrative gen error', e); }
+  }
+
+  // ── Manually set a narrative fact (from contact profile edit) ────
+  async function setManualNote(contactId, note) {
+    if (!store[contactId]) store[contactId] = { narrative: '', events: [], signalCounts: {}, lastUpdated: null };
+    const mem = store[contactId];
+    // Prepend the manual note to the narrative
+    mem.narrative = note + (mem.narrative ? '\n\n' + mem.narrative : '');
+    await saveContact(contactId);
+  }
+
+  // ── Clear memory for a contact ───────────────────────────────────
+  async function clearContact(contactId) {
+    delete store[contactId];
+    if (currentUserId && tableExists) {
+      try { await db.from('contact_memories').delete().eq('user_id', currentUserId).eq('contact_id', contactId); } catch(_) {}
+    }
+    try { localStorage.setItem('aria_contact_memories', JSON.stringify(store)); } catch(_) {}
+  }
+
+  function getAll() { return store; }
+  function isTableAvailable() { return tableExists; }
+  function setTableExists(v) { tableExists = v; }
+
+  return { load, get, buildContext, recordInteraction, recordSilent, setManualNote, clearContact, getAll, isTableAvailable, setTableExists };
+})();
+
 // ── AUTH ────────────────────────────────────────────────────────────
 
 async function initAuth() {
   const { data: { session } } = await db.auth.getSession();
   if (session?.user) {
     currentUserId = session.user.id;
+    dismissAuthGate();
     await loadFromSupabase();
+    await ariaMemory.load();
+  } else {
+    // Listen for auth state changes (e.g. magic link return)
+    db.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user && !currentUserId) {
+        currentUserId = session.user.id;
+        dismissAuthGate();
+        await loadFromSupabase();
+        await ariaMemory.load();
+      }
+    });
   }
-  // No blocking prompt — user can trigger sign-in from menu when ready
+}
+
+function dismissAuthGate() {
+  const gate = document.getElementById('authGate');
+  if (!gate) return;
+  gate.classList.add('hiding');
+  setTimeout(() => { gate.style.display = 'none'; }, 450);
+}
+
+let gateMode = 'signin';
+
+function gateTab(mode) {
+  gateMode = mode;
+  const isSignin = mode === 'signin';
+  document.getElementById('gateTabSignin').style.background = isSignin ? 'var(--rose-dim)' : 'transparent';
+  document.getElementById('gateTabSignin').style.color = isSignin ? 'var(--rose)' : 'var(--muted)';
+  document.getElementById('gateTabSignup').style.background = isSignin ? 'transparent' : 'var(--rose-dim)';
+  document.getElementById('gateTabSignup').style.color = isSignin ? 'var(--muted)' : 'var(--rose)';
+  document.getElementById('gateConfirmWrap').style.display = isSignin ? 'none' : '';
+  document.getElementById('gateBtn').textContent = isSignin ? 'sign in →' : 'create account →';
+  document.getElementById('gatePassword').placeholder = isSignin ? 'password' : 'password (min 6 chars)';
+  document.getElementById('gatePassword').autocomplete = isSignin ? 'current-password' : 'new-password';
+  document.getElementById('gateError').textContent = '';
+}
+
+async function gateSubmit() {
+  const email    = (document.getElementById('gateEmail').value || '').trim();
+  const password = document.getElementById('gatePassword').value || '';
+  const errEl    = document.getElementById('gateError');
+  errEl.textContent = '';
+
+  if (!email || !email.includes('@')) { errEl.textContent = 'enter a valid email'; return; }
+  if (password.length < 6) { errEl.textContent = 'password must be at least 6 characters'; return; }
+
+  if (gateMode === 'signup') {
+    const confirm = document.getElementById('gateConfirm').value || '';
+    if (password !== confirm) { errEl.textContent = 'passwords don\'t match'; return; }
+  }
+
+  const btn = document.getElementById('gateBtn');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = gateMode === 'signin' ? 'signing in…' : 'creating account…';
+
+  let error;
+  if (gateMode === 'signin') {
+    ({ error } = await db.auth.signInWithPassword({ email, password }));
+  } else {
+    ({ error } = await db.auth.signUp({ email, password }));
+  }
+
+  btn.disabled = false;
+  btn.textContent = orig;
+
+  if (error) {
+    if (error.message.includes('Invalid login')) errEl.textContent = 'wrong email or password';
+    else if (error.message.includes('already registered')) errEl.textContent = 'account already exists — sign in instead';
+    else errEl.textContent = error.message;
+    return;
+  }
+
+  // success — session triggers onAuthStateChange which calls dismissAuthGate
+  if (gateMode === 'signup') {
+    errEl.style.color = 'var(--green)';
+    errEl.textContent = 'account created ✓ signing you in…';
+  }
+}
+
+function gateSkip() {
+  dismissAuthGate();
+  showToast('continuing without account — memory won\'t persist');
 }
 
 function openAuthModal() {
@@ -3764,24 +4601,55 @@ function switchAuthTab(tab) {
   document.getElementById('tabSignup').classList.toggle('active', !isSignin);
   document.getElementById('authSigninFields').style.display = isSignin ? '' : 'none';
   document.getElementById('authSignupFields').style.display = isSignin ? 'none' : '';
+  document.getElementById('authSigninError').textContent = '';
+  document.getElementById('authSignupError').textContent = '';
 }
 
 async function handleAuthSubmit(mode) {
-  const emailField = mode === 'signup'
-    ? document.getElementById('authEmailSignup')
-    : document.getElementById('authEmail');
-  const email = (emailField?.value || '').trim();
-  if (!email || !email.includes('@')) { showToast('enter a valid email'); return; }
-  const btnId = mode === 'signup' ? 'authSignupBtn' : 'authSubmitBtn';
+  const isSignin = mode === 'signin';
+  const errId = isSignin ? 'authSigninError' : 'authSignupError';
+  const errEl = document.getElementById(errId);
+  errEl.textContent = '';
+
+  const email = isSignin
+    ? (document.getElementById('authEmail').value || '').trim()
+    : (document.getElementById('authEmailSignup').value || '').trim();
+  const password = isSignin
+    ? (document.getElementById('authPassword').value || '')
+    : (document.getElementById('authPasswordSignup').value || '');
+
+  if (!email || !email.includes('@')) { errEl.textContent = 'enter a valid email'; return; }
+  if (password.length < 6) { errEl.textContent = 'password must be at least 6 characters'; return; }
+
+  if (!isSignin) {
+    const confirm = document.getElementById('authPasswordConfirm').value || '';
+    if (password !== confirm) { errEl.textContent = 'passwords don\'t match'; return; }
+  }
+
+  const btnId = isSignin ? 'authSubmitBtn' : 'authSignupBtn';
   const btn = document.getElementById(btnId);
-  const origText = btn.textContent;
+  const orig = btn.textContent;
   btn.disabled = true;
-  btn.textContent = 'Sending…';
-  const { error } = await db.auth.signInWithOtp({ email });
+  btn.textContent = isSignin ? 'signing in…' : 'creating account…';
+
+  let error;
+  if (isSignin) {
+    ({ error } = await db.auth.signInWithPassword({ email, password }));
+  } else {
+    ({ error } = await db.auth.signUp({ email, password }));
+  }
+
   btn.disabled = false;
-  btn.textContent = origText;
-  if (error) { showToast('sign-in failed: ' + error.message); return; }
-  document.getElementById('authSentEmail').textContent = email;
+  btn.textContent = orig;
+
+  if (error) {
+    if (error.message.includes('Invalid login')) errEl.textContent = 'wrong email or password';
+    else if (error.message.includes('already registered')) errEl.textContent = 'account exists — sign in instead';
+    else errEl.textContent = error.message;
+    return;
+  }
+
+  // success
   document.getElementById('authDefault').style.display = 'none';
   document.getElementById('authSent').style.display = '';
 }
@@ -3818,6 +4686,11 @@ async function loadFromSupabase() {
     updateStats();
     renderSlangPills();
     renderHistory();
+
+    // ── Bootstrap memory from loaded data ──────────────────────────
+    ariaMemory.learnWritingStyle();
+    ariaMemory.learnFromHistory(replyHistory);
+    await contactMemory.load();
   } catch(e) {
     console.warn('Supabase load error — falling back to localStorage', e);
     loadFromLocalStorage();
@@ -3931,7 +4804,7 @@ function updateStats() {
 
 // ── SCREEN NAV ──────────────────────────────────────────────────────
 
-const screensWithNav = ['introScreen','historyScreen','moodScreen','profileScreen','glowupScreen','redflagScreen','vibeScreen','queueScreen','contactProfileScreen','onboardScreen','presendScreen'];
+const screensWithNav = ['introScreen','historyScreen','moodScreen','profileScreen','glowupScreen','redflagScreen','vibeScreen','queueScreen','contactProfileScreen','onboardScreen','presendScreen','memoryScreen'];
 
 function showScreen(id) {
   ariaVoice.stop();
@@ -3965,6 +4838,7 @@ function showScreen(id) {
   else if (id === 'vibeScreen') { renderVibeContactGrid(); }
   else if (id === 'queueScreen') { renderQueue(); }
   else if (id === 'chatScreen') { setNavActive('navChat'); initChat(); }
+  else if (id === 'memoryScreen') { setNavActive('navMemory'); renderMemoryScreen(); }
 
   window.scrollTo(0, 0);
 }
@@ -4199,8 +5073,24 @@ function selectContact(id) {
 
   // Populate convo area
   const convoArea = document.getElementById('convoArea');
+
+  // ── Render contact memory narrative card ──────────────────────────
+  const contactMem = contactMemory.get(currentContact.id);
+  let memCard = '';
+  if (contactMem && contactMem.narrative) {
+    memCard = `
+      <div class="contact-memory-card" id="contactMemCard" onclick="this.classList.toggle('expanded')">
+        <div class="contact-memory-header">
+          <span class="contact-memory-label">🧠 ARIA REMEMBERS</span>
+          <span class="contact-memory-toggle">▾</span>
+        </div>
+        <div class="contact-memory-body">${contactMem.narrative}</div>
+        ${contactMem.events && contactMem.events.length ? `<div class="contact-memory-events">${contactMem.events.slice(-2).map(e=>`<div class="contact-memory-event">${e}</div>`).join('')}</div>` : ''}
+      </div>`;
+  }
+
   if (currentContact.preview && currentContact.preview !== 'no recent messages') {
-    convoArea.innerHTML = `
+    convoArea.innerHTML = memCard + `
       <div class="convo-label">LAST FROM ${currentContact.name.toUpperCase()}</div>
       <div class="convo-thread">
         <div class="thread-msg them">${currentContact.preview}</div>
@@ -4208,7 +5098,7 @@ function selectContact(id) {
       </div>
     `;
   } else {
-    convoArea.innerHTML = `<div class="convo-label">PASTE THEIR MESSAGE BELOW</div>`;
+    convoArea.innerHTML = memCard + `<div class="convo-label">PASTE THEIR MESSAGE BELOW</div>`;
   }
 }
 
@@ -4285,6 +5175,16 @@ function buildSystemPrompt() {
   // Silent hours note
   if (currentContact?.silentHours > 3) {
     system += `\n\nNOTE: The user has been leaving ${currentContact.name} on read for ${currentContact.silentHours} hours. Factor this in — the reply might need to acknowledge the delay naturally.`;
+  }
+
+  // ── Inject Aria's memory of the user ────────────────────────────
+  const memCtx = ariaMemory.buildContext();
+  if (memCtx) system += memCtx;
+
+  // ── Inject contact-specific relationship memory ──────────────────
+  if (currentContact?.id) {
+    const contactCtx = contactMemory.buildContext(currentContact.id);
+    if (contactCtx) system += contactCtx;
   }
 
   return system;
@@ -4431,6 +5331,33 @@ Read the entire arc. Notice the tone shift, what's been building, what the other
     replySentCount++;
     gainRelationshipXP(1);
     updateStats();
+
+    // ── Auto-learn from this interaction ──────────────────────────
+    ariaMemory.learnFromGeneration({
+      tone: currentTone,
+      mood: currentMood,
+      platform: currentPlatform,
+      contact: currentContact,
+      msg: input,
+      regen: false
+    });
+    ariaMemory.learnWritingStyle();
+
+    // ── Record in per-contact relationship memory ──────────────────
+    if (currentContact?.id && msg) {
+      contactMemory.recordInteraction(
+        currentContact.id,
+        currentContact.name,
+        currentContact.relationship,
+        msg,
+        currentReplies.join(' '),
+        contextStr
+      );
+      // Track silent hours as "left on read" signal
+      if (currentContact.silentHours >= 2) {
+        contactMemory.recordSilent(currentContact.id, currentContact.silentHours);
+      }
+    }
 
     // Fire-and-forget: log generation event
     if (currentUserId) {
@@ -5289,11 +6216,93 @@ function openContactProfile(id) {
   }
 
   showScreen('contactProfileScreen');
+
+  // ── Render relationship memory section ──────────────────────────
+  let memSection = document.getElementById('cpMemorySection');
+  if (!memSection) {
+    // Create and insert before history
+    const histEl = document.querySelector('.contact-profile-history');
+    if (histEl) {
+      memSection = document.createElement('div');
+      memSection.id = 'cpMemorySection';
+      memSection.style.cssText = 'padding: 0 20px; margin-bottom: 20px;';
+      histEl.parentNode.insertBefore(memSection, histEl);
+    }
+  }
+  if (memSection) {
+    const mem = contactMemory.get(profileContact.id);
+    if (mem && mem.narrative) {
+      memSection.innerHTML = `
+        <div class="contact-profile-history-label" style="margin-bottom:10px;">🧠 ARIA'S MEMORY</div>
+        <div style="background:linear-gradient(135deg,rgba(244,114,182,0.07),rgba(96,165,250,0.04));border:1px solid var(--rose-border);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:10px;">
+          <div style="font-size:13px;color:var(--text2);line-height:1.65;font-style:italic;margin-bottom:12px;">${mem.narrative}</div>
+          ${mem.events && mem.events.length ? `
+            <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;">
+              ${mem.events.slice(-3).map(e=>`<div style="font-size:11px;color:var(--muted);padding:5px 8px;background:var(--card2);border-radius:6px;border-left:2px solid var(--rose-border);">${e}</div>`).join('')}
+            </div>` : ''}
+          <div style="display:flex;gap:8px;margin-bottom:10px;">
+            ${Object.entries(mem.signalCounts||{}).filter(([,v])=>v>0).map(([k,v])=>`
+              <div style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;text-align:center;">
+                <div style="font-size:16px;font-weight:600;color:var(--rose);">${v}</div>
+                <div style="font-size:9px;color:var(--muted);margin-top:2px;">${k.replace(/_/g,' ')}</div>
+              </div>`).join('')}
+          </div>
+          <button onclick="openAddMemoryNote(${profileContact.id})" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px;color:var(--muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--rose-border)';this.style.color='var(--rose)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">+ add a note for Aria</button>
+        </div>
+      `;
+    } else {
+      memSection.innerHTML = `
+        <div class="contact-profile-history-label" style="margin-bottom:10px;">🧠 ARIA'S MEMORY</div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 16px;text-align:center;">
+          <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">Aria hasn't built a memory for ${profileContact.name} yet.<br>Generate a reply with them to start.</div>
+          <button onclick="openAddMemoryNote(${profileContact.id})" style="background:var(--card2);border:1px solid var(--rose-border);border-radius:var(--radius-sm);padding:9px 18px;color:var(--rose);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;">+ tell Aria something about them</button>
+        </div>
+      `;
+    }
+  }
 }
 
 function replyFromProfile() {
   if (!profileContact) return;
   selectContact(profileContact.id);
+}
+
+function openAddMemoryNote(contactId) {
+  const contact = contacts.find(c => c.id === contactId);
+  if (!contact) return;
+  // Create a quick inline modal
+  const existing = document.getElementById('memNoteModal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'memNoteModal';
+  modal.style.cssText = `position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;`;
+  modal.innerHTML = `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;">
+      <div style="width:40px;height:4px;border-radius:2px;background:var(--border-hover);margin:0 auto 20px;"></div>
+      <div style="font-family:'Instrument Serif',serif;font-size:20px;margin-bottom:6px;">Tell Aria something</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;">This gets added to Aria's memory for ${contact.name} and shapes how she writes their replies.</div>
+      <textarea id="memNoteInput" rows="3" placeholder="e.g. we had a falling out in march. things have been weird since." style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;resize:none;outline:none;line-height:1.6;"></textarea>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button onclick="document.getElementById('memNoteModal').remove()" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-md);padding:13px;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">cancel</button>
+        <button onclick="saveMemoryNote(${contactId})" style="flex:2;background:linear-gradient(135deg,#be185d,#db2777,#f472b6);border:none;border-radius:var(--radius-md);padding:13px;color:#fff;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;">save to Aria's memory →</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  setTimeout(() => document.getElementById('memNoteInput')?.focus(), 100);
+}
+
+async function saveMemoryNote(contactId) {
+  const note = document.getElementById('memNoteInput')?.value?.trim();
+  if (!note) { showToast('write something first'); return; }
+  document.getElementById('memNoteModal')?.remove();
+  await contactMemory.setManualNote(contactId, note);
+  showToast('saved to Aria\'s memory ✓', 'green');
+  // Re-render if still on contact profile screen
+  if (activeScreen === 'contactProfileScreen' && profileContact?.id === contactId) {
+    openContactProfile(contactId);
+  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -6117,6 +7126,86 @@ function queueSnooze() {
   queueContacts.splice(queueIdx, 1);
   showToast('snoozed 😴');
   renderQueue();
+}
+
+// ═══════════════════════════════════════════════════
+// ARIA MEMORY SCREEN
+// ═══════════════════════════════════════════════════
+
+function renderMemoryScreen() {
+  const body = document.getElementById('memoryBody');
+  const statusEl = document.getElementById('memoryStatus');
+  const sqlNotice = document.getElementById('memorySqlNotice');
+
+  if (!currentUserId) {
+    statusEl.textContent = '● not signed in';
+    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🔐</div><div>Sign in to save and view Aria's memory of you.<br><br>Your interactions still teach Aria during this session — but memory won't persist without an account.</div></div>`;
+    sqlNotice.style.display = 'none';
+    return;
+  }
+
+  if (!ariaMemory.isTableAvailable()) {
+    statusEl.textContent = '● setup needed';
+    sqlNotice.style.display = 'block';
+    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">⚠️</div><div>Run the SQL above in your Supabase editor to enable persistent memory.</div></div>`;
+    return;
+  }
+
+  sqlNotice.style.display = 'none';
+  const all = ariaMemory.getAll();
+  const categories = Object.keys(all);
+
+  if (!categories.length) {
+    statusEl.textContent = '● learning…';
+    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🌱</div><div>Aria hasn't learned much about you yet.<br>Use her to generate a few replies and she'll start building your profile.</div></div>`;
+    return;
+  }
+
+  const totalKeys = categories.reduce((sum, cat) => sum + Object.keys(all[cat]).length, 0);
+  statusEl.textContent = `● ${totalKeys} things remembered`;
+
+  const categoryLabels = {
+    writing_style: '✍️ YOUR WRITING STYLE',
+    patterns: '📊 BEHAVIORAL PATTERNS',
+    emotional: '💫 EMOTIONAL CONTEXT',
+    facts: '🗂 KNOWN FACTS',
+    relationships: '👥 RELATIONSHIP DYNAMICS'
+  };
+
+  body.innerHTML = categories.map(cat => {
+    const entries = Object.entries(all[cat]);
+    if (!entries.length) return '';
+    return `
+      <div class="memory-section">
+        <div class="memory-section-label">
+          <span>${categoryLabels[cat] || cat.toUpperCase()}</span>
+          <span class="memory-count-badge">${entries.length}</span>
+        </div>
+        ${entries.map(([key, mem]) => `
+          <div class="memory-card">
+            <div class="memory-card-key">${key.replace(/_/g, ' ')}</div>
+            <div class="memory-card-value">${mem.value}</div>
+            <div class="memory-card-meta">
+              <span class="memory-card-source ${mem.source}">${mem.source}</span>
+              <div class="memory-confidence-bar">
+                <div class="memory-confidence-fill" style="width:${Math.round((mem.confidence||0.7)*100)}%"></div>
+              </div>
+              <span style="font-size:10px;color:var(--muted)">${Math.round((mem.confidence||0.7)*100)}%</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }).join('');
+}
+
+async function forceMemoryLearn() {
+  showToast('re-learning from your history…');
+  await ariaMemory.learnWritingStyle();
+  await ariaMemory.learnFromHistory(replyHistory);
+  await ariaMemory.load();
+  renderMemoryScreen();
+  showToast('memory updated ✓', 'green');
 }
 
 </script>
