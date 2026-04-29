@@ -2108,15 +2108,27 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 
 /* ─── HOME INSIGHT BANNER ────────────────────── */
 .aria-insight-banner {
-  margin: 0 20px 16px; padding: 14px 16px;
+  margin: 0 20px 16px;
   background: var(--card); border: 1px solid var(--rose-border);
   border-radius: 6px 16px 16px 16px;
   display: none; animation: slide-up 0.4s ease 0.8s both;
+  overflow: hidden;
 }
-.aria-insight-banner.visible { display: flex; gap: 10px; align-items: flex-start; }
-.aria-insight-orb { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; overflow: hidden; }
-.aria-insight-orb img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
-.aria-insight-text { font-size: 13px; color: var(--text2); line-height: 1.6; font-style: italic; }
+.aria-insight-banner.visible { display: flex; align-items: stretch; }
+.aria-insight-photo {
+  width: 90px; min-width: 90px;
+  flex-shrink: 0; overflow: hidden;
+}
+.aria-insight-photo img {
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center top;
+  display: block;
+}
+.aria-insight-body {
+  padding: 14px 14px 14px 12px;
+  display: flex; flex-direction: column; justify-content: center;
+}
+.aria-insight-text { font-size: 13px; color: var(--text2); line-height: 1.65; font-style: italic; }
 
 /* ─── TONE QUICK-STRIP (reply screen) ──────── */
 .tone-strip { padding: 0 20px; margin-bottom: 12px; overflow-x: auto; display: flex; gap: 8px; scrollbar-width: none; -ms-overflow-style: none; }
@@ -2287,8 +2299,10 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 
     <!-- Aria insight banner -->
     <div class="aria-insight-banner" id="ariaInsightBanner">
-      <div class="aria-insight-orb"><img src="" id="insightOrbImg" /></div>
-      <div class="aria-insight-text" id="ariaInsightText"></div>
+      <div class="aria-insight-photo"><img src="" id="insightOrbImg" /></div>
+      <div class="aria-insight-body">
+        <div class="aria-insight-text" id="ariaInsightText"></div>
+      </div>
     </div>
 
     <!-- Stats strip -->
@@ -6153,43 +6167,78 @@ async function saveMemoryNote(contactId) {
 // FEATURE 3: HOME INSIGHT BANNER
 // ═══════════════════════════════════════════════════
 
-async function loadHomeInsight() {
+const ariaInsightCards = [
+  // cunning — she's clocked everything and she's ready
+  {
+    img: 'https://i.imgur.com/aku1uwo.png',
+    objPos: 'center top',
+    lines: [
+      "your inbox is a crime scene and i already know who did it.",
+      "i've been watching your patterns. you type fast when you're nervous.",
+      "you left them on read but your streak didn't survive. interesting choice.",
+      "four people are waiting. i'm not judging — i'm just noting everything."
+    ]
+  },
+  // hopeful — she's rooting for you, genuinely
+  {
+    img: 'https://i.imgur.com/ji329r1.png',
+    objPos: 'center top',
+    lines: [
+      "today could be the day you actually reply first. just saying.",
+      "your streak's still alive. don't let it die over a bad opener.",
+      "one good text can change the whole energy. i'll help you write it.",
+      "i think today's a good day. your inbox agrees."
+    ]
+  },
+  // being silly — light, teasing, not taking it seriously
+  {
+    img: 'https://i.imgur.com/68qFlMp.png',
+    objPos: 'center top',
+    lines: [
+      "you opened the app. bold move. let's see if you follow through.",
+      "the audacity to have a 0-day streak and still show up here. respect.",
+      "no pressure but they've been staring at that blue tick for 6 hours.",
+      "i'm not saying you're bad at texting. i'm just saying i exist for a reason."
+    ]
+  },
+  // disappointed — she expected better, but she's still here
+  {
+    img: 'https://i.imgur.com/OncPXzL.png',
+    objPos: 'center top',
+    lines: [
+      "we had a streak going. we had something real. and then — nothing.",
+      "they texted twice. you opened it. closed it. opened it again. come on.",
+      "your read receipts are out here doing damage you haven't even measured yet.",
+      "i'm not mad. i'm just aware of exactly how long you've been avoiding this."
+    ]
+  },
+  // urgency — no time to waste, move now
+  {
+    img: 'https://i.imgur.com/ZENuLRe.png',
+    objPos: 'center top',
+    lines: [
+      "okay we actually need to handle your inbox right now.",
+      "that message has been sitting there long enough. i'll draft it, you send it.",
+      "people don't wait forever. let's fix this before the window closes.",
+      "your reply queue is not a vibe. let's go."
+    ]
+  }
+];
+
+function loadHomeInsight() {
   const banner = document.getElementById('ariaInsightBanner');
   const textEl = document.getElementById('ariaInsightText');
-  if (!banner || !textEl) return;
+  const imgEl = document.getElementById('insightOrbImg');
+  if (!banner || !textEl || !imgEl) return;
 
-  // Set orb image
-  const orbImg = document.getElementById('insightOrbImg');
-  const mainImg = document.querySelector('img.aria-orb');
-  if (orbImg && mainImg) orbImg.src = mainImg.src;
+  // Pick a random card and a random line within it
+  const card = ariaInsightCards[Math.floor(Math.random() * ariaInsightCards.length)];
+  const line = card.lines[Math.floor(Math.random() * card.lines.length)];
 
-  // Build insight context
-  const pending = contacts.filter(c => c.silent).length;
-  const streak = streakDays;
-  const topTone = currentTone !== 'natural' ? currentTone : currentMood;
-  const totalReplies = replySentCount;
-
-  // Rotate between different insight types
-  const insightType = Math.floor(Date.now() / (1000 * 60 * 60)) % 4;
-  let insightPrompt = '';
-
-  if (insightType === 0 && pending > 0) {
-    insightPrompt = `You are Aria. The user has ${pending} contacts waiting on a reply and a ${streak}-day streak. Give a short punchy greeting — like a friend who noticed. 1 sentence. Be alive and witty. No labels.`;
-  } else if (insightType === 1 && streak > 0) {
-    insightPrompt = `You are Aria. The user is on a ${streak}-day reply streak with ${totalReplies} total replies sent. React to this — be encouraging but not annoying. 1 sentence max. Be real.`;
-  } else if (insightType === 2) {
-    insightPrompt = `You are Aria. The user has been using ${topTone} tone most. Make a quick sassy observation about their texting personality. 1 punchy sentence. Be fun.`;
-  } else {
-    insightPrompt = `You are Aria. Say a short random thing you'd say if you just noticed the user opened the app — like a friend who's been waiting. 1 sentence. Be playful or cheeky.`;
-  }
-
-  try {
-    const text = await fetchReply('You are Aria — witty, alive, 1 sentence only.', insightPrompt);
-    if (text?.trim()) {
-      textEl.textContent = text.trim();
-      banner.classList.add('visible');
-    }
-  } catch(e) {}
+  imgEl.src = card.img;
+  imgEl.style.objectPosition = card.objPos;
+  textEl.textContent = line;
+  banner.classList.add('visible');
 }
 
 // ═══════════════════════════════════════════════════
