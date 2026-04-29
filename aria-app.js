@@ -2926,6 +2926,8 @@ function streamTextWithVoice(el, fullText, emotion, doSpeak) {
       } else {
         clearInterval(chatStreamInterval);
         chatIsTyping = false;
+        const sendBtn = document.getElementById('chatSendBtn');
+        if (sendBtn) sendBtn.disabled = false;
       }
     }, wordInterval);
 
@@ -3045,15 +3047,14 @@ async function sendChatMessage() {
     // After Aria replies, check if Long Game is relevant
     setTimeout(() => maybeSuggestLongGame(text), 1500);
 
-    chatIsTyping = false;
+    // NOTE: chatIsTyping is reset inside streamTextWithVoice once streaming completes
 
   } catch(e) {
     console.error('chat error:', e);
     appendAriaMessage("something went wrong on my end. try again?", 'soft', false);
     chatIsTyping = false;
+    document.getElementById('chatSendBtn').disabled = false;
   }
-
-  document.getElementById('chatSendBtn').disabled = false;
 }
 
 async function writeChatToMemory(recentMessages) {
