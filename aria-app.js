@@ -2798,26 +2798,22 @@ function initChat() {
             content: m.content
           });
         });
-        // Render previous messages
-        const cutoff = history.length > 6 ? history.length - 6 : 0;
-        if (cutoff > 0) {
-          const older = document.createElement('div');
-          older.className = 'chat-date-label';
-          older.textContent = `— ${cutoff} earlier messages loaded —`;
-          msgs.appendChild(older);
-        }
-        history.slice(cutoff).forEach(m => {
+        // Render ALL previous messages instantly — silent, no animation, no streaming
+        history.forEach(m => {
           if (m.role === 'user') appendUserMessage(m.content, true);
           else appendAriaMessage(m.content, m.emotion_tag || 'neutral', false, true);
         });
 
-        // Clear divider between old and new
+        // Divider so user knows where history ends and new session begins
         const divider = document.createElement('div');
         divider.className = 'chat-date-label';
-        divider.textContent = '— now —';
-        divider.style.cssText = 'margin: 16px 0; opacity: 0.5;';
+        divider.style.cssText = 'margin: 16px 0; opacity: 0.4; font-size: 10px;';
+        divider.textContent = '— new session —';
         msgs.appendChild(divider);
-        // Aria acknowledges returning
+
+        scrollChatToBottom();
+
+        // Aria greets them back
         const returns = [
           "you're back. pick up where we left off?",
           "hey, i remember you. what's on your mind now.",
@@ -2853,16 +2849,16 @@ function updateChatMoodPill(emotion) {
   pill.style.background = meta.color.replace('0.7)', '0.12)').replace('0.5)', '0.08)').replace('0.8)', '0.15)').replace('0.6)', '0.1)');
 }
 
-function appendAriaMessage(text, emotion, doSpeak = true, silent = false) {
+function appendAriaMessage(text, emotion, doSpeak = true) {
   const msgs = document.getElementById('chatMessages');
   const meta = EMOTION_META[emotion] || EMOTION_META.neutral;
 
   const wrap = document.createElement('div');
   wrap.className = 'chat-msg-aria-wrap';
-  if (!silent) wrap.style.animation = 'slide-up 0.3s ease both';
+  wrap.style.animation = 'slide-up 0.3s ease both';
 
-  // Emotion tag above bubble (only non-neutral, and not for silent/history messages)
-  if (emotion !== 'neutral' && !silent) {
+  // Emotion tag above bubble (only non-neutral)
+  if (emotion !== 'neutral') {
     const emoBar = document.createElement('div');
     emoBar.className = 'chat-emotion-bar';
     emoBar.textContent = meta.emoji + ' aria is ' + meta.label;
@@ -2891,14 +2887,8 @@ function appendAriaMessage(text, emotion, doSpeak = true, silent = false) {
   scrollChatToBottom();
 
   // Stream text word by word as voice speaks it
-  if (silent) {
-    // History message — render instantly, no animation, no voice, no streaming
-    bubble.textContent = text;
-    bubble.style.opacity = '0.75'; // slightly dimmed to distinguish from live messages
-  } else {
-    streamTextWithVoice(bubble, text, emotion, doSpeak);
-    updateChatMoodPill(emotion);
-  }
+  streamTextWithVoice(bubble, text, emotion, doSpeak);
+  updateChatMoodPill(emotion);
 }
 
 function streamTextWithVoice(el, fullText, emotion, doSpeak) {
@@ -3559,7 +3549,7 @@ function queueSnooze() {
 // ARIA MEMORY SCREEN
 // ═══════════════════════════════════════════════════
 
-async function renderMemoryScreen() {
+function renderMemoryScreen() {
   const body = document.getElementById('memoryBody');
   const statusEl = document.getElementById('memoryStatus');
   const sqlNotice = document.getElementById('memorySqlNotice');
@@ -3571,13 +3561,6 @@ async function renderMemoryScreen() {
     return;
   }
 
-  // Show loading while we fetch
-  statusEl.textContent = '● loading…';
-  body.innerHTML = '';
-
-  // Always reload fresh from Supabase when screen opens
-  await ariaMemory.load();
-
   if (!ariaMemory.isTableAvailable()) {
     statusEl.textContent = '● setup needed';
     sqlNotice.style.display = 'block';
@@ -3587,7 +3570,7 @@ async function renderMemoryScreen() {
 
   sqlNotice.style.display = 'none';
   const all = ariaMemory.getAll();
-  const categories = Object.keys(all).filter(cat => Object.keys(all[cat]).length > 0);
+  const categories = Object.keys(all);
 
   if (!categories.length) {
     statusEl.textContent = '● learning…';
@@ -3600,11 +3583,10 @@ async function renderMemoryScreen() {
 
   const categoryLabels = {
     writing_style: '✍️ YOUR WRITING STYLE',
-    patterns:      '📊 BEHAVIORAL PATTERNS',
-    emotional:     '💫 EMOTIONAL CONTEXT',
-    facts:         '🗂 KNOWN FACTS',
-    relationships: '👥 RELATIONSHIP DYNAMICS',
-    chat:          '💬 FROM YOUR CONVERSATIONS'
+    patterns: '📊 BEHAVIORAL PATTERNS',
+    emotional: '💫 EMOTIONAL CONTEXT',
+    facts: '🗂 KNOWN FACTS',
+    relationships: '👥 RELATIONSHIP DYNAMICS'
   };
 
   body.innerHTML = categories.map(cat => {
