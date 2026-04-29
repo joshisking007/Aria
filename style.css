@@ -2497,3 +2497,43 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   font-weight: 600; cursor: pointer; display: block;
 }
 
+
+/* ── CONTACT PROFILE: action row + Long Game strip ── */
+.cp-action-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px 20px 0;
+}
+.cp-action-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+  border: 1px solid var(--border);
+}
+.cp-action-reply {
+  background: var(--rose-dim);
+  border-color: var(--rose-border);
+  color: var(--rose);
+}
+.cp-action-reply:active { opacity: 0.75; }
+.cp-action-longgame {
+  background: rgba(167,139,250,0.08);
+  border-color: rgba(167,139,250,0.25);
+  color: #a78bfa;
+}
+.cp-action-longgame:active { opacity: 0.75; }
+
+/* ── LONG GAME: Arc preview ── */
+#lgArcPreviewScreen {
+  padding-bottom: 100px;
+  overflow-y: auto;
+}

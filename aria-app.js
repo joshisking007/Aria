@@ -18,7 +18,7 @@ function updateStats() {
 
 // ── SCREEN NAV ──────────────────────────────────────────────────────
 
-const screensWithNav = ['introScreen','historyScreen','moodScreen','profileScreen','glowupScreen','redflagScreen','vibeScreen','queueScreen','contactProfileScreen','onboardScreen','presendScreen','memoryScreen','longGameScreen','lgDetailScreen'];
+const screensWithNav = ['introScreen','historyScreen','moodScreen','profileScreen','glowupScreen','redflagScreen','vibeScreen','queueScreen','contactProfileScreen','onboardScreen','presendScreen','memoryScreen','longGameScreen','lgDetailScreen','lgArcPreviewScreen'];
 
 function showScreen(id) {
   ariaVoice.stop();
@@ -54,6 +54,7 @@ function showScreen(id) {
   else if (id === 'chatScreen') { setNavActive('navChat'); initChat(); }
   else if (id === 'memoryScreen') { setNavActive('navMemory'); renderMemoryScreen(); }
   else if (id === 'longGameScreen') { renderLongGameScreen(); }
+  else if (id === 'lgArcPreviewScreen') { /* rendered by showArcPreview() */ }
 
   window.scrollTo(0, 0);
 }
@@ -1453,6 +1454,9 @@ function openContactProfile(id) {
 
   showScreen('contactProfileScreen');
 
+  // ── Render active Long Games for this contact ────────────────────
+  renderCpActiveGames(profileContact.id);
+
   // ── Render relationship memory section ──────────────────────────
   let memSection = document.getElementById('cpMemorySection');
   if (!memSection) {
@@ -1490,8 +1494,8 @@ function openContactProfile(id) {
       memSection.innerHTML = `
         <div class="contact-profile-history-label" style="margin-bottom:10px;">🧠 ARIA'S MEMORY</div>
         <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 16px;text-align:center;">
-          <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">Aria hasn't built a memory for ${profileContact.name} yet.<br>Generate a reply with them to start.</div>
-          <button onclick="openAddMemoryNote(${profileContact.id})" style="background:var(--card2);border:1px solid var(--rose-border);border-radius:var(--radius-sm);padding:9px 18px;color:var(--rose);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;">+ tell Aria something about them</button>
+          <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">I haven't built a memory for ${profileContact.name} yet.<br>Generate a reply with them to start.</div>
+          <button onclick="openAddMemoryNote(${profileContact.id})" style="background:var(--card2);border:1px solid var(--rose-border);border-radius:var(--radius-sm);padding:9px 18px;color:var(--rose);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;">+ tell me something about them</button>
         </div>
       `;
     }
@@ -1515,12 +1519,12 @@ function openAddMemoryNote(contactId) {
   modal.innerHTML = `
     <div style="background:var(--card);border:1px solid var(--border);border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;">
       <div style="width:40px;height:4px;border-radius:2px;background:var(--border-hover);margin:0 auto 20px;"></div>
-      <div style="font-family:'Instrument Serif',serif;font-size:20px;margin-bottom:6px;">Tell Aria something</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;">This gets added to Aria's memory for ${contact.name} and shapes how she writes their replies.</div>
+      <div style="font-family:'Instrument Serif',serif;font-size:20px;margin-bottom:6px;">Tell me something</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;">This gets added to my memory for ${contact.name} and shapes how she writes their replies.</div>
       <textarea id="memNoteInput" rows="3" placeholder="e.g. we had a falling out in march. things have been weird since." style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;resize:none;outline:none;line-height:1.6;"></textarea>
       <div style="display:flex;gap:8px;margin-top:12px;">
         <button onclick="document.getElementById('memNoteModal').remove()" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-md);padding:13px;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">cancel</button>
-        <button onclick="saveMemoryNote(${contactId})" style="flex:2;background:linear-gradient(135deg,#be185d,#db2777,#f472b6);border:none;border-radius:var(--radius-md);padding:13px;color:#fff;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;">save to Aria's memory →</button>
+        <button onclick="saveMemoryNote(${contactId})" style="flex:2;background:linear-gradient(135deg,#be185d,#db2777,#f472b6);border:none;border-radius:var(--radius-md);padding:13px;color:#fff;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;">save to my memory →</button>
       </div>
     </div>
   `;
@@ -1640,7 +1644,7 @@ async function submitLongGameSetup() {
   errEl.textContent = '';
 
   if (situation.length < 20) {
-    errEl.textContent = 'give aria a bit more to work with.';
+    errEl.textContent = "give me a bit more to work with.";
     return;
   }
 
@@ -1653,12 +1657,12 @@ async function submitLongGameSetup() {
 
   closeModal('lgSetupModal');
 
-  // Show thinking state
-  showScreen('longGameScreen');
-  document.getElementById('lgGameList').innerHTML = `
+  // Show arc preview screen in loading state
+  showScreen('lgArcPreviewScreen');
+  document.getElementById('lgArcPreviewWrap').innerHTML = `
     <div class="lg-aria-thinking-card">
       <div class="lg-thinking-orb"></div>
-      <div class="lg-thinking-text">aria is mapping your moves...</div>
+      <div class="lg-thinking-text">I'm mapping your moves...</div>
     </div>`;
 
   try {
@@ -1666,8 +1670,8 @@ async function submitLongGameSetup() {
 
     if (raw.includes('INSUFFICIENT_DETAIL')) {
       const funnyLine = raw.replace('INSUFFICIENT_DETAIL', '').trim() ||
-        "okay buddy, i'm an AI not a miracle worker. give me something to work with here.";
-      document.getElementById('lgGameList').innerHTML = `
+        "okay buddy, I'm an AI not a miracle worker. give me something to work with here.";
+      document.getElementById('lgArcPreviewWrap').innerHTML = `
         <div class="lg-aria-thinking-card" style="border-color:rgba(251,191,36,0.3);">
           <div style="font-size:32px;margin-bottom:12px;">🤨</div>
           <div class="lg-thinking-text" style="color:var(--text);">${funnyLine}</div>
@@ -1678,42 +1682,164 @@ async function submitLongGameSetup() {
 
     const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
 
-    const game = {
-      id:          Date.now(),
-      contactId:   contactId || null,
-      contactName: contact?.name || null,
-      contactColor: contact?.color || null,
+    // Store pending game (not committed yet — user reviews first)
+    window._lgPendingGame = {
+      contactId:       contactId || null,
+      contactName:     contact?.name || null,
+      contactColor:    contact?.color || null,
       contactInitials: contact?.initials || null,
       situation,
       goal:        parsed.goal,
       ariaRead:    parsed.aria_read,
       steps:       parsed.steps.map((s, i) => ({
         ...s,
-        id:      i,
-        status:  i === 0 ? 'active' : 'pending',
-        outcome: null,
+        id:         i,
+        status:     i === 0 ? 'active' : 'pending',
+        outcome:    null,
         theirReply: null,
-        ariaNote: null,
+        ariaNote:   null,
         userEdited: false
-      })),
-      currentStep: 0,
-      priority:    longGames.length + 1,
-      createdAt:   new Date().toISOString(),
-      status:      'active'
+      }))
     };
 
-    longGames.unshift(game);
-    await saveLongGames();
-    renderLongGameScreen();
-    openLgDetail(game.id);
+    showArcPreview(window._lgPendingGame);
 
   } catch(e) {
-    document.getElementById('lgGameList').innerHTML = `
+    document.getElementById('lgArcPreviewWrap').innerHTML = `
       <div class="lg-aria-thinking-card">
         <div class="lg-thinking-text">something went wrong. tap below to try again.</div>
         <button class="lg-setup-btn" style="margin-top:16px;" onclick="openLongGameSetup()">try again</button>
       </div>`;
   }
+}
+
+// ── ARC PREVIEW ──────────────────────────────────────
+
+function showArcPreview(pendingGame) {
+  showScreen('lgArcPreviewScreen');
+  document.getElementById('lgPreviewStatus').textContent =
+    `● ${pendingGame.steps.length} step${pendingGame.steps.length !== 1 ? 's' : ''} — review before starting`;
+
+  const wrap = document.getElementById('lgArcPreviewWrap');
+  wrap.innerHTML = `
+    <div class="lg-detail-goal-card" style="border-color:rgba(167,139,250,0.25);">
+      <div class="lg-detail-goal-label">THE GOAL</div>
+      <div class="lg-detail-goal-text">${pendingGame.goal}</div>
+      <div class="lg-aria-read">${pendingGame.ariaRead}</div>
+    </div>
+    <div style="padding:0 20px 6px;">
+      <div style="font-size:10px;letter-spacing:0.8px;color:var(--muted);font-weight:600;">THE PLAN — ${pendingGame.steps.length} MOVES</div>
+    </div>
+    ${pendingGame.steps.map((step, i) => `
+      <div class="lg-step-card" style="border-color:rgba(167,139,250,0.15);">
+        <div class="lg-step-header">
+          <div class="lg-step-num" style="background:rgba(167,139,250,0.15);color:#a78bfa;">${i + 1}</div>
+          <div class="lg-step-title">${step.title}</div>
+          <button onclick="lgPreviewEditStep(${i})" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;color:var(--muted);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;">edit</button>
+        </div>
+        <div class="lg-step-body">
+          <div class="lg-step-intent">${step.intent}</div>
+          <div class="lg-step-draft" id="lgPreviewDraft_${i}">${step.draft}</div>
+        </div>
+      </div>`).join('')}
+    <div style="padding:20px 20px 40px;display:flex;flex-direction:column;gap:10px;">
+      <button onclick="commitLongGame()" style="width:100%;padding:15px;background:linear-gradient(135deg,#6d28d9,#7c3aed,#8b5cf6);border:none;border-radius:14px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;letter-spacing:0.2px;">
+        let's run it →
+      </button>
+      <button onclick="openLongGameSetup()" style="width:100%;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:14px;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">
+        start over with different details
+      </button>
+    </div>
+  `;
+}
+
+function lgPreviewEditStep(idx) {
+  const step = window._lgPendingGame.steps[idx];
+  const draftEl = document.getElementById(`lgPreviewDraft_${idx}`);
+  if (!draftEl) return;
+
+  // Inline edit — replace draft div with textarea
+  const original = step.draft;
+  draftEl.outerHTML = `
+    <textarea id="lgPreviewEdit_${idx}" rows="4"
+      style="width:100%;background:var(--card2);border:1px solid var(--rose-border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;resize:none;outline:none;line-height:1.6;margin-top:4px;"
+    >${original}</textarea>
+    <div style="display:flex;gap:8px;margin-top:6px;">
+      <button onclick="lgPreviewSaveEdit(${idx})" style="flex:2;background:var(--rose-dim);border:1px solid var(--rose-border);border-radius:8px;padding:8px;color:var(--rose);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;">save</button>
+      <button onclick="lgPreviewCancelEdit(${idx}, \`${original.replace(/`/g,"'")}\`)" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;">cancel</button>
+    </div>`;
+  document.getElementById(`lgPreviewEdit_${idx}`)?.focus();
+}
+
+function lgPreviewSaveEdit(idx) {
+  const ta = document.getElementById(`lgPreviewEdit_${idx}`);
+  if (!ta) return;
+  const newDraft = ta.value.trim();
+  if (newDraft) {
+    window._lgPendingGame.steps[idx].draft = newDraft;
+    window._lgPendingGame.steps[idx].userEdited = true;
+  }
+  // Re-render preview with saved state
+  showArcPreview(window._lgPendingGame);
+}
+
+function lgPreviewCancelEdit(idx, original) {
+  showArcPreview(window._lgPendingGame);
+}
+
+async function commitLongGame() {
+  const pending = window._lgPendingGame;
+  if (!pending) return;
+
+  const game = {
+    ...pending,
+    id:          Date.now(),
+    currentStep: 0,
+    priority:    longGames.length + 1,
+    createdAt:   new Date().toISOString(),
+    status:      'active'
+  };
+
+  longGames.unshift(game);
+  await saveLongGames();
+  window._lgPendingGame = null;
+  renderLongGameScreen();
+  openLgDetail(game.id);
+}
+
+// ── CONTACT PROFILE: Long Game entry ─────────────────
+
+function openLongGameFromContact() {
+  if (!profileContact) return;
+  // Open setup modal pre-selected to this contact
+  openLongGameSetup();
+  // Pre-select the contact after modal renders
+  setTimeout(() => {
+    const sel = document.getElementById('lgSetupContact');
+    if (sel) sel.value = profileContact.id;
+  }, 50);
+}
+
+function renderCpActiveGames(contactId) {
+  const strip = document.getElementById('cpActiveGamesStrip');
+  if (!strip) return;
+
+  const games = longGames.filter(g => g.contactId == contactId && g.status === 'active');
+  if (!games.length) { strip.innerHTML = ''; return; }
+
+  strip.innerHTML = `
+    <div style="padding:0 20px 4px;">
+      <div style="font-size:10px;letter-spacing:0.8px;color:rgba(167,139,250,0.7);font-weight:600;margin-bottom:8px;">ACTIVE LONG GAMES</div>
+      ${games.map(g => `
+        <div onclick="openLgDetail(${g.id})"
+          style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.2);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:13px;color:var(--text);margin-bottom:2px;">${g.goal}</div>
+            <div style="font-size:11px;color:rgba(167,139,250,0.7);">step ${g.currentStep + 1} of ${g.steps.length}</div>
+          </div>
+          <span style="color:rgba(167,139,250,0.6);font-size:16px;">›</span>
+        </div>`).join('')}
+    </div>`;
 }
 
 // ── RENDER LIST ───────────────────────────────────────
@@ -1933,7 +2059,7 @@ async function submitStepOutcome(outcome) {
     await saveLongGames();
     await writeLgToMemory(game);
     renderLgDetail();
-    showToast('game plan complete — aria saved this to memory ✓', 'green');
+    showToast('game plan complete — I saved this to memory ✓', 'green');
     return;
   }
 
@@ -1941,7 +2067,7 @@ async function submitStepOutcome(outcome) {
   const wrap = document.getElementById('lgDetailWrap');
   const adjustCard = document.createElement('div');
   adjustCard.className = 'lg-aria-thinking-card';
-  adjustCard.innerHTML = `<div class="lg-thinking-orb"></div><div class="lg-thinking-text">aria is adjusting the remaining steps...</div>`;
+  adjustCard.innerHTML = `<div class="lg-thinking-orb"></div><div class="lg-thinking-text">I'm adjusting the remaining steps...</div>`;
   wrap.appendChild(adjustCard);
 
   try {
@@ -2090,6 +2216,8 @@ function showLgAriaPrompt(msg, onYes, onNo) {
       <button class="lg-step-btn lg-btn-edit" style="flex:1;" onclick="this.closest('.lg-detail-goal-card').remove();lgNoEdit()">no, i've got it</button>
     </div>`;
   wrap.prepend(card);
+  // Scroll the prompt into view so user sees it
+  setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
   window._lgYesFn = onYes;
   window._lgNoFn  = onNo;
 }
@@ -2102,7 +2230,7 @@ async function markLgDone() {
   await saveLongGames();
   await writeLgToMemory(_activeLgGame);
   renderLgDetail();
-  showToast('game plan marked complete ✓', 'green');
+  showToast('game plan complete — marked it ✓', 'green');
 }
 
 // ── MEMORY WRITE ──────────────────────────────────────
@@ -2201,12 +2329,12 @@ const driftLines = {
                 "it's been a while since you reached out to them.",
                 "life moves fast. this one might appreciate a check-in more than you think."],
     default:   ["you've gone quiet with them. probably not intentional — but it adds up.",
-                "the gap between you two has been growing. aria noticed.",
+                "the gap between you two has been growing. I noticed.",
                 "haven't heard about them in a while. still on your radar?"]
   },
   fading: {
     romantic:  ["your messages to them have been getting shorter. could mean nothing. could mean something.",
-                "the energy between you two has been different lately. aria's picked up on it."],
+                "the energy between you two has been different lately. I've picked up on it."],
     bestfriend:["the conversations are getting thinner. probably worth a real one soon.",
                 "you used to send them more — longer, more often. the pattern's shifting."],
     family:    ["replies have been getting brief. sometimes that's all you have energy for — just checking.",
@@ -2221,7 +2349,7 @@ const driftLines = {
                 "real ones drift too sometimes. doesn't mean it's gone — just needs attention."],
     family:    ["it's been a while since you reached out to them. they might not say it but.",
                 "two weeks without contact. could be nothing. still worth a message."],
-    default:   ["two weeks without contact. aria's flagging it — do with that what you will.",
+    default:   ["two weeks without contact. I'm flagging it — do with that what you will.",
                 "the silence here has gone past casual. just so you know."]
   }
 };
@@ -2553,7 +2681,7 @@ function toggleThreadMode() {
   banner.classList.toggle('visible', threadModeActive);
   if (threadModeActive) {
     ta.rows = 7;
-    ta.placeholder = 'paste the full conversation here — both sides. format: "them: [msg]" and "me: [msg]", or just paste it raw. aria will figure it out.';
+    ta.placeholder = 'paste the full conversation here — both sides. format: "them: [msg]" and "me: [msg]", or just paste it raw. I’ll figure it out.';
   } else {
     ta.rows = 3;
     ta.placeholder = 'paste what they said... or give context';
@@ -3424,7 +3552,7 @@ function renderMemoryScreen() {
 
   if (!currentUserId) {
     statusEl.textContent = '● not signed in';
-    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🔐</div><div>Sign in to save and view Aria's memory of you.<br><br>Your interactions still teach Aria during this session — but memory won't persist without an account.</div></div>`;
+    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🔐</div><div>Sign in to save and view my memory of you.<br><br>Your interactions still teach Aria during this session — but memory won't persist without an account.</div></div>`;
     sqlNotice.style.display = 'none';
     return;
   }
@@ -3442,7 +3570,7 @@ function renderMemoryScreen() {
 
   if (!categories.length) {
     statusEl.textContent = '● learning…';
-    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🌱</div><div>Aria hasn't learned much about you yet.<br>Use her to generate a few replies and she'll start building your profile.</div></div>`;
+    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🌱</div><div>I haven't learned much about you yet.<br>Generate a few replies and I'll start building your profile.</div></div>`;
     return;
   }
 

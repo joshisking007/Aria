@@ -203,7 +203,7 @@
         </span>
         <div class="option-label">
           <div>check before you send</div>
-          <div class="option-sub" style="color:var(--rose);opacity:0.75;">aria reads your draft — flags what could backfire</div>
+          <div class="option-sub" style="color:var(--rose);opacity:0.75;">I read your draft — flag what could backfire</div>
         </div>
         <span class="option-arrow" style="color:var(--rose);">›</span>
       </button>
@@ -319,7 +319,7 @@
       </button>
     </div>
     <div class="thread-mode-banner" id="threadModeBanner">
-      <strong>Thread mode on.</strong> Paste the full conversation below — include both sides. Aria will read the whole arc, not just the last message.
+      <strong>Thread mode on.</strong> Paste the full conversation below — include both sides. I'll read the whole arc, not just the last message.
     </div>
     <textarea class="convo-input" id="theirMsgInput" rows="3" placeholder="paste what they said... or give context"></textarea>
 
@@ -342,7 +342,7 @@
           <div class="screenshot-drop" id="screenshotDrop">
             <input type="file" accept="image/*" onchange="handleScreenshotUpload(this)" />
             <div class="screenshot-drop-icon">📷</div>
-            <div class="screenshot-drop-text">tap to upload a screenshot<br><span style="font-size:10px;opacity:0.6;">jpg, png — Aria will read the convo</span></div>
+            <div class="screenshot-drop-text">tap to upload a screenshot<br><span style="font-size:10px;opacity:0.6;">jpg, png — I'll read the convo</span></div>
           </div>
           <img class="screenshot-preview" id="screenshotPreview" />
           <div class="context-clear" id="screenshotClearBtn" onclick="clearScreenshot()">✕ remove screenshot</div>
@@ -690,7 +690,7 @@
     <div class="aria-mini" style="background:radial-gradient(circle at 35% 35%,#f9a8d4,#ec4899);box-shadow:0 0 16px rgba(244,114,182,0.35);flex-shrink:0;border-radius:50%;"></div>
     <div class="top-bar-info">
       <div class="top-bar-name">Pre-Send Check</div>
-      <div class="top-bar-status">🛑 aria reads it before you do</div>
+      <div class="top-bar-status">🛑 I read it before you do</div>
     </div>
     <button class="mute-btn" onclick="toggleMute()">🔊</button>
   </div>
@@ -848,13 +848,13 @@
     <img src="" class="aria-mini" style="object-fit:cover;object-position:center top;border-radius:50%;"/>
     <div class="top-bar-info">
       <div class="top-bar-name">Red Flag Detector</div>
-      <div class="top-bar-status">🚩 aria reads between the lines</div>
+      <div class="top-bar-status">🚩 I read between the lines</div>
     </div>
   </div>
 
   <div style="padding:0 20px;margin-bottom:14px;">
     <div class="paste-label">PASTE THEIR MESSAGE(S)</div>
-    <textarea class="convo-input" id="redflagInput" rows="5" placeholder="paste what they said... Aria will analyse the vibe, energy, and any sus patterns"></textarea>
+    <textarea class="convo-input" id="redflagInput" rows="5" placeholder="paste what they said... I'll analyse the vibe, energy, and any sus patterns"></textarea>
     <div class="paste-label" style="margin-top:10px;">WHO IS THIS? (optional)</div>
     <input class="convo-input" id="redflagWho" style="resize:none;height:auto;padding:12px 16px;" placeholder='e.g. "someone i just started talking to" or "my ex"'/>
     <button class="gen-reply-btn" id="redflagBtn" onclick="runRedflag()" style="margin-top:10px;">🚩 scan for red flags →</button>
@@ -1000,7 +1000,18 @@
     <div class="contact-profile-name" id="cpNameBig"></div>
     <div class="contact-profile-rel" id="cpRelBig"></div>
     <div class="contact-profile-stats" id="cpStats"></div>
+    <div class="cp-action-row">
+      <button class="cp-action-btn cp-action-reply" onclick="replyFromProfile()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        reply
+      </button>
+      <button class="cp-action-btn cp-action-longgame" onclick="openLongGameFromContact()" id="cpLongGameBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" width="14" height="14"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        long game
+      </button>
+    </div>
   </div>
+  <div id="cpActiveGamesStrip"></div>
   <div class="contact-profile-history">
     <div class="contact-profile-history-label">REPLY HISTORY WITH THEM</div>
     <div id="cpHistoryList"></div>
@@ -1045,11 +1056,23 @@
     </div>
   </div>
   <div class="lg-header">
-    <div class="lg-sub">describe the situation. aria maps the moves.</div>
+    <div class="lg-sub">describe the situation. I map the moves.</div>
   </div>
   <button class="lg-new-btn" onclick="openLongGameSetup()">+ new game plan</button>
   <div class="lg-section-label" id="lgActiveLabel" style="display:none;">ACTIVE GAMES</div>
   <div id="lgGameList"></div>
+</div>
+
+<!-- Long Game: Arc Preview screen (shown after generation, before committing) -->
+<div class="screen" id="lgArcPreviewScreen" style="display:none;">
+  <div class="top-bar">
+    <button class="back-btn" onclick="showScreen('longGameScreen')">←</button>
+    <div class="top-bar-info">
+      <div class="top-bar-name">your game plan</div>
+      <div class="top-bar-status" id="lgPreviewStatus">● review before starting</div>
+    </div>
+  </div>
+  <div class="lg-detail-wrap" id="lgArcPreviewWrap"></div>
 </div>
 
 <!-- Long Game: Detail screen (overlays longGameScreen) -->
@@ -1072,7 +1095,7 @@
     <button class="modal-close" onclick="closeModal('lgSetupModal')">×</button>
     <div style="padding:4px 20px 6px;">
       <div class="modal-title" style="font-family:'Instrument Serif',serif;">new game plan</div>
-      <div class="modal-sub">tell aria what's going on. the more detail, the sharper the plan.</div>
+      <div class="modal-sub">tell me what's going on. the more detail, the sharper my plan.</div>
     </div>
     <div class="lg-setup-wrap">
       <div class="lg-setup-label">WHO IS THIS ABOUT?</div>
@@ -1081,7 +1104,7 @@
       </select>
       <div class="lg-setup-label">WHAT'S THE SITUATION?</div>
       <textarea class="lg-setup-textarea" id="lgSetupSituation" placeholder="e.g. we had a fight last week and haven't talked since. i said something i regret and i want to fix it without making it weird." rows="4"></textarea>
-      <div class="lg-setup-label">WHAT DO YOU WANT TO HAPPEN? (optional — aria will figure it out if you're not sure)</div>
+      <div class="lg-setup-label">WHAT DO YOU WANT TO HAPPEN? (optional — I'll figure it out if you're not sure)</div>
       <textarea class="lg-setup-textarea" id="lgSetupGoal" placeholder="e.g. i want us to be okay again. or: i want to ask them out. or: i'm not sure yet." rows="2"></textarea>
       <div id="lgSetupError" style="font-size:12px;color:#f87171;margin-top:8px;min-height:16px;"></div>
       <button class="lg-setup-btn" onclick="submitLongGameSetup()">let aria build the plan →</button>
@@ -1095,13 +1118,13 @@
     <div class="modal-handle"></div>
     <button class="modal-close" onclick="closeModal('lgOutcomeModal')">×</button>
     <div class="modal-title">how did that land?</div>
-    <div class="modal-sub" id="lgOutcomeSub">aria will adjust the next step based on what you tell her.</div>
+    <div class="modal-sub" id="lgOutcomeSub">I'll adjust the next step based on what you tell me.</div>
     <div class="lg-outcome-row">
       <button class="lg-outcome-btn good" onclick="submitStepOutcome('good')">🔥 went well</button>
       <button class="lg-outcome-btn meh" onclick="submitStepOutcome('meh')">😐 okay-ish</button>
       <button class="lg-outcome-btn bad" onclick="submitStepOutcome('bad')">💀 backfired</button>
     </div>
-    <textarea class="lg-setup-textarea" id="lgOutcomeReply" placeholder="paste their reply (optional — helps aria adjust)" style="margin-top:14px;" rows="3"></textarea>
+    <textarea class="lg-setup-textarea" id="lgOutcomeReply" placeholder="paste their reply (optional — helps me adjust)" style="margin-top:14px;" rows="3"></textarea>
   </div>
 </div>
 
@@ -1111,7 +1134,7 @@
     <div class="modal-handle"></div>
     <button class="modal-close" onclick="closeModal('lgEditStepModal')">×</button>
     <div class="modal-title">edit this step</div>
-    <div class="modal-sub">change the draft. aria will ask if you want the rest adjusted.</div>
+    <div class="modal-sub">change the draft. I'll ask if you want the rest adjusted.</div>
     <textarea class="lg-setup-textarea" id="lgEditStepText" rows="5"></textarea>
     <button class="lg-setup-btn" style="margin-top:14px;" onclick="saveEditedStep()">save changes</button>
   </div>
@@ -1319,7 +1342,7 @@
     <div class="modal-handle"></div>
     <button class="modal-close" onclick="closeModal('toneModal')">×</button>
     <div class="modal-title">Reply Tone</div>
-    <div class="modal-sub">Pick a tone for this specific reply. Aria will adjust while keeping your voice.</div>
+    <div class="modal-sub">Pick a tone for this specific reply. I'll adjust while keeping your voice.</div>
     <div class="tone-pills" id="toneModalPills">
       <button class="tone-pill active" data-tone="natural" onclick="selectTone(this)">💬 natural</button>
       <button class="tone-pill" data-tone="funny" onclick="selectTone(this)">😂 funny</button>
