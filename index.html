@@ -2203,7 +2203,96 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 .followup-btn.meh { border-color: var(--amber); color: var(--amber); }
 .followup-btn.bad { border-color: rgba(244,63,94,0.5); color: #f43f5e; }
 
+/* ─── TUTORIAL MODAL ──────────────────────────── */
+#tutorialModal .modal-sheet { max-height: 92vh; overflow-y: auto; padding-bottom: 28px; }
+.tutorial-aria-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 18px 20px 0;
+}
+.tutorial-aria-img {
+  width: 52px; height: 52px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
+  box-shadow: 0 0 20px rgba(244,114,182,0.35);
+}
+.tutorial-aria-img img { width: 160%; height: 160%; object-fit: cover; object-position: center 10%; margin-left: -30%; margin-top: -5%; }
+.tutorial-aria-bubble {
+  background: var(--card); border: 1px solid var(--rose-border);
+  border-radius: 4px 14px 14px 14px;
+  padding: 10px 14px; font-size: 13px; color: var(--text2);
+  line-height: 1.55; font-style: italic; flex: 1;
+}
+.tutorial-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 20px; color: var(--text);
+  padding: 16px 20px 4px; text-align: center;
+}
+.tutorial-sub {
+  font-size: 12px; color: var(--muted); text-align: center;
+  padding: 0 20px 16px; line-height: 1.5;
+}
+.tutorial-methods { display: flex; flex-direction: column; gap: 10px; padding: 0 16px; }
+.tutorial-method-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px 16px;
+  display: flex; gap: 14px; align-items: flex-start;
+}
+.tutorial-method-icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: var(--rose-dim); border: 1px solid var(--rose-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.tutorial-method-body { flex: 1; }
+.tutorial-method-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.tutorial-method-desc { font-size: 12px; color: var(--muted); line-height: 1.55; }
+.tutorial-method-badge {
+  display: inline-block; margin-top: 6px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
+  padding: 2px 8px; border-radius: 20px;
+}
+.tutorial-method-badge.easiest { background: rgba(52,211,153,0.12); color: #34d399; border: 1px solid rgba(52,211,153,0.25); }
+.tutorial-method-badge.quick { background: rgba(251,191,36,0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+.tutorial-method-badge.power { background: rgba(244,114,182,0.12); color: var(--rose); border: 1px solid var(--rose-border); }
+.tutorial-dont-show {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 20px 0; cursor: pointer;
+}
+.tutorial-checkbox {
+  width: 18px; height: 18px; border-radius: 5px;
+  border: 1px solid var(--border); background: var(--card);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 0.2s;
+}
+.tutorial-checkbox.checked { background: var(--rose-dim); border-color: var(--rose); }
+.tutorial-checkbox.checked::after { content: '✓'; font-size: 11px; color: var(--rose); font-weight: 700; }
+.tutorial-dont-show-label { font-size: 12px; color: var(--muted); line-height: 1.4; }
+.tutorial-got-it-btn {
+  margin: 16px 16px 0; width: calc(100% - 32px);
+  padding: 14px; background: linear-gradient(135deg, #ec4899, #f43f5e);
+  border: none; border-radius: 14px; color: #fff;
+  font-size: 15px; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; cursor: pointer; display: block;
+}
+
 </style>
+
+<!-- Web Share Target: manifest + service worker -->
+<link rel="manifest" href="manifest.json" />
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data?.type === 'SHARE_TARGET') {
+        const { title, text, url } = e.data;
+        const combined = [title, text, url].filter(Boolean).join('\n').trim();
+        if (combined) {
+          // Store and open when app is ready
+          window._pendingShare = combined;
+          if (window._ariaReady) handleIncomingShare(combined);
+        }
+      }
+    });
+  }
+</script>
 </head>
 <body>
 
@@ -3211,6 +3300,71 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   <div class="hb-line"></div>
   <div class="hb-line"></div>
 </button>
+
+<!-- Tutorial modal -->
+<div class="modal-overlay" id="tutorialModal" onclick="handleModalBgClick(event,'tutorialModal')" style="z-index:3400;">
+  <div class="modal-sheet" style="padding:0;">
+    <div style="padding-top:14px;display:flex;justify-content:center;"><div class="modal-handle"></div></div>
+    <button class="modal-close" onclick="closeTutorial()" style="position:absolute;top:14px;right:14px;">×</button>
+
+    <!-- Aria speaking -->
+    <div class="tutorial-aria-row">
+      <div class="tutorial-aria-img"><img src="https://i.imgur.com/ji329r1.png" /></div>
+      <div class="tutorial-aria-bubble">here's how to let me see your messages — pick whatever works for you.</div>
+    </div>
+
+    <div class="tutorial-title">how to show Aria your messages</div>
+    <div class="tutorial-sub">i can't read your apps directly — but here are three ways to fill me in.</div>
+
+    <div class="tutorial-methods">
+
+      <!-- Method 1: Copy & paste -->
+      <div class="tutorial-method-card">
+        <div class="tutorial-method-icon">📋</div>
+        <div class="tutorial-method-body">
+          <div class="tutorial-method-title">copy & paste</div>
+          <div class="tutorial-method-desc">
+            Open WhatsApp, Instagram, or iMessage. Long-press the message, copy it, then come back to Aria and paste it into <strong>"someone messaged me."</strong>
+          </div>
+          <span class="tutorial-method-badge easiest">easiest</span>
+        </div>
+      </div>
+
+      <!-- Method 2: Share sheet -->
+      <div class="tutorial-method-card">
+        <div class="tutorial-method-icon">↗️</div>
+        <div class="tutorial-method-body">
+          <div class="tutorial-method-title">share sheet (Android)</div>
+          <div class="tutorial-method-desc">
+            In any chat, tap the message → <strong>Share</strong> → select <strong>Aria</strong> from the list. The message lands here automatically, ready to reply.
+          </div>
+          <span class="tutorial-method-badge quick">quick</span>
+        </div>
+      </div>
+
+      <!-- Method 3: Web Share Target -->
+      <div class="tutorial-method-card">
+        <div class="tutorial-method-icon">⚡</div>
+        <div class="tutorial-method-body">
+          <div class="tutorial-method-title">add Aria to home screen</div>
+          <div class="tutorial-method-desc">
+            Tap your browser's <strong>⋮ menu → Add to Home Screen.</strong> Once installed, Aria appears in your share menu like a real app — share any message straight to her in one tap.
+          </div>
+          <span class="tutorial-method-badge power">fastest once set up</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Don't show again -->
+    <div class="tutorial-dont-show" onclick="toggleTutorialDontShow()">
+      <div class="tutorial-checkbox" id="tutorialCheckbox"></div>
+      <div class="tutorial-dont-show-label">don't show this again when i log in</div>
+    </div>
+
+    <button class="tutorial-got-it-btn" onclick="closeTutorial()">got it →</button>
+  </div>
+</div>
 
 <!-- Logout confirmation modal -->
 <div class="modal-overlay" id="logoutModal" onclick="handleModalBgClick(event,'logoutModal')" style="z-index:3500;">
@@ -4366,6 +4520,77 @@ function dismissAuthGate() {
   gate.classList.add('hiding');
   setTimeout(() => { gate.style.display = 'none'; }, 450);
   updateAuthMenuState();
+  maybeShowTutorial();
+}
+
+// ── TUTORIAL ─────────────────────────────────────────────────────────
+
+let _tutorialDontShow = false;
+
+function maybeShowTutorial() {
+  const skip = localStorage.getItem('aria_tutorial_skip');
+  if (skip === '1') return;
+  setTimeout(() => openModal('tutorialModal'), 600);
+}
+
+function toggleTutorialDontShow() {
+  _tutorialDontShow = !_tutorialDontShow;
+  const cb = document.getElementById('tutorialCheckbox');
+  if (_tutorialDontShow) cb.classList.add('checked');
+  else cb.classList.remove('checked');
+}
+
+function closeTutorial() {
+  if (_tutorialDontShow) {
+    localStorage.setItem('aria_tutorial_skip', '1');
+    closeModal('tutorialModal');
+    // Aria confirms
+    setTimeout(() => {
+      showAriaAck("understood. seems like you know your way around — but this can always be found again in settings.");
+    }, 300);
+  } else {
+    closeModal('tutorialModal');
+  }
+}
+
+function showAriaAck(msg) {
+  // Reuse insight banner temporarily
+  const banner = document.getElementById('ariaInsightBanner');
+  const textEl = document.getElementById('ariaInsightText');
+  const imgEl = document.getElementById('insightOrbImg');
+  if (!banner || !textEl || !imgEl) return;
+  const prev = { src: imgEl.src, text: textEl.textContent };
+  imgEl.src = 'https://i.imgur.com/aku1uwo.png';
+  textEl.textContent = msg;
+  banner.classList.add('visible');
+  setTimeout(() => {
+    imgEl.src = prev.src;
+    textEl.textContent = prev.text;
+  }, 5000);
+}
+
+// ── WEB SHARE TARGET ─────────────────────────────────────────────────
+
+function handleIncomingShare(text) {
+  // Navigate to "someone messaged me" screen and prefill
+  showScreen('replyScreen');
+  setTimeout(() => {
+    const input = document.getElementById('theirMsgInput') ||
+                  document.querySelector('textarea[placeholder*="message"]') ||
+                  document.querySelector('.reply-paste-area');
+    if (input) {
+      input.value = text;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    showToast('message received from share ✓', 'green');
+  }, 400);
+}
+
+// Check for pending share once app is ready
+window._ariaReady = true;
+if (window._pendingShare) {
+  handleIncomingShare(window._pendingShare);
+  window._pendingShare = null;
 }
 
 function updateAuthMenuState() {
