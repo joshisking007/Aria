@@ -414,7 +414,7 @@ body::after {
 .aria-full-name {
   font-size: 9px; color: var(--muted);
   letter-spacing: 2.5px; text-align: center;
-  line-height: 1.8;
+  line-height: 1.8; margin-bottom: 20px;
 }
 
 /* Version badge */
@@ -2298,7 +2298,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
         <div class="stat-label">replies sent</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num" id="statContacts">3</div>
+        <div class="stat-num" id="statContacts">0</div>
         <div class="stat-label">contacts</div>
       </div>
       <div class="stat-card">
@@ -3229,9 +3229,9 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
     <div><div class="menu-item-label">Pre-Send Check</div><div class="menu-item-sub">Aria reviews your draft first</div></div>
   </button>
   <div class="menu-divider"></div>
-  <button class="menu-item" id="navSignin" onclick="closeMenu();openAuthModal()">
+  <button class="menu-item" id="navSignin" onclick="closeMenu();handleAuthMenuTap()">
     <span class="menu-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></span>
-    <div><div class="menu-item-label">Sign in / Save data</div><div class="menu-item-sub">Sync across devices</div></div>
+    <div><div class="menu-item-label" id="navSigninLabel">Sign in / Save data</div><div class="menu-item-sub" id="navSigninSub">Sync across devices</div></div>
   </button>
   <button class="menu-item" id="navMemory" onclick="menuNavTo('memoryScreen','navMemory')">
     <span class="menu-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></span>
@@ -3888,34 +3888,9 @@ let clarifyContext = '';
 
 // ── CONTACTS ──────────────────────────────────────────────────────
 
-let contacts = [
-  {
-    id: 1, name: "Jensel", initials: "J", color: "rose",
-    preview: "how u been?", time: "2h ago",
-    silent: true, silentHours: 2, platform: "Instagram",
-    relationship: "close friend", online: false
-  },
-  {
-    id: 2, name: "Jaiye", initials: "J", color: "blue",
-    preview: "bro you see this 💀", time: "5h ago",
-    silent: true, silentHours: 5, platform: "Instagram",
-    relationship: "best friend", online: false
-  },
-  {
-    id: 3, name: "Mom", initials: "M", color: "green",
-    preview: "call me when you get a chance", time: "1h ago",
-    silent: true, silentHours: 1, platform: "iMessage",
-    relationship: "family", online: true
-  },
-  {
-    id: 4, name: "Kai", initials: "K", color: "purple",
-    preview: "we still on for friday?", time: "3h ago",
-    silent: true, silentHours: 3, platform: "WhatsApp",
-    relationship: "friend", online: false
-  },
-];
+let contacts = [];
 
-let nextContactId = 5;
+let nextContactId = 1;
 
 // ── INTRO ──────────────────────────────────────────────────────────
 
@@ -4341,6 +4316,7 @@ async function initAuth() {
     dismissAuthGate();
     await loadFromSupabase();
     await ariaMemory.load();
+    updateAuthMenuState();
   } else {
     // Listen for auth state changes (e.g. magic link return)
     db.auth.onAuthStateChange(async (event, session) => {
@@ -4349,6 +4325,7 @@ async function initAuth() {
         dismissAuthGate();
         await loadFromSupabase();
         await ariaMemory.load();
+        updateAuthMenuState();
       }
     });
   }
@@ -4359,6 +4336,31 @@ function dismissAuthGate() {
   if (!gate) return;
   gate.classList.add('hiding');
   setTimeout(() => { gate.style.display = 'none'; }, 450);
+  updateAuthMenuState();
+}
+
+function updateAuthMenuState() {
+  const label = document.getElementById('navSigninLabel');
+  const sub = document.getElementById('navSigninSub');
+  if (!label || !sub) return;
+  if (currentUserId) {
+    label.textContent = 'Log out';
+    sub.textContent = 'You\'re signed in';
+  } else {
+    label.textContent = 'Sign in / Save data';
+    sub.textContent = 'Sync across devices';
+  }
+}
+
+async function handleAuthMenuTap() {
+  if (currentUserId) {
+    await db.auth.signOut();
+    currentUserId = null;
+    updateAuthMenuState();
+    showToast('logged out ✓');
+  } else {
+    openAuthModal();
+  }
 }
 
 let gateMode = 'signin';
