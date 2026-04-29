@@ -209,6 +209,7 @@ body::after {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   padding: 40px 28px;
+  overflow-y: auto; overflow-x: hidden;
   transition: opacity 0.4s ease;
 }
 #authGate.hiding { opacity: 0; pointer-events: none; }
@@ -3211,6 +3212,20 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   <div class="hb-line"></div>
 </button>
 
+<!-- Logout confirmation modal -->
+<div class="modal-overlay" id="logoutModal" onclick="handleModalBgClick(event,'logoutModal')" style="z-index:3500;">
+  <div class="modal-sheet" style="text-align:center;padding:32px 24px 28px;">
+    <div class="modal-handle"></div>
+    <div style="width:80px;height:80px;border-radius:50%;overflow:hidden;margin:0 auto 18px;box-shadow:0 0 40px rgba(244,114,182,0.4);">
+      <img id="logoutAriaImg" src="https://i.imgur.com/OncPXzL.png" style="width:160%;height:160%;object-fit:cover;object-position:center 10%;margin-left:-30%;margin-top:-5%;" />
+    </div>
+    <div style="font-family:'Instrument Serif',serif;font-size:22px;color:var(--text);margin-bottom:8px;">leaving already?</div>
+    <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:28px;font-style:italic;">i'll keep everything safe while you're gone.</div>
+    <button onclick="confirmLogout()" style="width:100%;padding:14px;background:linear-gradient(135deg,#ec4899,#f43f5e);border:none;border-radius:14px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;margin-bottom:10px;">yes, log me out</button>
+    <button onclick="closeModal('logoutModal')" style="width:100%;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:14px;color:var(--muted);font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;">nevermind</button>
+  </div>
+</div>
+
 <!-- Menu overlay -->
 <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
 
@@ -3415,7 +3430,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
     <button class="modal-close" onclick="closeModal('authModal')">×</button>
 
     <div id="authDefault">
-      <div class="auth-orb-wrap"><div class="auth-orb"></div></div>
+      <div class="auth-orb-wrap"><div class="auth-orb" style="overflow:hidden;"><img src="https://i.imgur.com/NeQqqKG.png" style="width:160%;height:160%;object-fit:cover;object-position:center 15%;margin-left:-30%;margin-top:-5%;" /></div></div>
       <div class="modal-title" style="text-align:center;">welcome to Aria</div>
       <div class="modal-sub" style="text-align:center;">sign in to save contacts, history & settings.</div>
 
@@ -4368,13 +4383,31 @@ function updateAuthMenuState() {
 
 async function handleAuthMenuTap() {
   if (currentUserId) {
-    await db.auth.signOut();
-    currentUserId = null;
-    updateAuthMenuState();
-    showToast('logged out ✓');
+    closeMenu();
+    openModal('logoutModal');
   } else {
     openAuthModal();
   }
+}
+
+async function confirmLogout() {
+  closeModal('logoutModal');
+  await db.auth.signOut();
+  currentUserId = null;
+  updateAuthMenuState();
+  // Reset app state
+  contacts = [];
+  replySentCount = 0;
+  streakDays = 0;
+  document.getElementById('statReplies').textContent = '0';
+  document.getElementById('statContacts').textContent = '0';
+  document.getElementById('statStreak').textContent = '0';
+  // Show the auth gate immediately
+  const gate = document.getElementById('authGate');
+  gate.style.opacity = '1';
+  gate.style.display = 'flex';
+  gate.classList.remove('hiding');
+  showScreen('introScreen');
 }
 
 let gateMode = 'signin';
@@ -6167,55 +6200,82 @@ async function saveMemoryNote(contactId) {
 // FEATURE 3: HOME INSIGHT BANNER
 // ═══════════════════════════════════════════════════
 
-const ariaInsightCards = [
-  // cunning — she's clocked everything and she's ready
+// NEW USER cards — shown when contacts === 0, no history
+const ariaNewUserCards = [
+  {
+    img: 'https://i.imgur.com/ji329r1.png',
+    lines: [
+      "hey. i'm Aria. i write your texts so you don't have to overthink them.",
+      "add someone you've been meaning to reply to. i'll take it from there.",
+      "no contacts yet — but every conversation starts somewhere. let's start one.",
+      "i'm ready when you are. add a contact and i'll do the heavy lifting."
+    ]
+  },
+  {
+    img: 'https://i.imgur.com/68qFlMp.png',
+    lines: [
+      "zero contacts. zero excuses. let's fix that.",
+      "you just got here and i'm already excited. add someone — anyone.",
+      "i can't write your texts if you haven't told me who to write to.",
+      "the hardest part is opening the app. you already did that. add a contact."
+    ]
+  },
   {
     img: 'https://i.imgur.com/aku1uwo.png',
-    objPos: 'center top',
+    lines: [
+      "i've seen inboxes. yours has potential. show me who we're working with.",
+      "fresh start. clean slate. one contact and we're in business.",
+      "i'm here. let's not waste it — who do you owe a reply to?",
+      "add a contact and tell me what's going on. i'll figure out the rest."
+    ]
+  }
+];
+
+// RETURNING USER cards — unlocked once contacts > 0
+const ariaReturningCards = [
+  {
+    img: 'https://i.imgur.com/aku1uwo.png',
+    minContacts: 1,
     lines: [
       "your inbox is a crime scene and i already know who did it.",
       "i've been watching your patterns. you type fast when you're nervous.",
       "you left them on read but your streak didn't survive. interesting choice.",
-      "four people are waiting. i'm not judging — i'm just noting everything."
+      "i'm not judging — i'm just noting everything."
     ]
   },
-  // hopeful — she's rooting for you, genuinely
   {
     img: 'https://i.imgur.com/ji329r1.png',
-    objPos: 'center top',
+    minContacts: 1,
     lines: [
       "today could be the day you actually reply first. just saying.",
-      "your streak's still alive. don't let it die over a bad opener.",
       "one good text can change the whole energy. i'll help you write it.",
-      "i think today's a good day. your inbox agrees."
+      "your streak's still alive. don't let it die over a bad opener.",
+      "i think today's a good day. let's make it count."
     ]
   },
-  // being silly — light, teasing, not taking it seriously
   {
     img: 'https://i.imgur.com/68qFlMp.png',
-    objPos: 'center top',
+    minContacts: 1,
     lines: [
       "you opened the app. bold move. let's see if you follow through.",
-      "the audacity to have a 0-day streak and still show up here. respect.",
-      "no pressure but they've been staring at that blue tick for 6 hours.",
-      "i'm not saying you're bad at texting. i'm just saying i exist for a reason."
+      "i'm not saying you're bad at texting. i'm just saying i exist for a reason.",
+      "the audacity to ghost and then show up here. respect. let's fix it.",
+      "back again. i like the dedication. now let's actually reply to someone."
     ]
   },
-  // disappointed — she expected better, but she's still here
   {
     img: 'https://i.imgur.com/OncPXzL.png',
-    objPos: 'center top',
+    minContacts: 2,
     lines: [
       "we had a streak going. we had something real. and then — nothing.",
       "they texted twice. you opened it. closed it. opened it again. come on.",
-      "your read receipts are out here doing damage you haven't even measured yet.",
+      "your read receipts are doing damage you haven't even measured yet.",
       "i'm not mad. i'm just aware of exactly how long you've been avoiding this."
     ]
   },
-  // urgency — no time to waste, move now
   {
     img: 'https://i.imgur.com/ZENuLRe.png',
-    objPos: 'center top',
+    minContacts: 2,
     lines: [
       "okay we actually need to handle your inbox right now.",
       "that message has been sitting there long enough. i'll draft it, you send it.",
@@ -6231,12 +6291,22 @@ function loadHomeInsight() {
   const imgEl = document.getElementById('insightOrbImg');
   if (!banner || !textEl || !imgEl) return;
 
-  // Pick a random card and a random line within it
-  const card = ariaInsightCards[Math.floor(Math.random() * ariaInsightCards.length)];
+  const contactCount = contacts.length;
+  let pool;
+
+  if (contactCount === 0) {
+    // New user — only show welcoming onboarding cards
+    pool = ariaNewUserCards;
+  } else {
+    // Returning user — filter returning cards by minContacts threshold
+    pool = ariaReturningCards.filter(c => contactCount >= c.minContacts);
+    if (!pool.length) pool = ariaReturningCards.slice(0, 1);
+  }
+
+  const card = pool[Math.floor(Math.random() * pool.length)];
   const line = card.lines[Math.floor(Math.random() * card.lines.length)];
 
   imgEl.src = card.img;
-  imgEl.style.objectPosition = card.objPos;
   textEl.textContent = line;
   banner.classList.add('visible');
 }
