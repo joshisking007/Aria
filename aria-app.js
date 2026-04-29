@@ -2808,8 +2808,15 @@ function initChat() {
         }
         history.slice(cutoff).forEach(m => {
           if (m.role === 'user') appendUserMessage(m.content, true);
-          else appendAriaMessage(m.content, m.emotion_tag || 'neutral', false);
+          else appendAriaMessage(m.content, m.emotion_tag || 'neutral', false, true);
         });
+
+        // Clear divider between old and new
+        const divider = document.createElement('div');
+        divider.className = 'chat-date-label';
+        divider.textContent = '— now —';
+        divider.style.cssText = 'margin: 16px 0; opacity: 0.5;';
+        msgs.appendChild(divider);
         // Aria acknowledges returning
         const returns = [
           "you're back. pick up where we left off?",
@@ -2846,16 +2853,16 @@ function updateChatMoodPill(emotion) {
   pill.style.background = meta.color.replace('0.7)', '0.12)').replace('0.5)', '0.08)').replace('0.8)', '0.15)').replace('0.6)', '0.1)');
 }
 
-function appendAriaMessage(text, emotion, doSpeak = true) {
+function appendAriaMessage(text, emotion, doSpeak = true, silent = false) {
   const msgs = document.getElementById('chatMessages');
   const meta = EMOTION_META[emotion] || EMOTION_META.neutral;
 
   const wrap = document.createElement('div');
   wrap.className = 'chat-msg-aria-wrap';
-  wrap.style.animation = 'slide-up 0.3s ease both';
+  if (!silent) wrap.style.animation = 'slide-up 0.3s ease both';
 
-  // Emotion tag above bubble (only non-neutral)
-  if (emotion !== 'neutral') {
+  // Emotion tag above bubble (only non-neutral, and not for silent/history messages)
+  if (emotion !== 'neutral' && !silent) {
     const emoBar = document.createElement('div');
     emoBar.className = 'chat-emotion-bar';
     emoBar.textContent = meta.emoji + ' aria is ' + meta.label;
@@ -2884,8 +2891,14 @@ function appendAriaMessage(text, emotion, doSpeak = true) {
   scrollChatToBottom();
 
   // Stream text word by word as voice speaks it
-  streamTextWithVoice(bubble, text, emotion, doSpeak);
-  updateChatMoodPill(emotion);
+  if (silent) {
+    // History message — render instantly, no animation, no voice, no streaming
+    bubble.textContent = text;
+    bubble.style.opacity = '0.75'; // slightly dimmed to distinguish from live messages
+  } else {
+    streamTextWithVoice(bubble, text, emotion, doSpeak);
+    updateChatMoodPill(emotion);
+  }
 }
 
 function streamTextWithVoice(el, fullText, emotion, doSpeak) {
@@ -3546,7 +3559,7 @@ function queueSnooze() {
 // ARIA MEMORY SCREEN
 // ═══════════════════════════════════════════════════
 
-function renderMemoryScreen() {
+async function renderMemoryScreen() {
   const body = document.getElementById('memoryBody');
   const statusEl = document.getElementById('memoryStatus');
   const sqlNotice = document.getElementById('memorySqlNotice');
@@ -3558,6 +3571,13 @@ function renderMemoryScreen() {
     return;
   }
 
+  // Show loading while we fetch
+  statusEl.textContent = '● loading…';
+  body.innerHTML = '';
+
+  // Always reload fresh from Supabase when screen opens
+  await ariaMemory.load();
+
   if (!ariaMemory.isTableAvailable()) {
     statusEl.textContent = '● setup needed';
     sqlNotice.style.display = 'block';
@@ -3567,7 +3587,7 @@ function renderMemoryScreen() {
 
   sqlNotice.style.display = 'none';
   const all = ariaMemory.getAll();
-  const categories = Object.keys(all);
+  const categories = Object.keys(all).filter(cat => Object.keys(all[cat]).length > 0);
 
   if (!categories.length) {
     statusEl.textContent = '● learning…';
@@ -3580,10 +3600,11 @@ function renderMemoryScreen() {
 
   const categoryLabels = {
     writing_style: '✍️ YOUR WRITING STYLE',
-    patterns: '📊 BEHAVIORAL PATTERNS',
-    emotional: '💫 EMOTIONAL CONTEXT',
-    facts: '🗂 KNOWN FACTS',
-    relationships: '👥 RELATIONSHIP DYNAMICS'
+    patterns:      '📊 BEHAVIORAL PATTERNS',
+    emotional:     '💫 EMOTIONAL CONTEXT',
+    facts:         '🗂 KNOWN FACTS',
+    relationships: '👥 RELATIONSHIP DYNAMICS',
+    chat:          '💬 FROM YOUR CONVERSATIONS'
   };
 
   body.innerHTML = categories.map(cat => {
