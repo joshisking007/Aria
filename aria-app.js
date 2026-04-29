@@ -3074,9 +3074,14 @@ async function writeChatToMemory(recentMessages) {
 
     if (summary && typeof ariaMemory.addChatFacts === 'function') {
       ariaMemory.addChatFacts(summary);
+      // Also persist each fact individually to aria_memory table so it survives reload
+      const lines = summary.split('\n').map(l => l.replace(/^–\s*/, '').trim()).filter(Boolean);
+      for (let i = 0; i < lines.length; i++) {
+        await ariaMemory.remember('chat', `fact_${Date.now()}_${i}`, lines[i], 0.8, 'chat');
+      }
     }
 
-    // Also upsert to Supabase user_profiles as aria_chat_memory
+    // Also upsert to Supabase user_profiles as aria_chat_memory (legacy store)
     if (currentUserId) {
       const { data } = await db.from('user_profiles').select('aria_chat_memory').eq('id', currentUserId).single();
       const existing = data?.aria_chat_memory || '';
@@ -3577,7 +3582,7 @@ function humanizeMemoryEntry(cat, key, value) {
   return `${label}: ${value}`;
 }
 
-function renderMemoryScreen() {
+async function renderMemoryScreen() {
   const body = document.getElementById('memoryBody');
   const statusEl = document.getElementById('memoryStatus');
   const sqlNotice = document.getElementById('memorySqlNotice');
@@ -3588,6 +3593,14 @@ function renderMemoryScreen() {
     sqlNotice.style.display = 'none';
     return;
   }
+
+  // Merge any aria_chat_memory from user_profiles that isn't yet in the live store
+  try {
+    const { data } = await db.from('user_profiles').select('aria_chat_memory').eq('id', currentUserId).single();
+    if (data?.aria_chat_memory && typeof ariaMemory.addChatFacts === 'function') {
+      ariaMemory.addChatFacts(data.aria_chat_memory);
+    }
+  } catch(e) {}
 
   if (!ariaMemory.isTableAvailable()) {
     statusEl.textContent = '● setup needed';
@@ -3663,7 +3676,61 @@ async function forceMemoryLearn() {
   await ariaMemory.learnWritingStyle();
   await ariaMemory.learnFromHistory(replyHistory);
   await ariaMemory.load();
+  // Pull any chat-derived facts stored in user_profiles back into the live store
+  if (currentUserId) {
+    try {
+      const { data } = await db.from('user_profiles').select('aria_chat_memory').eq('id', currentUserId).single();
+      if (data?.aria_chat_memory && typeof ariaMemory.addChatFacts === 'function') {
+        ariaMemory.addChatFacts(data.aria_chat_memory);
+      }
+    } catch(e) {}
+  }
   renderMemoryScreen();
   showToast('memory updated ✓', 'green');
 }
 
+// ── SIGN-IN BOOTSTRAP FIX ───────────────────────────────────────────
+// Ensures app bootstraps fully on fresh sign-in (not just on refresh)
+(function() {
+  let _appBooted = false;
+  db.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session?.user && !_appBooted) {
+      _appBooted = true;
+      currentUserId = session.user.id;
+      // Load all persistent data
+      try { await ariaMemory.load(); } catch(e) {}
+      try { await contactMemory.load(); } catch(e) {}
+      try { ariaMemory.learnWritingStyle(); } catch(e) {}
+      // Load reply history from Supabase
+      try {
+        const { data } = await db.from('reply_history').select('*')
+          .eq('user_id', currentUserId).order('created_at', { ascending: false }).limit(100);
+        if (data?.length) {
+          replyHistory = data;
+          ariaMemory.learnFromHistory(replyHistory);
+        }
+      } catch(e) {}
+      // Load chat_messages for chat history
+      try {
+        const { data } = await db.from('chat_messages').select('*')
+          .eq('user_id', currentUserId).order('created_at', { ascending: true }).limit(60);
+        if (data?.length) {
+          chatHistory = data.map(m => ({ role: m.role === 'aria' ? 'assistant' : m.role, content: m.content }));
+        }
+      } catch(e) {}
+      // Load aria_chat_memory from user_profiles and push into ariaMemory
+      try {
+        const { data } = await db.from('user_profiles').select('aria_chat_memory').eq('id', currentUserId).single();
+        if (data?.aria_chat_memory && typeof ariaMemory.addChatFacts === 'function') {
+          ariaMemory.addChatFacts(data.aria_chat_memory);
+        }
+      } catch(e) {}
+      // Hide the auth gate
+      const gate = document.getElementById('authGate');
+      if (gate && !gate.classList.contains('hiding')) {
+        gate.classList.add('hiding');
+        setTimeout(() => { gate.style.display = 'none'; }, 400);
+      }
+    }
+  });
+})();
