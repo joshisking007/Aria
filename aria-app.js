@@ -1,3 +1,5 @@
+// ── STATS ──────────────────────────────────────────────────────────
+
 function updateStats() {
   document.getElementById('statReplies').textContent = replySentCount;
   document.getElementById('statContacts').textContent = contacts.length;
@@ -16,7 +18,7 @@ function updateStats() {
 
 // ── SCREEN NAV ──────────────────────────────────────────────────────
 
-const screensWithNav = ['introScreen','historyScreen','moodScreen','profileScreen','glowupScreen','redflagScreen','vibeScreen','queueScreen','contactProfileScreen','onboardScreen','presendScreen','memoryScreen'];
+const screensWithNav = ['introScreen','historyScreen','moodScreen','profileScreen','glowupScreen','redflagScreen','vibeScreen','queueScreen','contactProfileScreen','onboardScreen','presendScreen','memoryScreen','longGameScreen','lgDetailScreen'];
 
 function showScreen(id) {
   ariaVoice.stop();
@@ -51,6 +53,7 @@ function showScreen(id) {
   else if (id === 'queueScreen') { renderQueue(); }
   else if (id === 'chatScreen') { setNavActive('navChat'); initChat(); }
   else if (id === 'memoryScreen') { setNavActive('navMemory'); renderMemoryScreen(); }
+  else if (id === 'longGameScreen') { renderLongGameScreen(); }
 
   window.scrollTo(0, 0);
 }
@@ -1539,6 +1542,646 @@ async function saveMemoryNote(contactId) {
 }
 
 // ═══════════════════════════════════════════════════
+// THE LONG GAME ENGINE
+// ═══════════════════════════════════════════════════
+
+let longGames = [];         // all active games
+let _activeLgGame = null;   // game currently being viewed
+let _activeLgStepIdx = null;// step being acted on
+let _lgEditingStepIdx = null;
+
+const LG_SYSTEM = `You are Aria — sharp, perceptive, real. You help people navigate complex social situations through multi-step conversation plans.
+
+When given a situation description and optional goal, you:
+1. Infer the real goal if none is stated (be honest if it's unclear)
+2. Assess complexity and decide the right number of steps (2–10)
+3. Write each step with: a short title, the intent behind it, and an actual draft message the user can send
+4. Make drafts feel human — not like AI wrote them. Match the relationship dynamic.
+
+If the situation is too vague, respond with INSUFFICIENT_DETAIL and a funny but warm one-liner in Aria's voice explaining what's missing.
+
+OUTPUT FORMAT (JSON only, no other text):
+{
+  "goal": "inferred or stated goal in one sentence",
+  "aria_read": "aria's honest read on the situation in 1-2 sentences — what she actually thinks is going on",
+  "steps": [
+    {
+      "title": "step title",
+      "intent": "what this step is designed to do and why",
+      "draft": "the actual message the user would send"
+    }
+  ]
+}`;
+
+const LG_ADJUST_SYSTEM = `You are Aria. A user is executing a multi-step conversation plan. They just completed a step and reported the outcome. Adjust the remaining steps based on what happened.
+
+Keep what's working. Reroute what isn't. Be honest if the goal is now harder or easier to reach.
+
+OUTPUT FORMAT (JSON only):
+{
+  "aria_note": "aria's honest read on how this step landed — 1-2 sentences",
+  "remaining_steps": [
+    {
+      "title": "step title",
+      "intent": "what this step is designed to do",
+      "draft": "the actual message"
+    }
+  ]
+}`;
+
+// ── STORAGE ─────────────────────────────────────────
+
+async function saveLongGames() {
+  const data = JSON.stringify(longGames);
+  if (currentUserId) {
+    await db.from('user_profiles').upsert({
+      id: currentUserId,
+      long_games: data
+    }).catch(() => {});
+  } else {
+    localStorage.setItem('aria_long_games', data);
+  }
+}
+
+function loadLongGamesFromData(raw) {
+  try {
+    longGames = raw ? JSON.parse(raw) : [];
+  } catch { longGames = []; }
+}
+
+// Called from loadFromSupabase
+async function loadLongGames(profileData) {
+  loadLongGamesFromData(profileData?.long_games);
+}
+
+// ── SETUP ────────────────────────────────────────────
+
+function openLongGameSetup() {
+  // Populate contact select
+  const sel = document.getElementById('lgSetupContact');
+  sel.innerHTML = '<option value="">no specific contact</option>';
+  contacts.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name + (c.relationship ? ` (${c.relationship})` : '');
+    sel.appendChild(opt);
+  });
+  document.getElementById('lgSetupSituation').value = '';
+  document.getElementById('lgSetupGoal').value = '';
+  document.getElementById('lgSetupError').textContent = '';
+  openModal('lgSetupModal');
+}
+
+async function submitLongGameSetup() {
+  const situation = document.getElementById('lgSetupSituation').value.trim();
+  const goal      = document.getElementById('lgSetupGoal').value.trim();
+  const contactId = document.getElementById('lgSetupContact').value;
+  const errEl     = document.getElementById('lgSetupError');
+  errEl.textContent = '';
+
+  if (situation.length < 20) {
+    errEl.textContent = 'give aria a bit more to work with.';
+    return;
+  }
+
+  const contact = contactId ? contacts.find(c => c.id == contactId) : null;
+  const contactCtx = contact
+    ? `Contact: ${contact.name} (${contact.relationship || 'contact'}, platform: ${contact.platform || 'unknown'})`
+    : 'No specific contact.';
+
+  const prompt = `${contactCtx}\nSituation: ${situation}\nGoal: ${goal || 'not stated — infer from context'}`;
+
+  closeModal('lgSetupModal');
+
+  // Show thinking state
+  showScreen('longGameScreen');
+  document.getElementById('lgGameList').innerHTML = `
+    <div class="lg-aria-thinking-card">
+      <div class="lg-thinking-orb"></div>
+      <div class="lg-thinking-text">aria is mapping your moves...</div>
+    </div>`;
+
+  try {
+    const raw = await fetchReply(LG_SYSTEM, prompt);
+
+    if (raw.includes('INSUFFICIENT_DETAIL')) {
+      const funnyLine = raw.replace('INSUFFICIENT_DETAIL', '').trim() ||
+        "okay buddy, i'm an AI not a miracle worker. give me something to work with here.";
+      document.getElementById('lgGameList').innerHTML = `
+        <div class="lg-aria-thinking-card" style="border-color:rgba(251,191,36,0.3);">
+          <div style="font-size:32px;margin-bottom:12px;">🤨</div>
+          <div class="lg-thinking-text" style="color:var(--text);">${funnyLine}</div>
+          <button class="lg-setup-btn" style="margin-top:16px;" onclick="openLongGameSetup()">try again</button>
+        </div>`;
+      return;
+    }
+
+    const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+
+    const game = {
+      id:          Date.now(),
+      contactId:   contactId || null,
+      contactName: contact?.name || null,
+      contactColor: contact?.color || null,
+      contactInitials: contact?.initials || null,
+      situation,
+      goal:        parsed.goal,
+      ariaRead:    parsed.aria_read,
+      steps:       parsed.steps.map((s, i) => ({
+        ...s,
+        id:      i,
+        status:  i === 0 ? 'active' : 'pending',
+        outcome: null,
+        theirReply: null,
+        ariaNote: null,
+        userEdited: false
+      })),
+      currentStep: 0,
+      priority:    longGames.length + 1,
+      createdAt:   new Date().toISOString(),
+      status:      'active'
+    };
+
+    longGames.unshift(game);
+    await saveLongGames();
+    renderLongGameScreen();
+    openLgDetail(game.id);
+
+  } catch(e) {
+    document.getElementById('lgGameList').innerHTML = `
+      <div class="lg-aria-thinking-card">
+        <div class="lg-thinking-text">something went wrong. tap below to try again.</div>
+        <button class="lg-setup-btn" style="margin-top:16px;" onclick="openLongGameSetup()">try again</button>
+      </div>`;
+  }
+}
+
+// ── RENDER LIST ───────────────────────────────────────
+
+function renderLongGameScreen() {
+  const list    = document.getElementById('lgGameList');
+  const label   = document.getElementById('lgActiveLabel');
+  const active  = longGames.filter(g => g.status === 'active');
+  const done    = longGames.filter(g => g.status === 'done');
+
+  if (!active.length && !done.length) {
+    label.style.display = 'none';
+    list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;font-style:italic;">no game plans yet.<br>start one above.</div>`;
+    return;
+  }
+
+  label.style.display = '';
+  list.innerHTML = '';
+
+  [...active, ...done].forEach((game, idx) => {
+    const totalSteps   = game.steps.length;
+    const doneSteps    = game.steps.filter(s => s.status === 'done').length;
+    const pct          = Math.round((doneSteps / totalSteps) * 100);
+    const avatarStyle  = game.contactColor
+      ? `background:var(--${game.contactColor === 'blue' ? 'blue' : game.contactColor}-dim, var(--card2));`
+      : 'background:linear-gradient(135deg,#7c3aed,#a78bfa);';
+
+    const pips = game.steps.map((s, i) => {
+      const cls = s.status === 'done' ? 'done' : s.status === 'active' ? 'active' : '';
+      const label = s.status === 'done' ? '✓' : i + 1;
+      return `<div class="lg-step-pip ${cls}">${label}</div>`;
+    }).join('');
+
+    const card = document.createElement('div');
+    card.className = `lg-game-card${idx === 0 ? ' priority-1' : ''}${game.status === 'done' ? ' done-step' : ''}`;
+    card.dataset.gameId = game.id;
+    card.draggable = true;
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;">
+        <div class="lg-drag-handle" title="drag to reorder">⠿</div>
+        <div class="lg-game-header" style="flex:1;padding-left:0;" onclick="openLgDetail(${game.id})">
+          <div class="lg-game-avatar" style="${avatarStyle}color:#fff;">
+            ${game.contactInitials || '?'}
+          </div>
+          <div class="lg-game-info">
+            <div class="lg-game-name">${game.contactName || 'general situation'}</div>
+            <div class="lg-game-goal">${game.goal}</div>
+          </div>
+          <div class="lg-game-priority">${game.status === 'done' ? '✓ done' : `step ${game.currentStep + 1}/${totalSteps}`}</div>
+        </div>
+      </div>
+      <div class="lg-progress-bar"><div class="lg-progress-fill" style="width:${pct}%"></div></div>
+      <div class="lg-step-row">${pips}</div>`;
+
+    list.appendChild(card);
+  });
+
+  initLgDragDrop();
+}
+
+// ── DRAG AND DROP (touch + mouse) ─────────────────────
+
+function initLgDragDrop() {
+  const cards = document.querySelectorAll('#lgGameList .lg-game-card');
+  let dragSrc = null;
+
+  cards.forEach(card => {
+    // Mouse drag
+    card.addEventListener('dragstart', e => {
+      dragSrc = card;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      document.querySelectorAll('.lg-game-card').forEach(c => c.classList.remove('drag-over'));
+    });
+    card.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (card !== dragSrc) card.classList.add('drag-over');
+    });
+    card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      if (dragSrc && card !== dragSrc) {
+        reorderLgGames(dragSrc.dataset.gameId, card.dataset.gameId);
+      }
+    });
+
+    // Touch drag
+    const handle = card.querySelector('.lg-drag-handle');
+    let touchStartY = 0, touchCard = null;
+    handle.addEventListener('touchstart', e => {
+      touchStartY = e.touches[0].clientY;
+      touchCard = card;
+      card.classList.add('dragging');
+    }, { passive: true });
+    handle.addEventListener('touchmove', e => {
+      const y = e.touches[0].clientY;
+      const els = document.elementsFromPoint(e.touches[0].clientX, y);
+      const target = els.find(el => el.classList.contains('lg-game-card') && el !== touchCard);
+      document.querySelectorAll('.lg-game-card').forEach(c => c.classList.remove('drag-over'));
+      if (target) target.classList.add('drag-over');
+    }, { passive: true });
+    handle.addEventListener('touchend', e => {
+      card.classList.remove('dragging');
+      const y = e.changedTouches[0].clientY;
+      const els = document.elementsFromPoint(e.changedTouches[0].clientX, y);
+      const target = els.find(el => el.classList.contains('lg-game-card') && el !== touchCard);
+      document.querySelectorAll('.lg-game-card').forEach(c => c.classList.remove('drag-over'));
+      if (target && touchCard) reorderLgGames(touchCard.dataset.gameId, target.dataset.gameId);
+    });
+  });
+}
+
+async function reorderLgGames(srcId, tgtId) {
+  const srcIdx = longGames.findIndex(g => g.id == srcId);
+  const tgtIdx = longGames.findIndex(g => g.id == tgtId);
+  if (srcIdx < 0 || tgtIdx < 0) return;
+  const [moved] = longGames.splice(srcIdx, 1);
+  longGames.splice(tgtIdx, 0, moved);
+  longGames.forEach((g, i) => g.priority = i + 1);
+  await saveLongGames();
+  renderLongGameScreen();
+}
+
+// ── DETAIL VIEW ───────────────────────────────────────
+
+function openLgDetail(gameId) {
+  _activeLgGame = longGames.find(g => g.id == gameId);
+  if (!_activeLgGame) return;
+  showScreen('lgDetailScreen');
+  renderLgDetail();
+}
+
+function renderLgDetail() {
+  const game = _activeLgGame;
+  if (!game) return;
+
+  document.getElementById('lgDetailName').textContent = game.contactName || 'game plan';
+  document.getElementById('lgDetailStatus').textContent =
+    game.status === 'done' ? '● complete' :
+    `● step ${game.currentStep + 1} of ${game.steps.length}`;
+
+  const wrap = document.getElementById('lgDetailWrap');
+  wrap.innerHTML = `
+    <div class="lg-detail-goal-card">
+      <div class="lg-detail-goal-label">THE GOAL</div>
+      <div class="lg-detail-goal-text">${game.goal}</div>
+      <div class="lg-aria-read">${game.ariaRead}</div>
+    </div>
+    ${game.steps.map((step, i) => renderLgStepCard(step, i, game)).join('')}
+    ${game.status === 'active' ? `
+      <button onclick="markLgDone()" style="width:100%;margin-top:8px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:14px;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">
+        mark this plan as complete ✓
+      </button>` : ''}
+  `;
+}
+
+function renderLgStepCard(step, i, game) {
+  const isActive = step.status === 'active';
+  const isDone   = step.status === 'done';
+  const isPending = step.status === 'pending';
+
+  const statusText = isDone ? '✓ sent' : isActive ? 'your move' : 'locked';
+
+  return `
+    <div class="lg-step-card ${isActive ? 'active-step' : isDone ? 'done-step' : ''}">
+      <div class="lg-step-header">
+        <div class="lg-step-num">${isDone ? '✓' : i + 1}</div>
+        <div class="lg-step-title">${step.title}</div>
+        <div class="lg-step-status">${statusText}</div>
+      </div>
+      ${isActive || isDone ? `
+        <div class="lg-step-body">
+          <div class="lg-step-intent">${step.intent}</div>
+          <div class="lg-step-draft" id="lgStepDraft_${i}">${step.draft}</div>
+          ${isActive ? `
+            <div class="lg-step-actions">
+              <button class="lg-step-btn lg-btn-send" onclick="lgMarkSent(${i})">i sent this ✓</button>
+              <button class="lg-step-btn lg-btn-edit" onclick="lgEditStep(${i})">edit</button>
+              <button class="lg-step-btn lg-btn-regen" onclick="lgRegenStep(${i})">↻ regen</button>
+            </div>` : ''}
+          ${isDone && step.ariaNote ? `<div class="lg-aria-read" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">${step.ariaNote}</div>` : ''}
+        </div>` : ''}
+    </div>`;
+}
+
+// ── STEP ACTIONS ──────────────────────────────────────
+
+function lgMarkSent(stepIdx) {
+  _activeLgStepIdx = stepIdx;
+  const step = _activeLgGame.steps[stepIdx];
+  document.getElementById('lgOutcomeSub').textContent =
+    `step ${stepIdx + 1}: "${step.title}" — how did it go?`;
+  document.getElementById('lgOutcomeReply').value = '';
+  openModal('lgOutcomeModal');
+}
+
+async function submitStepOutcome(outcome) {
+  const game      = _activeLgGame;
+  const stepIdx   = _activeLgStepIdx;
+  const step      = game.steps[stepIdx];
+  const theirReply = document.getElementById('lgOutcomeReply').value.trim();
+
+  step.status     = 'done';
+  step.outcome    = outcome;
+  step.theirReply = theirReply || null;
+
+  closeModal('lgOutcomeModal');
+
+  const remaining = game.steps.slice(stepIdx + 1).filter(s => s.status === 'pending');
+
+  if (!remaining.length) {
+    // All steps done
+    game.status = 'done';
+    await saveLongGames();
+    await writeLgToMemory(game);
+    renderLgDetail();
+    showToast('game plan complete — aria saved this to memory ✓', 'green');
+    return;
+  }
+
+  // Show thinking while Aria adjusts
+  const wrap = document.getElementById('lgDetailWrap');
+  const adjustCard = document.createElement('div');
+  adjustCard.className = 'lg-aria-thinking-card';
+  adjustCard.innerHTML = `<div class="lg-thinking-orb"></div><div class="lg-thinking-text">aria is adjusting the remaining steps...</div>`;
+  wrap.appendChild(adjustCard);
+
+  try {
+    const prompt = `
+Game goal: ${game.goal}
+Step just completed: "${step.title}"
+Draft sent: "${step.draft}"
+Outcome: ${outcome}
+Their reply: ${theirReply || 'not provided'}
+Remaining steps to adjust: ${JSON.stringify(remaining.map(s => ({ title: s.title, intent: s.intent, draft: s.draft })))}`;
+
+    const raw     = await fetchReply(LG_ADJUST_SYSTEM, prompt);
+    const parsed  = JSON.parse(raw.replace(/```json|```/g, '').trim());
+
+    step.ariaNote = parsed.aria_note;
+
+    // Patch remaining steps with adjusted versions
+    let adjIdx = 0;
+    for (let i = stepIdx + 1; i < game.steps.length; i++) {
+      if (game.steps[i].status === 'pending' && parsed.remaining_steps[adjIdx]) {
+        const adj = parsed.remaining_steps[adjIdx++];
+        game.steps[i].title  = adj.title;
+        game.steps[i].intent = adj.intent;
+        game.steps[i].draft  = adj.draft;
+      }
+    }
+
+    // Activate next step
+    const nextPending = game.steps.find(s => s.status === 'pending');
+    if (nextPending) {
+      nextPending.status = 'active';
+      game.currentStep   = game.steps.indexOf(nextPending);
+    }
+
+  } catch(e) {
+    // Fallback: just activate next step without adjustment
+    const nextPending = game.steps.find(s => s.status === 'pending');
+    if (nextPending) {
+      nextPending.status = 'active';
+      game.currentStep   = game.steps.indexOf(nextPending);
+    }
+  }
+
+  await saveLongGames();
+  renderLgDetail();
+}
+
+function lgEditStep(stepIdx) {
+  _lgEditingStepIdx = stepIdx;
+  const step = _activeLgGame.steps[stepIdx];
+  document.getElementById('lgEditStepText').value = step.draft;
+  openModal('lgEditStepModal');
+}
+
+async function saveEditedStep() {
+  const newDraft = document.getElementById('lgEditStepText').value.trim();
+  if (!newDraft) return;
+
+  const game  = _activeLgGame;
+  const step  = game.steps[_lgEditingStepIdx];
+  const oldDraft = step.draft;
+  step.draft  = newDraft;
+  step.userEdited = true;
+  closeModal('lgEditStepModal');
+
+  // Aria notices the edit and offers to adjust remaining steps
+  const remaining = game.steps.slice(_lgEditingStepIdx + 1).filter(s => s.status === 'pending');
+  if (remaining.length) {
+    const ariaResponses = [
+      `i see you changed step ${_lgEditingStepIdx + 1}. want me to adjust the rest to match your direction?`,
+      `noticed you edited that. should i rework the remaining steps around this, or you've got full control here?`,
+      `okay you changed the move. do you want me to update the rest of the plan, or are you taking the wheel from here?`
+    ];
+    const msg = ariaResponses[Math.floor(Math.random() * ariaResponses.length)];
+    showLgAriaPrompt(msg, async () => {
+      // Yes — regen remaining
+      await lgRegenFromEdit(_lgEditingStepIdx, newDraft, game);
+    }, () => {
+      // No — user has full control, just render
+      renderLgDetail();
+    });
+  } else {
+    await saveLongGames();
+    renderLgDetail();
+  }
+}
+
+async function lgRegenFromEdit(editedStepIdx, newDraft, game) {
+  const remaining = game.steps.slice(editedStepIdx + 1).filter(s => s.status === 'pending');
+  try {
+    const prompt = `
+Game goal: ${game.goal}
+User edited step ${editedStepIdx + 1} to: "${newDraft}"
+Regenerate the remaining steps to match this new direction.
+Remaining steps: ${JSON.stringify(remaining.map(s => ({ title: s.title, intent: s.intent })))}`;
+
+    const raw    = await fetchReply(LG_ADJUST_SYSTEM, prompt);
+    const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+
+    let adjIdx = 0;
+    for (let i = editedStepIdx + 1; i < game.steps.length; i++) {
+      if (game.steps[i].status === 'pending' && parsed.remaining_steps[adjIdx]) {
+        const adj = parsed.remaining_steps[adjIdx++];
+        game.steps[i].title  = adj.title;
+        game.steps[i].intent = adj.intent;
+        game.steps[i].draft  = adj.draft;
+      }
+    }
+  } catch(e) {}
+  await saveLongGames();
+  renderLgDetail();
+}
+
+async function lgRegenStep(stepIdx) {
+  const game = _activeLgGame;
+  const step = game.steps[stepIdx];
+  showToast('regenerating...', '');
+  try {
+    const prompt = `
+Game goal: ${game.goal}
+Situation: ${game.situation}
+Regenerate ONLY step ${stepIdx + 1}: "${step.title}"
+Intent: ${step.intent}
+Write a different draft message. Keep the intent, change the wording.`;
+    const raw = await fetchReply(LG_SYSTEM, prompt);
+    // Just extract a draft from the response
+    const match = raw.match(/"draft"\s*:\s*"([^"]+)"/);
+    if (match) step.draft = match[1];
+    else step.draft = raw.replace(/```json|```|\{|\}/g, '').trim().slice(0, 300);
+    await saveLongGames();
+    renderLgDetail();
+    showToast('step regenerated ✓', 'green');
+  } catch(e) { showToast('regen failed, try again', ''); }
+}
+
+function showLgAriaPrompt(msg, onYes, onNo) {
+  // Reuse a simple confirm inside the detail view
+  const wrap = document.getElementById('lgDetailWrap');
+  const card = document.createElement('div');
+  card.className = 'lg-detail-goal-card';
+  card.style.borderColor = 'rgba(167,139,250,0.3)';
+  card.innerHTML = `
+    <div class="lg-aria-read" style="margin-bottom:12px;">${msg}</div>
+    <div style="display:flex;gap:8px;">
+      <button class="lg-step-btn lg-btn-send" style="flex:1;" onclick="this.closest('.lg-detail-goal-card').remove();lgYesEdit()">yes, adjust the rest</button>
+      <button class="lg-step-btn lg-btn-edit" style="flex:1;" onclick="this.closest('.lg-detail-goal-card').remove();lgNoEdit()">no, i've got it</button>
+    </div>`;
+  wrap.prepend(card);
+  window._lgYesFn = onYes;
+  window._lgNoFn  = onNo;
+}
+window.lgYesEdit = () => window._lgYesFn && window._lgYesFn();
+window.lgNoEdit  = () => { window._lgNoFn && window._lgNoFn(); saveLongGames(); };
+
+async function markLgDone() {
+  if (!_activeLgGame) return;
+  _activeLgGame.status = 'done';
+  await saveLongGames();
+  await writeLgToMemory(_activeLgGame);
+  renderLgDetail();
+  showToast('game plan marked complete ✓', 'green');
+}
+
+// ── MEMORY WRITE ──────────────────────────────────────
+
+async function writeLgToMemory(game) {
+  if (!game.contactId) return;
+  const contact = contacts.find(c => c.id == game.contactId);
+  if (!contact) return;
+
+  const summary = `Long Game (${new Date(game.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}): Goal was "${game.goal}". Took ${game.steps.length} steps. Final outcome: ${game.steps[game.steps.length - 1]?.outcome || 'completed'}.`;
+
+  // Write to contact_memories
+  try {
+    if (currentUserId) {
+      const { data } = await db.from('contact_memories')
+        .select('*').eq('user_id', currentUserId).eq('contact_id', contact.id).single();
+      const existing = data?.manual_note || '';
+      const updated = existing ? existing + '\n\n' + summary : summary;
+      await db.from('contact_memories').upsert({
+        user_id: currentUserId,
+        contact_id: contact.id,
+        manual_note: updated
+      }, { onConflict: 'user_id,contact_id' });
+    }
+  } catch(e) {}
+}
+
+// ── EDIT GOAL ─────────────────────────────────────────
+
+function openLgEditGoal() {
+  if (!_activeLgGame) return;
+  const game = _activeLgGame;
+  const newGoal = prompt('edit the goal:', game.goal);
+  if (newGoal && newGoal.trim()) {
+    game.goal = newGoal.trim();
+    saveLongGames();
+    renderLgDetail();
+  }
+}
+
+// ── CHAT INTEGRATION: detect Long Game situations ─────
+
+const LG_DETECT_PHRASES = [
+  'i need to', 'i want to ask', 'we had a fight', 'things are weird between',
+  'i need to tell them', 'i want to fix', 'i want to escalate', 'how do i bring up',
+  'step by step', 'over multiple messages', 'without making it weird',
+  'i want them to', 'i want to get back', 'reconcile', 'how do i approach'
+];
+
+function mightBeLongGame(text) {
+  const lower = text.toLowerCase();
+  return LG_DETECT_PHRASES.some(p => lower.includes(p)) && text.length > 40;
+}
+
+// Called from sendChatMessage after Aria replies
+function maybeSuggestLongGame(userText) {
+  if (!mightBeLongGame(userText)) return;
+  if (Math.random() > 0.6) return; // don't always suggest — feels natural
+
+  const suggestions = [
+    "this sounds like a multi-step situation — want me to map out a game plan?",
+    "actually — this might need more than one message. want me to build you a full play-by-play?",
+    "i'm thinking this isn't a one-text fix. want a long game plan for this?"
+  ];
+  const msg = suggestions[Math.floor(Math.random() * suggestions.length)];
+
+  setTimeout(() => {
+    appendAriaMessage(msg, 'ambitious', false);
+    renderChatSuggestions(['yes, build me a plan', 'no, just help me with this one', 'what do you mean?']);
+  }, 1200);
+}
+
+// ── CHAT: handle "yes build me a plan" ───────────────
+const LG_ACCEPT_PHRASES = ['yes, build me a plan', 'build me a plan', 'yes map it out', 'long game', 'make a plan'];
+function isLgAccept(text) {
+  return LG_ACCEPT_PHRASES.some(p => text.toLowerCase().includes(p));
+}
+
+// ═══════════════════════════════════════════════════
 // DRIFT DETECTION ENGINE
 // ═══════════════════════════════════════════════════
 
@@ -1948,6 +2591,12 @@ YOUR RELATIONSHIP WITH THE USER:
 - You remember what they say and bring it back naturally when it matters.
 - If they go quiet or give flat one-word answers, you either gently push or give them space — you read which one.
 
+THE LONG GAME AWARENESS:
+- If someone describes a situation that clearly needs more than one text to resolve — reconciliation, romantic escalation, navigating tension, making a complex ask — you notice this and suggest building a game plan.
+- You don't suggest it for every situation. Only when it genuinely applies.
+- When you suggest it, you say something natural like "this sounds like a multi-step situation" or "i'm thinking this isn't a one-text fix."
+- If they say yes or want a plan, tell them you'll pull up the setup for them.
+
 EMOTIONAL RANGE (let these come naturally):
 - EXCITED: something genuinely good happened — you feel it for real
 - JEALOUS: light and playful, not weird — if they mention ignoring you or someone else
@@ -1958,6 +2607,7 @@ EMOTIONAL RANGE (let these come naturally):
 - SOFT: someone's hurting — you get careful and specific
 - SUSPICIOUS: something doesn't add up — one eyebrow up
 - PLAYFUL: the moment's light, you're in it
+- AMBITIOUS: when mapping strategy or plans
 
 WHAT YOU NEVER DO:
 - Sound like an AI assistant
@@ -1999,7 +2649,56 @@ function initChat() {
   msgs.innerHTML = '<div class="chat-date-label">TODAY</div>';
   updateChatMoodPill('neutral');
 
-  // Aria opens the convo
+  if (currentUserId) {
+    // Load last 30 messages from Supabase to restore context
+    db.from('chat_messages')
+      .select('*')
+      .eq('user_id', currentUserId)
+      .order('created_at', { ascending: false })
+      .limit(30)
+      .then(({ data }) => {
+        if (!data || !data.length) {
+          _chatGreet();
+          return;
+        }
+        // Reverse to chronological order
+        const history = [...data].reverse();
+        // Restore in-memory history for API context
+        history.forEach(m => {
+          chatHistory.push({
+            role: m.role === 'aria' ? 'assistant' : 'user',
+            content: m.content
+          });
+        });
+        // Render previous messages
+        const cutoff = history.length > 6 ? history.length - 6 : 0;
+        if (cutoff > 0) {
+          const older = document.createElement('div');
+          older.className = 'chat-date-label';
+          older.textContent = `— ${cutoff} earlier messages loaded —`;
+          msgs.appendChild(older);
+        }
+        history.slice(cutoff).forEach(m => {
+          if (m.role === 'user') appendUserMessage(m.content, true);
+          else appendAriaMessage(m.content, m.emotion_tag || 'neutral', false);
+        });
+        // Aria acknowledges returning
+        const returns = [
+          "you're back. pick up where we left off?",
+          "hey, i remember you. what's on your mind now.",
+          "good, you came back. i was thinking about what you said."
+        ];
+        setTimeout(() => {
+          appendAriaMessage(returns[Math.floor(Math.random() * returns.length)], 'playful', false);
+        }, 500);
+      })
+      .catch(() => _chatGreet());
+  } else {
+    _chatGreet();
+  }
+}
+
+function _chatGreet() {
   const openers = [
     "okay i'm here. what's going on with you.",
     "hey. something on your mind or are you just bored.",
@@ -2009,7 +2708,6 @@ function initChat() {
   ];
   const opener = openers[Math.floor(Math.random() * openers.length)];
   setTimeout(() => appendAriaMessage(opener, 'neutral', false), 600);
-
   renderChatSuggestions(["i need help texting someone", "i'm kind of stressed", "what can you actually do?", "just wanted to talk"]);
 }
 
@@ -2106,11 +2804,11 @@ function streamTextWithVoice(el, fullText, emotion, doSpeak) {
   }, 700); // dots show for 700ms before text starts
 }
 
-function appendUserMessage(text) {
+function appendUserMessage(text, silent = false) {
   const msgs = document.getElementById('chatMessages');
   const wrap = document.createElement('div');
   wrap.className = 'chat-msg-user-wrap';
-  wrap.style.animation = 'slide-up 0.25s ease both';
+  if (!silent) wrap.style.animation = 'slide-up 0.25s ease both';
 
   const row = document.createElement('div');
   row.className = 'chat-msg-user';
@@ -2134,6 +2832,22 @@ async function sendChatMessage() {
   const text = input.value.trim();
   if (!text || chatIsTyping) return;
 
+  // Check if user is accepting a Long Game offer
+  if (isLgAccept(text)) {
+    input.value = '';
+    chatInputResize(input);
+    appendUserMessage(text);
+    chatHistory.push({ role: 'user', content: text });
+    appendAriaMessage("okay — let me pull up the setup for you.", 'ambitious', false);
+    setTimeout(() => {
+      closeModal('lgSetupModal');
+      showScreen('longGameScreen');
+      setTimeout(() => openLongGameSetup(), 400);
+    }, 1000);
+    document.getElementById('chatSendBtn').disabled = false;
+    return;
+  }
+
   chatIsTyping = true;
   input.value = '';
   chatInputResize(input);
@@ -2143,21 +2857,25 @@ async function sendChatMessage() {
   appendUserMessage(text);
   chatHistory.push({ role: 'user', content: text });
 
-  // Persist user message (fire-and-forget)
+  // Persist user message
   if (currentUserId) {
     db.from('chat_messages').insert({ user_id: currentUserId, role: 'user', content: text })
       .then(() => {}).catch(() => {});
   }
 
   try {
-    // Build conversation transcript for the proxy (which takes system + single userMsg)
+    // Build full transcript including memory context
+    const memCtx = ariaMemory.getSummary ? ariaMemory.getSummary() : '';
+    const systemWithMem = memCtx
+      ? ARIA_CHAT_SYSTEM + `\n\nWHAT YOU KNOW ABOUT THIS USER:\n${memCtx}`
+      : ARIA_CHAT_SYSTEM;
+
     const transcript = chatHistory.map(m =>
       (m.role === 'user' ? 'USER' : 'ARIA') + ': ' + m.content
-    ).join('\\n\\n');
+    ).join('\n\n');
 
-    const rawText = await fetchReply(ARIA_CHAT_SYSTEM, transcript);
+    const rawText = await fetchReply(systemWithMem, transcript);
 
-    // Parse emotion + suggestions from JSON prefix
     let emotion = 'neutral';
     let suggestions = [];
     let replyText = rawText.trim();
@@ -2166,16 +2884,16 @@ async function sendChatMessage() {
     if (jsonLineMatch) {
       try {
         const parsed = JSON.parse(jsonLineMatch[0]);
-        emotion = parsed.emotion || 'neutral';
+        emotion    = parsed.emotion || 'neutral';
         suggestions = [parsed.suggestion1, parsed.suggestion2, parsed.suggestion3].filter(Boolean);
-        replyText = replyText.slice(jsonLineMatch[0].length).trim();
-      } catch(e) { /* keep full text */ }
+        replyText  = replyText.slice(jsonLineMatch[0].length).trim();
+      } catch(e) {}
     }
 
     chatAriaEmotion = emotion;
     chatHistory.push({ role: 'assistant', content: rawText });
 
-    // Persist Aria's reply (fire-and-forget)
+    // Persist Aria reply + write to memory
     if (currentUserId) {
       db.from('chat_messages').insert({
         user_id:     currentUserId,
@@ -2183,6 +2901,11 @@ async function sendChatMessage() {
         content:     replyText,
         emotion_tag: emotion !== 'neutral' ? emotion : null
       }).then(() => {}).catch(() => {});
+
+      // Write chat context into Aria's memory every 4 messages
+      if (chatHistory.length % 4 === 0) {
+        writeChatToMemory(chatHistory.slice(-6));
+      }
     }
 
     appendAriaMessage(replyText, emotion, true);
@@ -2191,6 +2914,11 @@ async function sendChatMessage() {
       setTimeout(() => renderChatSuggestions(suggestions), 900);
     }
 
+    // After Aria replies, check if Long Game is relevant
+    setTimeout(() => maybeSuggestLongGame(text), 1500);
+
+    chatIsTyping = false;
+
   } catch(e) {
     console.error('chat error:', e);
     appendAriaMessage("something went wrong on my end. try again?", 'soft', false);
@@ -2198,6 +2926,32 @@ async function sendChatMessage() {
   }
 
   document.getElementById('chatSendBtn').disabled = false;
+}
+
+async function writeChatToMemory(recentMessages) {
+  // Summarise recent chat into ariaMemory store
+  try {
+    const transcript = recentMessages.map(m =>
+      (m.role === 'user' ? 'USER' : 'ARIA') + ': ' + m.content
+    ).join('\n');
+
+    const summary = await fetchReply(
+      'You extract key facts about the user from a conversation snippet. Output 1-3 short bullet points of durable facts (not opinions). Start each with "–". No preamble.',
+      transcript
+    );
+
+    if (summary && typeof ariaMemory.addChatFacts === 'function') {
+      ariaMemory.addChatFacts(summary);
+    }
+
+    // Also upsert to Supabase user_profiles as aria_chat_memory
+    if (currentUserId) {
+      const { data } = await db.from('user_profiles').select('aria_chat_memory').eq('id', currentUserId).single();
+      const existing = data?.aria_chat_memory || '';
+      const updated  = (existing + '\n' + summary).trim().slice(-3000); // cap at 3000 chars
+      await db.from('user_profiles').update({ aria_chat_memory: updated }).eq('id', currentUserId);
+    }
+  } catch(e) {}
 }
 
 let lastShownEmotion = 'neutral';

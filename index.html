@@ -8,17 +8,16 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <title>ARIA</title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="style.css"/>
-<link rel="manifest" href="manifest.json"/>
-
-<!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const SUPABASE_URL = 'https://mmtdtcmhvbruubrjgjrz.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tdGR0Y21odmJydXVicmpnanJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMTU2MDUsImV4cCI6MjA5MjY5MTYwNX0.f2FXAA8GaUeXXE8V8dnwq4NXz3_22H7d5jVA9rAWsTo';
+  // Named `db` to avoid collision with the `window.supabase` namespace the CDN sets
   const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let currentUserId = null;
 </script>
+<link rel="stylesheet" href="style.css"/>
+<link rel="manifest" href="manifest.json"/>
 
 <!-- Service Worker (Web Share Target) -->
 <script>
@@ -38,6 +37,7 @@
 </script>
 </head>
 <body>
+
 <!-- Ambient layers -->
 <div class="ambient ambient-1"></div>
 <div class="ambient ambient-2"></div>
@@ -216,6 +216,16 @@
           <div class="option-sub">what i've drafted before</div>
         </div>
         <span class="option-arrow">›</span>
+      </button>
+      <button class="option-btn" onclick="showScreen('longGameScreen')" style="border-color:rgba(167,139,250,0.2);background:rgba(167,139,250,0.03);">
+        <span class="option-icon" style="background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.25);color:#a78bfa;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </span>
+        <div class="option-label">
+          <div>the long game</div>
+          <div class="option-sub" style="color:rgba(167,139,250,0.8);">map out a multi-step conversation plan</div>
+        </div>
+        <span class="option-arrow" style="color:#a78bfa;">›</span>
       </button>
     </div>
 
@@ -1023,6 +1033,90 @@
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════
+     SCREEN: THE LONG GAME
+════════════════════════════════════════════════ -->
+<div class="screen" id="longGameScreen" style="display:none;">
+  <div class="top-bar">
+    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <div class="top-bar-info">
+      <div class="top-bar-name">The Long Game</div>
+      <div class="top-bar-status">● multi-step plans</div>
+    </div>
+  </div>
+  <div class="lg-header">
+    <div class="lg-sub">describe the situation. aria maps the moves.</div>
+  </div>
+  <button class="lg-new-btn" onclick="openLongGameSetup()">+ new game plan</button>
+  <div class="lg-section-label" id="lgActiveLabel" style="display:none;">ACTIVE GAMES</div>
+  <div id="lgGameList"></div>
+</div>
+
+<!-- Long Game: Detail screen (overlays longGameScreen) -->
+<div class="screen" id="lgDetailScreen" style="display:none;">
+  <div class="top-bar">
+    <button class="back-btn" onclick="showScreen('longGameScreen')">←</button>
+    <div class="top-bar-info">
+      <div class="top-bar-name" id="lgDetailName">Game Plan</div>
+      <div class="top-bar-status" id="lgDetailStatus">● in progress</div>
+    </div>
+    <button onclick="openLgEditGoal()" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:4px 8px;">edit</button>
+  </div>
+  <div class="lg-detail-wrap" id="lgDetailWrap"></div>
+</div>
+
+<!-- Long Game: Setup modal -->
+<div class="modal-overlay" id="lgSetupModal" onclick="handleModalBgClick(event,'lgSetupModal')" style="z-index:3200;">
+  <div class="modal-sheet" style="padding:0; max-height:92vh; overflow-y:auto;">
+    <div style="padding-top:14px;display:flex;justify-content:center;"><div class="modal-handle"></div></div>
+    <button class="modal-close" onclick="closeModal('lgSetupModal')">×</button>
+    <div style="padding:4px 20px 6px;">
+      <div class="modal-title" style="font-family:'Instrument Serif',serif;">new game plan</div>
+      <div class="modal-sub">tell aria what's going on. the more detail, the sharper the plan.</div>
+    </div>
+    <div class="lg-setup-wrap">
+      <div class="lg-setup-label">WHO IS THIS ABOUT?</div>
+      <select class="lg-contact-select" id="lgSetupContact">
+        <option value="">no specific contact (general situation)</option>
+      </select>
+      <div class="lg-setup-label">WHAT'S THE SITUATION?</div>
+      <textarea class="lg-setup-textarea" id="lgSetupSituation" placeholder="e.g. we had a fight last week and haven't talked since. i said something i regret and i want to fix it without making it weird." rows="4"></textarea>
+      <div class="lg-setup-label">WHAT DO YOU WANT TO HAPPEN? (optional — aria will figure it out if you're not sure)</div>
+      <textarea class="lg-setup-textarea" id="lgSetupGoal" placeholder="e.g. i want us to be okay again. or: i want to ask them out. or: i'm not sure yet." rows="2"></textarea>
+      <div id="lgSetupError" style="font-size:12px;color:#f87171;margin-top:8px;min-height:16px;"></div>
+      <button class="lg-setup-btn" onclick="submitLongGameSetup()">let aria build the plan →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Long Game: Step outcome modal -->
+<div class="modal-overlay" id="lgOutcomeModal" onclick="handleModalBgClick(event,'lgOutcomeModal')" style="z-index:3200;">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('lgOutcomeModal')">×</button>
+    <div class="modal-title">how did that land?</div>
+    <div class="modal-sub" id="lgOutcomeSub">aria will adjust the next step based on what you tell her.</div>
+    <div class="lg-outcome-row">
+      <button class="lg-outcome-btn good" onclick="submitStepOutcome('good')">🔥 went well</button>
+      <button class="lg-outcome-btn meh" onclick="submitStepOutcome('meh')">😐 okay-ish</button>
+      <button class="lg-outcome-btn bad" onclick="submitStepOutcome('bad')">💀 backfired</button>
+    </div>
+    <textarea class="lg-setup-textarea" id="lgOutcomeReply" placeholder="paste their reply (optional — helps aria adjust)" style="margin-top:14px;" rows="3"></textarea>
+  </div>
+</div>
+
+<!-- Long Game: Edit step modal -->
+<div class="modal-overlay" id="lgEditStepModal" onclick="handleModalBgClick(event,'lgEditStepModal')" style="z-index:3200;">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal('lgEditStepModal')">×</button>
+    <div class="modal-title">edit this step</div>
+    <div class="modal-sub">change the draft. aria will ask if you want the rest adjusted.</div>
+    <textarea class="lg-setup-textarea" id="lgEditStepText" rows="5"></textarea>
+    <button class="lg-setup-btn" style="margin-top:14px;" onclick="saveEditedStep()">save changes</button>
+  </div>
+</div>
+
 <!-- ─── DID IT WORK? NUDGE ─────────────────────── -->
 <div class="followup-nudge" id="followupNudge">
   <div class="followup-nudge-top">
@@ -1417,11 +1511,12 @@
 <div class="toast" id="toast"></div>
 
 <!-- ═══════════════════════════════════════════════
+     SCRIPT
 
 <!-- ═══════════════════════════════════════════════
      SCRIPTS — load order matters:
-     1. aria-core.js  (Supabase already loaded above, memory, auth, storage)
-     2. aria-app.js   (all feature logic, depends on core)
+     1. aria-core.js  (memory, auth, Supabase, storage — no DOM deps)
+     2. aria-app.js   (all features — depends on core)
 ════════════════════════════════════════════════ -->
 <script src="aria-core.js"></script>
 <script src="aria-app.js"></script>

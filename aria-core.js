@@ -637,7 +637,28 @@ const ariaMemory = (() => {
   // ── Whether table is known to exist ────────────────────────────
   function isTableAvailable() { return tableExists; }
 
-  return { load, remember, get, getCategory, buildContext, learnFromGeneration, learnWritingStyle, learnFromHistory, getAll, isTableAvailable };
+  function addChatFacts(factsText) {
+    // Store chat-derived facts in the 'chat' category
+    const lines = factsText.split('\n').map(l => l.replace(/^–\s*/, '').trim()).filter(Boolean);
+    lines.forEach((fact, i) => {
+      remember('chat', `fact_${Date.now()}_${i}`, fact, 0.8, 'chat');
+    });
+  }
+
+  function getSummary() {
+    // Returns a compact string of all known facts for injecting into system prompt
+    const all = getAll();
+    if (!all || !Object.keys(all).length) return '';
+    const lines = [];
+    for (const [cat, facts] of Object.entries(all)) {
+      for (const [key, entry] of Object.entries(facts)) {
+        if (entry?.value) lines.push(`${cat}: ${entry.value}`);
+      }
+    }
+    return lines.slice(0, 20).join('\n'); // cap at 20 facts
+  }
+
+  return { load, remember, get, getCategory, buildContext, learnFromGeneration, learnWritingStyle, learnFromHistory, getAll, isTableAvailable, addChatFacts, getSummary };
 })();
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1128,6 +1149,7 @@ async function loadFromSupabase() {
       replySentCount     = p.reply_sent_count    || 0;
       streakDays         = p.streak_days         || 0;
       ariaRelationshipXP = p.aria_relationship_xp || 0;
+      loadLongGamesFromData(p.long_games);
     }
 
     if (contactsRes.data && contactsRes.data.length) {
@@ -1166,6 +1188,7 @@ function loadFromLocalStorage() {
       defaultTone    = d.defaultTone || 'real';
       energyLevel    = d.energy     || 40;
       if (d.contacts) { contacts = d.contacts; nextContactId = Math.max(...contacts.map(c=>c.id))+1; }
+      loadLongGamesFromData(localStorage.getItem('aria_long_games'));
     }
   } catch(e) {}
   updateStats();
@@ -1237,6 +1260,4 @@ function saveToStorage() {
     saveToLocalStorage();
   }
 }
-
-// ── STATS ──────────────────────────────────────────────────────────
 
