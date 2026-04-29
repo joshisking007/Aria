@@ -605,6 +605,64 @@ body::after {
   padding: 2px 8px; border-radius: 8px; white-space: nowrap; display: inline-block;
 }
 
+/* ─── DRIFT DETECTION ──────────────────────────────────────────── */
+.drift-badge {
+  font-size: 10px; padding: 2px 8px; border-radius: 8px;
+  white-space: nowrap; display: inline-block;
+}
+.drift-badge.cold {
+  background: rgba(96,165,250,0.1); color: #60a5fa;
+  border: 1px solid rgba(96,165,250,0.25);
+}
+.drift-badge.fading {
+  background: rgba(251,191,36,0.1); color: #fbbf24;
+  border: 1px solid rgba(251,191,36,0.25);
+}
+.drift-badge.lost {
+  background: rgba(244,63,94,0.1); color: #f43f5e;
+  border: 1px solid rgba(244,63,94,0.25);
+}
+.contact-card.drifting-cold  { border-color: rgba(96,165,250,0.2); }
+.contact-card.drifting-fading { border-color: rgba(251,191,36,0.25); }
+.contact-card.drifting-lost  { border-color: rgba(244,63,94,0.2); }
+
+/* Drift snooze bottom sheet */
+#driftSnoozeSheet {
+  position: fixed; inset: 0; z-index: 3600;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+  display: none; align-items: flex-end;
+}
+#driftSnoozeSheet.open { display: flex; }
+.drift-snooze-inner {
+  background: var(--card); border-radius: 24px 24px 0 0;
+  padding: 24px 20px 36px; width: 100%;
+  border-top: 1px solid var(--border);
+}
+.drift-snooze-handle {
+  width: 36px; height: 4px; background: var(--border);
+  border-radius: 2px; margin: 0 auto 20px;
+}
+.drift-snooze-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 20px; color: var(--text); margin-bottom: 6px;
+}
+.drift-snooze-sub {
+  font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5;
+}
+.drift-snooze-options { display: flex; flex-direction: column; gap: 10px; }
+.drift-snooze-btn {
+  padding: 14px 16px; background: var(--card2);
+  border: 1px solid var(--border); border-radius: 14px;
+  color: var(--text); font-size: 14px;
+  font-family: 'DM Sans', sans-serif; cursor: pointer;
+  text-align: left; transition: all 0.2s;
+}
+.drift-snooze-btn:active { border-color: var(--rose-border); background: var(--rose-dim); }
+.drift-snooze-btn.dismiss-btn {
+  color: #f43f5e; border-color: rgba(244,63,94,0.2);
+  background: rgba(244,63,94,0.05);
+}
+
 /* Add contact card */
 .add-contact-card {
   margin: 0 20px 8px;
@@ -3301,6 +3359,21 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   <div class="hb-line"></div>
 </button>
 
+<!-- Drift snooze sheet -->
+<div id="driftSnoozeSheet" onclick="e => { if(e.target===this) closeDriftSnooze(); }">
+  <div class="drift-snooze-inner">
+    <div class="drift-snooze-handle"></div>
+    <div class="drift-snooze-title" id="driftSnoozeTitle">gone quiet with someone?</div>
+    <div class="drift-snooze-sub" id="driftSnoozeSub">what do you want to do about it?</div>
+    <div class="drift-snooze-options">
+      <button class="drift-snooze-btn" onclick="driftSnooze(3)">😴 remind me in 3 days</button>
+      <button class="drift-snooze-btn" onclick="driftSnooze(7)">📅 remind me in a week</button>
+      <button class="drift-snooze-btn" onclick="driftReplyNow()">💬 reply to them now</button>
+      <button class="drift-snooze-btn dismiss-btn" onclick="driftDismiss()">✕ stop tracking this drift</button>
+    </div>
+  </div>
+</div>
+
 <!-- Tutorial modal -->
 <div class="modal-overlay" id="tutorialModal" onclick="handleModalBgClick(event,'tutorialModal')" style="z-index:3400;">
   <div class="modal-sheet" style="padding:0;">
@@ -4779,8 +4852,8 @@ async function loadFromSupabase() {
   try {
     const [profileRes, contactsRes, historyRes] = await Promise.all([
       db.from('user_profiles').select('*').single(),
-      db.from('contacts').select('*').eq('archived', false),
-      db.from('reply_history').select('*').order('created_at', { ascending: false }).limit(50)
+      db.from('contacts').select('*, last_contacted_at, reply_count, avg_msg_length, drift_score, drift_snoozed_until, drift_dismissed').eq('archived', false),
+      db.from('reply_history').select('*').order('created_at', { ascending: false }).limit(100)
     ]);
 
     const p = profileRes.data;
@@ -4809,6 +4882,7 @@ async function loadFromSupabase() {
     ariaMemory.learnWritingStyle();
     ariaMemory.learnFromHistory(replyHistory);
     await contactMemory.load();
+    runDriftEngine();
   } catch(e) {
     console.warn('Supabase load error — falling back to localStorage', e);
     loadFromLocalStorage();
@@ -5074,18 +5148,39 @@ function renderContacts(list) {
   }
   container.innerHTML = list.map((c, i) => {
     let statusClass = c.online ? 'online' : c.silent ? 'needs-reply' : '';
+
+    // Drift indicator
+    const drift = c._drift;
+    let driftCardClass = '';
+    let driftBadgeHtml = '';
+    if (drift && !c.drift_dismissed) {
+      if (drift.level === 'lost') {
+        driftCardClass = 'drifting-lost';
+        driftBadgeHtml = `<div class="drift-badge lost" onclick="openDriftSnooze(${c.id},event)">gone quiet</div>`;
+      } else if (drift.level === 'fading') {
+        driftCardClass = 'drifting-fading';
+        driftBadgeHtml = `<div class="drift-badge fading" onclick="openDriftSnooze(${c.id},event)">fading</div>`;
+      } else if (drift.level === 'cold') {
+        driftCardClass = 'drifting-cold';
+        driftBadgeHtml = `<div class="drift-badge cold" onclick="openDriftSnooze(${c.id},event)">gone cold</div>`;
+      }
+    }
+
+    const badgeHtml = driftBadgeHtml ||
+      (c.silent && c.silentHours > 0
+        ? `<div class="silent-badge">${c.silentHours}h silent</div>`
+        : `<div class="platform-badge ${(c.platform||'').toLowerCase().replace(/\s/,'')}">${c.platform||''}</div>`);
+
     return `
-      <div class="contact-card stagger-${Math.min(i+1,5)}" onclick="selectContact(${c.id})" oncontextmenu="openContactProfile(${c.id});return false;" style="animation-delay:${i*0.05}s">
+      <div class="contact-card ${driftCardClass} stagger-${Math.min(i+1,5)}" onclick="selectContact(${c.id})" oncontextmenu="openContactProfile(${c.id});return false;" style="animation-delay:${i*0.05}s">
         <div class="contact-avatar ${statusClass}" data-color="${c.color||''}">${c.initials || c.name[0]}</div>
         <div class="contact-info">
           <div class="contact-name">${c.name}</div>
-          <div class="contact-preview">${c.preview || (c.relationship ? '(' + c.relationship + ')' : 'no recent messages')}</div>
+          <div class="contact-preview">${drift && !c.drift_dismissed ? drift.preview : (c.preview || (c.relationship ? '(' + c.relationship + ')' : 'no recent messages'))}</div>
         </div>
         <div class="contact-meta">
           <div class="contact-time">${c.time || ''}</div>
-          ${c.silent && c.silentHours > 0
-            ? `<div class="silent-badge">${c.silentHours}h silent</div>`
-            : `<div class="platform-badge ${(c.platform||'').toLowerCase().replace(/\\s/,'')}">${c.platform||''}</div>`}
+          ${badgeHtml}
         </div>
       </div>
     `;
@@ -5700,6 +5795,7 @@ async function saveToHistory() {
   if (!currentReplies.length) return;
 
   if (currentUserId) {
+    const originalMsg = document.getElementById('theirMsgInput').value.trim() || currentContact?.preview || '';
     const { error } = await db.from('reply_history').insert({
       user_id:         currentUserId,
       contact_id:      currentContact?.id || null,
@@ -5709,8 +5805,9 @@ async function saveToHistory() {
       platform:        currentPlatform,
       tone:            currentTone,
       mood:            currentMood,
-      original_msg:    document.getElementById('theirMsgInput').value.trim() || currentContact?.preview || '',
-      generated_reply: currentReplies.join('\\n'),
+      original_msg:    originalMsg,
+      message_length:  originalMsg.length,
+      generated_reply: currentReplies.join('\n'),
       alternatives:    window._altReplies || null
     });
     if (error) { showToast('could not save to history'); console.error(error); return; }
@@ -6422,6 +6519,232 @@ async function saveMemoryNote(contactId) {
 }
 
 // ═══════════════════════════════════════════════════
+// DRIFT DETECTION ENGINE
+// ═══════════════════════════════════════════════════
+
+let _driftSnoozeContactId = null;
+
+// Aria's drift messages — keyed by relationship type + level
+// She adjusts her tone based on who the contact is
+const driftLines = {
+  lost: {
+    romantic:  ["you haven't brought them up in a while. that silence has weight.",
+                "something shifted between you two. you feel it too, don't you.",
+                "the gap's been growing. whether that's intentional or not — worth knowing."],
+    bestfriend:["you two used to be constant. now it's been weeks. what happened?",
+                "this is the longest you've gone without talking to them.",
+                "at some point quiet becomes a statement. you still have time to change it."],
+    family:    ["family doesn't always say when they feel forgotten. just noting.",
+                "it's been a while since you reached out to them.",
+                "life moves fast. this one might appreciate a check-in more than you think."],
+    default:   ["you've gone quiet with them. probably not intentional — but it adds up.",
+                "the gap between you two has been growing. aria noticed.",
+                "haven't heard about them in a while. still on your radar?"]
+  },
+  fading: {
+    romantic:  ["your messages to them have been getting shorter. could mean nothing. could mean something.",
+                "the energy between you two has been different lately. aria's picked up on it."],
+    bestfriend:["the conversations are getting thinner. probably worth a real one soon.",
+                "you used to send them more — longer, more often. the pattern's shifting."],
+    family:    ["replies have been getting brief. sometimes that's all you have energy for — just checking.",
+                "the frequency's dropped a bit with them."],
+    default:   ["something's shifted with this one — messages less frequent, shorter.",
+                "the pattern here has changed. fading or just busy — only you know."]
+  },
+  cold: {
+    romantic:  ["you haven't texted them in over two weeks. the window's still open — barely.",
+                "two weeks of silence with someone you were close to. that's worth addressing."],
+    bestfriend:["two weeks. for you two that's unusual.",
+                "real ones drift too sometimes. doesn't mean it's gone — just needs attention."],
+    family:    ["it's been a while since you reached out to them. they might not say it but.",
+                "two weeks without contact. could be nothing. still worth a message."],
+    default:   ["two weeks without contact. aria's flagging it — do with that what you will.",
+                "the silence here has gone past casual. just so you know."]
+  }
+};
+
+function getDriftLine(level, contact) {
+  const rel = (contact.relationship || '').toLowerCase();
+  let key = 'default';
+  if (/crush|partner|girlfriend|boyfriend|bae|ex|romantic/.test(rel)) key = 'romantic';
+  else if (/best|bestie|bff/.test(rel)) key = 'bestfriend';
+  else if (/mom|dad|sister|brother|family|parent|aunt|uncle/.test(rel)) key = 'family';
+  const pool = driftLines[level][key] || driftLines[level].default;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function scoreDrift(contact, history) {
+  // Skip if dismissed or snoozed
+  if (contact.drift_dismissed) return null;
+  if (contact.drift_snoozed_until) {
+    if (new Date(contact.drift_snoozed_until) > new Date()) return null;
+  }
+
+  // Need at least 2 interactions to detect drift
+  const contactHistory = history.filter(h => h.contact_id == contact.id);
+  if (contactHistory.length < 2) return null;
+
+  const now = new Date();
+  const lastContact = contact.last_contacted_at
+    ? new Date(contact.last_contacted_at)
+    : new Date(contactHistory[0]?.created_at || now);
+
+  const daysSinceLast = (now - lastContact) / (1000 * 60 * 60 * 24);
+
+  // Frequency comparison: replies in last 14 days vs previous 14 days
+  const twoWeeksAgo  = new Date(now - 14 * 24 * 60 * 60 * 1000);
+  const fourWeeksAgo = new Date(now - 28 * 24 * 60 * 60 * 1000);
+  const recentCount  = contactHistory.filter(h => new Date(h.created_at) > twoWeeksAgo).length;
+  const prevCount    = contactHistory.filter(h => new Date(h.created_at) > fourWeeksAgo && new Date(h.created_at) <= twoWeeksAgo).length;
+
+  // Message length trend: last 5 vs previous 5
+  const last5    = contactHistory.slice(0, 5).map(h => h.message_length || 0);
+  const prev5    = contactHistory.slice(5, 10).map(h => h.message_length || 0);
+  const avgLast  = last5.length  ? last5.reduce((a,b) => a+b, 0)  / last5.length  : 0;
+  const avgPrev  = prev5.length  ? prev5.reduce((a,b) => a+b, 0)  / prev5.length  : 0;
+  const lengthDrop = avgPrev > 10 ? (avgPrev - avgLast) / avgPrev : 0; // 0–1
+
+  // Rating trend: recent bad/meh ratings
+  const recentRatings = contactHistory.slice(0, 5).map(h => h.rating).filter(Boolean);
+  const badRatings = recentRatings.filter(r => r === 'bad' || r === 'meh').length;
+
+  // Score: 0–10
+  let score = 0;
+  if (daysSinceLast > 21)      score += 4;
+  else if (daysSinceLast > 14) score += 3;
+  else if (daysSinceLast > 7)  score += 1.5;
+  if (prevCount > 0 && recentCount === 0)    score += 3;
+  else if (prevCount > recentCount * 1.5)    score += 1.5;
+  if (lengthDrop > 0.5)  score += 2;
+  else if (lengthDrop > 0.3) score += 1;
+  if (badRatings >= 2)   score += 1;
+
+  let level = null;
+  if      (score >= 7)  level = 'lost';
+  else if (score >= 4)  level = 'fading';
+  else if (score >= 2.5) level = 'cold';
+
+  if (!level) return null;
+
+  return {
+    level,
+    score,
+    daysSinceLast: Math.round(daysSinceLast),
+    preview: getDriftLine(level, contact)
+  };
+}
+
+function runDriftEngine() {
+  if (!contacts.length || !replyHistory.length) return;
+
+  let topDrift = null;
+  let topScore = 0;
+
+  contacts.forEach(c => {
+    const drift = scoreDrift(c, replyHistory);
+    c._drift = drift;
+    if (drift && drift.score > topScore) {
+      topScore = drift.score;
+      topDrift = { contact: c, drift };
+    }
+  });
+
+  // Push to home banner if significant drift found
+  if (topDrift && topDrift.drift.score >= 4) {
+    showDriftInBanner(topDrift.contact, topDrift.drift);
+  }
+
+  // Re-render contacts with drift indicators
+  if (document.getElementById('contactList')) {
+    const search = document.getElementById('contactSearch')?.value || '';
+    const filtered = search
+      ? contacts.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
+      : contacts;
+    renderContacts(filtered);
+  }
+}
+
+function showDriftInBanner(contact, drift) {
+  const banner = document.getElementById('ariaInsightBanner');
+  const textEl = document.getElementById('ariaInsightText');
+  const imgEl  = document.getElementById('insightOrbImg');
+  if (!banner || !textEl || !imgEl) return;
+
+  // Pick photo based on drift level
+  const photo = drift.level === 'lost'   ? 'https://i.imgur.com/OncPXzL.png'  // disappointed
+              : drift.level === 'fading' ? 'https://i.imgur.com/aku1uwo.png'  // cunning/noticing
+              :                            'https://i.imgur.com/ZENuLRe.png'; // urgent
+
+  imgEl.src = photo;
+  // Personalise with contact name
+  const line = drift.preview.replace('them', contact.name).replace('you two', `you and ${contact.name}`);
+  textEl.textContent = line;
+  banner.classList.add('visible');
+
+  // Tap banner → open drift snooze for that contact
+  banner.onclick = () => openDriftSnooze(contact.id, null);
+  banner.style.cursor = 'pointer';
+}
+
+function openDriftSnooze(contactId, e) {
+  if (e) { e.stopPropagation(); }
+  const contact = contacts.find(c => c.id == contactId);
+  if (!contact || !contact._drift) return;
+  _driftSnoozeContactId = contactId;
+
+  document.getElementById('driftSnoozeTitle').textContent =
+    contact._drift.level === 'lost'   ? `you've gone quiet with ${contact.name}` :
+    contact._drift.level === 'fading' ? `things are fading with ${contact.name}` :
+                                        `${contact.name} has gone cold`;
+  document.getElementById('driftSnoozeSub').textContent =
+    contact._drift.daysSinceLast > 1
+      ? `${contact._drift.daysSinceLast} days since you last reached out.`
+      : `the pattern here has shifted.`;
+
+  document.getElementById('driftSnoozeSheet').classList.add('open');
+}
+
+function closeDriftSnooze() {
+  document.getElementById('driftSnoozeSheet').classList.remove('open');
+  _driftSnoozeContactId = null;
+}
+
+async function driftSnooze(days) {
+  const contact = contacts.find(c => c.id == _driftSnoozeContactId);
+  if (!contact) return;
+  const until = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+  contact.drift_snoozed_until = until;
+  contact._drift = null;
+  if (currentUserId) {
+    await db.from('contacts').update({ drift_snoozed_until: until })
+      .eq('id', contact.id).eq('user_id', currentUserId);
+  }
+  closeDriftSnooze();
+  showToast(`reminder set for ${days === 3 ? '3 days' : 'a week'} ✓`, 'green');
+  runDriftEngine();
+}
+
+async function driftDismiss() {
+  const contact = contacts.find(c => c.id == _driftSnoozeContactId);
+  if (!contact) return;
+  contact.drift_dismissed = true;
+  contact._drift = null;
+  if (currentUserId) {
+    await db.from('contacts').update({ drift_dismissed: true })
+      .eq('id', contact.id).eq('user_id', currentUserId);
+  }
+  closeDriftSnooze();
+  showToast('drift tracking off for this contact', '');
+  runDriftEngine();
+}
+
+function driftReplyNow() {
+  const contact = contacts.find(c => c.id == _driftSnoozeContactId);
+  closeDriftSnooze();
+  if (contact) selectContact(contact.id);
+}
+
+// ═══════════════════════════════════════════════════
 // FEATURE 3: HOME INSIGHT BANNER
 // ═══════════════════════════════════════════════════
 
@@ -6513,17 +6836,18 @@ const ariaReturningCards = [
 function loadHomeInsight() {
   const banner = document.getElementById('ariaInsightBanner');
   const textEl = document.getElementById('ariaInsightText');
-  const imgEl = document.getElementById('insightOrbImg');
+  const imgEl  = document.getElementById('insightOrbImg');
   if (!banner || !textEl || !imgEl) return;
+
+  // If drift engine already put something in the banner, don't overwrite
+  if (banner.classList.contains('visible')) return;
 
   const contactCount = contacts.length;
   let pool;
 
   if (contactCount === 0) {
-    // New user — only show welcoming onboarding cards
     pool = ariaNewUserCards;
   } else {
-    // Returning user — filter returning cards by minContacts threshold
     pool = ariaReturningCards.filter(c => contactCount >= c.minContacts);
     if (!pool.length) pool = ariaReturningCards.slice(0, 1);
   }
