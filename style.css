@@ -267,10 +267,12 @@ body::after {
   display: flex; align-items: center; gap: 16px;
 }
 .memory-orb {
-  width: 52px; height: 52px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #fed7aa, #ea7c1a);
-  box-shadow: 0 0 24px rgba(249,115,22,0.4);
+  width: 58px; height: 58px; border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 0 24px rgba(249,115,22,0.35);
   flex-shrink: 0;
+  overflow: hidden;
+  border: 1.5px solid rgba(249,115,22,0.25);
 }
 .memory-header-info { flex: 1; }
 .memory-header-title { font-family: 'Instrument Serif', serif; font-size: 18px; margin-bottom: 4px; }

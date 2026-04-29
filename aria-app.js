@@ -3549,6 +3549,34 @@ function queueSnooze() {
 // ARIA MEMORY SCREEN
 // ═══════════════════════════════════════════════════
 
+function humanizeMemoryEntry(cat, key, value) {
+  if (cat === 'writing_style') {
+    if (key === 'uses_capitals')    return value === 'yes' ? 'Capitalises your sentences' : "Doesn't capitalise — lowercase is the vibe";
+    if (key === 'uses_punctuation') return value === 'yes' ? 'Punctuation included' : 'No punctuation — straight and raw';
+    if (key === 'uses_emoji')       return value === 'yes' ? 'Emoji user ✓' : 'Emoji-free — words only';
+    if (key === 'slang_vocabulary') return `Your slang: ${value}`;
+  }
+  if (cat === 'patterns') {
+    if (key === 'preferred_tone')      return `Naturally leans ${value}`;
+    if (key === 'preferred_platform')  return `Texts most on ${value}`;
+    if (key === 'most_used_platform')  return `Most active on ${value}`;
+    if (key === 'total_replies_sent')  return `${value} message${value === '1' ? '' : 's'} crafted with me`;
+    if (key === 'regen_count')         return `Rerolled ${value} time${value === '1' ? '' : 's'} — a perfectionist, noted`;
+    if (key.startsWith('tone_') && key.endsWith('_count'))     return null;
+    if (key.startsWith('platform_') && key.endsWith('_count')) return null;
+  }
+  if (cat === 'emotional') {
+    if (key === 'current_mood_pattern') return value.charAt(0).toUpperCase() + value.slice(1);
+    return value;
+  }
+  if (cat === 'chat' || cat === 'facts' || cat === 'relationships') {
+    return value; // already human-readable — these are the gold
+  }
+  // fallback
+  const label = key.replace(/_/g, ' ');
+  return `${label}: ${value}`;
+}
+
 function renderMemoryScreen() {
   const body = document.getElementById('memoryBody');
   const statusEl = document.getElementById('memoryStatus');
@@ -3556,7 +3584,7 @@ function renderMemoryScreen() {
 
   if (!currentUserId) {
     statusEl.textContent = '● not signed in';
-    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🔐</div><div>Sign in to save and view my memory of you.<br><br>Your interactions still teach Aria during this session — but memory won't persist without an account.</div></div>`;
+    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🔐</div><div>Sign in and I'll actually remember you next time.<br><br>I'm still picking things up this session — I just won't be able to hold onto them.</div></div>`;
     sqlNotice.style.display = 'none';
     return;
   }
@@ -3564,60 +3592,74 @@ function renderMemoryScreen() {
   if (!ariaMemory.isTableAvailable()) {
     statusEl.textContent = '● setup needed';
     sqlNotice.style.display = 'block';
-    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">⚠️</div><div>Run the SQL above in your Supabase editor to enable persistent memory.</div></div>`;
+    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">⚠️</div><div>Run the SQL above in your Supabase editor and I'll have a place to store everything I pick up about you.</div></div>`;
     return;
   }
 
   sqlNotice.style.display = 'none';
   const all = ariaMemory.getAll();
-  const categories = Object.keys(all);
 
-  if (!categories.length) {
-    statusEl.textContent = '● learning…';
-    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🌱</div><div>I haven't learned much about you yet.<br>Generate a few replies and I'll start building your profile.</div></div>`;
+  // Collect ALL renderable points across every category
+  const personalFacts = [];   // chat / facts / relationships — shown first, big
+  const stylePoints   = [];   // writing_style
+  const patternPoints = [];   // patterns
+  const emotionPoints = [];   // emotional
+
+  for (const [cat, entries] of Object.entries(all)) {
+    for (const [key, mem] of Object.entries(entries)) {
+      const label = humanizeMemoryEntry(cat, key, mem.value);
+      if (!label) continue;
+      const point = { label, source: mem.source, confidence: mem.confidence || 0.7 };
+      if (cat === 'chat' || cat === 'facts' || cat === 'relationships') personalFacts.push(point);
+      else if (cat === 'writing_style') stylePoints.push(point);
+      else if (cat === 'patterns')      patternPoints.push(point);
+      else if (cat === 'emotional')     emotionPoints.push(point);
+    }
+  }
+
+  const totalPoints = personalFacts.length + stylePoints.length + patternPoints.length + emotionPoints.length;
+
+  if (!totalPoints) {
+    statusEl.textContent = '● still watching';
+    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🌱</div><div>Nothing filed away yet. Send a few messages, tell me about your life — I'll start building the picture.</div></div>`;
     return;
   }
 
-  const totalKeys = categories.reduce((sum, cat) => sum + Object.keys(all[cat]).length, 0);
-  statusEl.textContent = `● ${totalKeys} things remembered`;
+  statusEl.textContent = `● ${totalPoints} thing${totalPoints === 1 ? '' : 's'} noted`;
 
-  const categoryLabels = {
-    writing_style: '✍️ YOUR WRITING STYLE',
-    patterns: '📊 BEHAVIORAL PATTERNS',
-    emotional: '💫 EMOTIONAL CONTEXT',
-    facts: '🗂 KNOWN FACTS',
-    relationships: '👥 RELATIONSHIP DYNAMICS'
-  };
-
-  body.innerHTML = categories.map(cat => {
-    const entries = Object.entries(all[cat]);
-    if (!entries.length) return '';
+  function renderSection(title, points, emptySkip = true) {
+    if (!points.length) return emptySkip ? '' : '';
     return `
       <div class="memory-section">
         <div class="memory-section-label">
-          <span>${categoryLabels[cat] || cat.toUpperCase()}</span>
-          <span class="memory-count-badge">${entries.length}</span>
+          <span>${title}</span>
+          <span class="memory-count-badge">${points.length}</span>
         </div>
-        ${entries.map(([key, mem]) => `
+        ${points.map(p => `
           <div class="memory-card">
-            <div class="memory-card-key">${key.replace(/_/g, ' ')}</div>
-            <div class="memory-card-value">${mem.value}</div>
+            <div class="memory-card-value">${p.label}</div>
             <div class="memory-card-meta">
-              <span class="memory-card-source ${mem.source}">${mem.source}</span>
+              <span class="memory-card-source ${p.source}">${p.source}</span>
               <div class="memory-confidence-bar">
-                <div class="memory-confidence-fill" style="width:${Math.round((mem.confidence||0.7)*100)}%"></div>
+                <div class="memory-confidence-fill" style="width:${Math.round(p.confidence * 100)}%"></div>
               </div>
-              <span style="font-size:10px;color:var(--muted)">${Math.round((mem.confidence||0.7)*100)}%</span>
+              <span style="font-size:10px;color:var(--muted)">${Math.round(p.confidence * 100)}%</span>
             </div>
           </div>
         `).join('')}
       </div>
     `;
-  }).join('');
+  }
+
+  body.innerHTML =
+    renderSection('🧠 WHAT I KNOW ABOUT YOU', personalFacts) +
+    renderSection('✍️ HOW YOU WRITE', stylePoints) +
+    renderSection('📊 HOW YOU OPERATE', patternPoints) +
+    renderSection('💫 YOUR ENERGY', emotionPoints);
 }
 
 async function forceMemoryLearn() {
-  showToast('re-learning from your history…');
+  showToast('going back through everything…');
   await ariaMemory.learnWritingStyle();
   await ariaMemory.learnFromHistory(replyHistory);
   await ariaMemory.load();
