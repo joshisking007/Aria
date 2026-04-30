@@ -258,7 +258,7 @@ function testAriaVoice() {
 // ── VOICE PROFILES ────────────────────────────────────────────────
 
 // ── ARIA'S RELATIONSHIP STAGE ─────────────────────────────────────
-// Tracks how well Aria knows the user. Starts at 0, grows with use.
+// Tracks how well I know the user. Starts at 0, grows with use.
 let ariaRelationshipXP = 0; // loaded from Supabase user_profiles
 
 function getRelationshipStage() {
@@ -741,7 +741,7 @@ const contactMemory = (() => {
     if (sc.initiated_count > 0) signals.push(`they've started ${sc.initiated_count} of your recent conversations`);
     if (sc.left_on_read_count > 0) signals.push(`you've left them on read ${sc.left_on_read_count} times`);
     if (sc.late_night_count > 0) signals.push(`${sc.late_night_count} late-night exchanges`);
-    if (signals.length) lines.push(`\\nPATTERNS ARIA HAS NOTICED:\\n${signals.map(s => `  • ${s}`).join('\\n')}`);
+    if (signals.length) lines.push(`\\nPATTERNS I’VE NOTICED:\\n${signals.map(s => `  • ${s}`).join('\\n')}`);
     return '\\n\\n' + lines.join('');
   }
 

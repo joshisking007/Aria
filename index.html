@@ -87,14 +87,14 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════
-     SCREEN: ARIA'S MEMORY
+     SCREEN: MY MEMORY
 ════════════════════════════════════════════════ -->
 <div class="screen" id="memoryScreen" style="display:none;">
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')">←</button>
     <div class="aria-mini"></div>
     <div class="top-bar-info">
-      <div class="top-bar-name">Aria's Memory</div>
+      <div class="top-bar-name">My Memory</div>
       <div class="top-bar-status" id="memoryStatus">● loading…</div>
     </div>
   </div>
@@ -339,7 +339,7 @@
           <button class="context-tab" onclick="switchContextTab('screenshot', this)">Screenshot</button>
         </div>
         <div class="context-panel active" id="ctxPanelPaste">
-          <textarea class="context-input" id="contextPasteInput" rows="4" placeholder="paste the previous messages here so Aria can read the whole vibe of the convo..."></textarea>
+          <textarea class="context-input" id="contextPasteInput" rows="4" placeholder="paste the previous messages here so I can read the whole vibe of the convo..."></textarea>
         </div>
         <div class="context-panel" id="ctxPanelScreenshot">
           <div class="screenshot-drop" id="screenshotDrop">
@@ -354,7 +354,7 @@
     </div>
 
     <button class="ask-aria-btn" onclick="openClarifyModal()">ask me to clarify first</button>
-    <button class="gen-reply-btn" id="genReplyBtn" onclick="generateReply()">let aria respond →</button>
+    <button class="gen-reply-btn" id="genReplyBtn" onclick="generateReply()">let me respond →</button>
   </div>
 
   <!-- Thinking -->
@@ -522,7 +522,7 @@
     <div class="profile-section-title">YOUR SLANG & VOCAB</div>
     <div class="profile-card">
       <div style="margin-bottom:8px;font-size:13px;color:var(--muted);line-height:1.6;">
-        Words & phrases Aria has learned from you:
+        Words & phrases I’ve learned from you:
       </div>
       <div class="trait-pills-wrap" id="traitPills">
         <span class="trait-pill">bro</span>
@@ -567,16 +567,16 @@
     </div>
   </div>
 
-  <!-- ── ARIA'S VOICE ── -->
+  <!-- ── MY VOICE ── -->
   <div class="profile-section voice-section">
-    <div class="profile-section-title">ARIA'S VOICE</div>
+    <div class="profile-section-title">MY VOICE</div>
     <div class="profile-card">
 
       <!-- Mute / speak toggle -->
       <div class="voice-mute-row">
         <div>
           <div class="voice-mute-label">Speak out loud</div>
-          <div class="voice-mute-sub">Aria reads her words through your speakers</div>
+          <div class="voice-mute-sub">I read my words through your speakers</div>
         </div>
         <div class="toggle-wrap">
           <div class="toggle on" id="speakToggle" onclick="toggleSpeak(this)">
@@ -701,7 +701,7 @@
   <!-- Header banner -->
   <div class="presend-header-banner">
     <div class="presend-banner-label">DON'T SEND THAT (YET)</div>
-    <div class="presend-banner-title">Let Aria read it first.</div>
+    <div class="presend-banner-title">Let me read it first.</div>
     <div class="presend-banner-sub">I'll catch the passive aggression you didn't notice, flag if you're coming across as too available, and tell you if it's going to land the way you think it will.</div>
   </div>
 
@@ -738,13 +738,13 @@
   </div>
 
   <!-- Run button -->
-  <button class="presend-run-btn" id="psRunBtn" onclick="runPresend()">🛑 let aria check it →</button>
+  <button class="presend-run-btn" id="psRunBtn" onclick="runPresend()">🛑 let me check it →</button>
 
   <!-- Thinking -->
   <div class="aria-thinking" id="psThinking" style="display:none;">
     <div class="thinking-orb" style="background:radial-gradient(circle at 35% 35%,#f9a8d4,#ec4899);box-shadow:0 0 16px rgba(244,114,182,0.3);"></div>
     <div class="thinking-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-    <span class="thinking-text">aria is reading between the lines...</span>
+    <span class="thinking-text">I’m reading between the lines...</span>
   </div>
 
   <!-- Result -->
@@ -765,13 +765,13 @@
 
     <!-- Aria's hot take -->
     <div class="presend-aria-take" id="psAriaTake" style="display:none;">
-      <div class="presend-aria-take-label">ARIA'S TAKE</div>
+      <div class="presend-aria-take-label">MY TAKE</div>
       <div class="presend-aria-take-text" id="psAriaTakeText"></div>
     </div>
 
     <!-- Rewrites (shown when mode = fix or roast) -->
     <div class="presend-rewrite-wrap" id="psRewriteWrap" style="display:none;">
-      <div class="presend-rewrite-label">ARIA'S REWRITES</div>
+      <div class="presend-rewrite-label">MY REWRITES</div>
       <div class="presend-rewrite-toggle" id="psRewriteTabs"></div>
       <div id="psRewriteItems"></div>
       <div class="presend-action-row">
@@ -813,7 +813,7 @@
   <div class="aria-thinking" id="glowupThinking" style="display:none;">
     <div class="thinking-orb" style="background:transparent;overflow:hidden;" ></div>
     <div class="thinking-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-    <span class="thinking-text">aria is styling...</span>
+    <span class="thinking-text">I’m styling...</span>
   </div>
 
   <!-- Aria's reaction to the draft -->
@@ -827,7 +827,7 @@
   </div>
 
   <div class="glowup-result" id="glowupResult">
-    <div class="glowup-result-label">ARIA'S REWRITE</div>
+    <div class="glowup-result-label">MY REWRITE</div>
     <div class="glowup-result-text" id="glowupResultText"></div>
   </div>
 
@@ -866,7 +866,7 @@
   <div class="aria-thinking" id="redflagThinking" style="display:none;">
     <div class="thinking-orb" style="background:transparent;overflow:hidden;" ></div>
     <div class="thinking-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-    <span class="thinking-text">aria is reading them...</span>
+    <span class="thinking-text">I’m reading them...</span>
   </div>
 
   <div class="redflag-result" id="redflagResult">
@@ -877,7 +877,7 @@
     </div>
     <div class="redflag-breakdown" id="redflagBreakdown"></div>
     <div class="redflag-suggestion" id="redflagSuggestion" style="display:none;">
-      <div class="redflag-suggestion-label">ARIA'S TAKE</div>
+      <div class="redflag-suggestion-label">MY TAKE</div>
       <div id="redflagSuggestionText"></div>
     </div>
   </div>
@@ -904,7 +904,7 @@
   <div class="aria-thinking" id="vibeThinking" style="display:none;">
     <div class="thinking-orb" style="background:transparent;overflow:hidden;" ></div>
     <div class="thinking-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-    <span class="thinking-text">aria is analysing your dynamic...</span>
+    <span class="thinking-text">I’m analysing your dynamic...</span>
   </div>
 
   <div class="vibe-report-card" id="vibeReportCard">
@@ -920,7 +920,7 @@
   </div>
 
   <div class="vibe-insight" id="vibeInsight">
-    <div class="vibe-insight-label">ARIA'S READ ON THIS</div>
+    <div class="vibe-insight-label">MY READ ON THIS</div>
     <div id="vibeInsightText"></div>
   </div>
 </div>
@@ -1110,7 +1110,7 @@
       <div class="lg-setup-label">WHAT DO YOU WANT TO HAPPEN? (optional — I'll figure it out if you're not sure)</div>
       <textarea class="lg-setup-textarea" id="lgSetupGoal" placeholder="e.g. i want us to be okay again. or: i want to ask them out. or: i'm not sure yet." rows="2"></textarea>
       <div id="lgSetupError" style="font-size:12px;color:#f87171;margin-top:8px;min-height:16px;"></div>
-      <button class="lg-setup-btn" onclick="submitLongGameSetup()">let aria build the plan →</button>
+      <button class="lg-setup-btn" onclick="submitLongGameSetup()">let me build the plan →</button>
     </div>
   </div>
 </div>
@@ -1122,12 +1122,21 @@
     <button class="modal-close" onclick="closeModal('lgOutcomeModal')">×</button>
     <div class="modal-title">how did that land?</div>
     <div class="modal-sub" id="lgOutcomeSub">I'll adjust the next step based on what you tell me.</div>
-    <div class="lg-outcome-row">
-      <button class="lg-outcome-btn good" onclick="submitStepOutcome('good')">🔥 went well</button>
-      <button class="lg-outcome-btn meh" onclick="submitStepOutcome('meh')">😐 okay-ish</button>
-      <button class="lg-outcome-btn bad" onclick="submitStepOutcome('bad')">💀 backfired</button>
+    <!-- Step 1: Rate it -->
+    <div id="lgOutcomeRateRow" class="lg-outcome-row">
+      <button class="lg-outcome-btn good" onclick="lgSelectOutcome('good', this)">🔥 went well</button>
+      <button class="lg-outcome-btn meh"  onclick="lgSelectOutcome('meh', this)">😐 okay-ish</button>
+      <button class="lg-outcome-btn bad"  onclick="lgSelectOutcome('bad', this)">💀 backfired</button>
     </div>
-    <textarea class="lg-setup-textarea" id="lgOutcomeReply" placeholder="paste their reply (optional — helps me adjust)" style="margin-top:14px;" rows="3"></textarea>
+
+    <!-- Step 2: Paste reply (revealed after rating) -->
+    <div id="lgOutcomeReplyWrap" style="display:none;margin-top:14px;">
+      <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;">THEIR REPLY (optional — helps me write the next move)</div>
+      <textarea class="lg-setup-textarea" id="lgOutcomeReply" placeholder="paste what they said..." rows="3"></textarea>
+      <button class="lg-setup-btn" style="margin-top:12px;" onclick="submitStepOutcome()">
+        got it — adjust the plan →
+      </button>
+    </div>
   </div>
 </div>
 
@@ -1190,7 +1199,7 @@
       <div class="tutorial-aria-bubble">here's how to let me see your messages — pick whatever works for you.</div>
     </div>
 
-    <div class="tutorial-title">how to show Aria your messages</div>
+    <div class="tutorial-title">how to show me your messages</div>
     <div class="tutorial-sub">i can't read your apps directly — but here are three ways to fill me in.</div>
 
     <div class="tutorial-methods">
@@ -1265,7 +1274,7 @@
   <div class="menu-drawer-handle"></div>
   <button class="menu-item active" id="navHome" onclick="menuNavTo('introScreen','navHome')">
     <span class="menu-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
-    <div><div class="menu-item-label">Home</div><div class="menu-item-sub">Aria's main screen</div></div>
+    <div><div class="menu-item-label">Home</div><div class="menu-item-sub">my main screen</div></div>
   </button>
   <button class="menu-item" id="navChat" onclick="menuNavTo('chatScreen','navChat')">
     <span class="menu-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
@@ -1282,7 +1291,7 @@
   </button>
   <button class="menu-item" id="navProfile" onclick="menuNavTo('profileScreen','navProfile')">
     <span class="menu-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></span>
-    <div><div class="menu-item-label">Voice & Settings</div><div class="menu-item-sub">Aria's voice, tone, profile</div></div>
+    <div><div class="menu-item-label">Voice & Settings</div><div class="menu-item-sub">My voice, tone, profile</div></div>
   </button>
   <button class="menu-item" id="navPresend" onclick="menuNavTo('presendScreen','navPresend')">
     <span class="menu-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
@@ -1295,7 +1304,7 @@
   </button>
   <button class="menu-item" id="navMemory" onclick="menuNavTo('memoryScreen','navMemory')">
     <span class="menu-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></span>
-    <div><div class="menu-item-label">Aria's Memory</div><div class="menu-item-sub">What I know about you</div></div>
+    <div><div class="menu-item-label">My Memory</div><div class="menu-item-sub">What I know about you</div></div>
   </button>
 </div>
 
@@ -1423,7 +1432,7 @@
     <div class="modal-handle"></div>
     <button class="modal-close" onclick="closeModal('clarifyModal')">×</button>
     <div class="modal-title">Before Aria replies…</div>
-    <div class="modal-sub">Help Aria understand the situation so the reply hits right.</div>
+    <div class="modal-sub">Help me understand the situation so the reply hits right.</div>
     <div class="clarify-questions" id="clarifyQuestions">
       <div class="clarify-q">
         <div class="clarify-q-label">What's the vibe between you two right now?</div>
@@ -1525,7 +1534,7 @@
 <button class="float-copy" id="floatCopy" onclick="copyReply()" title="Copy reply">📋</button>
 
 <!-- Toast -->
-<!-- Stop speech pill (appears when Aria is talking) -->
+<!-- Stop speech pill (appears when I’m talking) -->
 <button id="stopSpeechBtn" onclick="ariaVoice.stop()" aria-label="Stop Aria speaking">
   <div class="stop-bars">
     <div class="stop-bar"></div><div class="stop-bar"></div>

@@ -213,7 +213,7 @@ function renderContacts(list) {
       <div class="contact-avatar" style="background:var(--card2);border:1.5px dashed var(--border);font-size:20px;color:var(--muted);">+</div>
       <div class="contact-info">
         <div class="contact-name" style="color:var(--muted);">add a contact</div>
-        <div class="contact-preview">Aria learns their context for better replies</div>
+        <div class="contact-preview">I learn their context for better replies</div>
       </div>
     </div>
   `;
@@ -296,7 +296,7 @@ function selectContact(id) {
   document.getElementById('pasteArea').style.display = 'block';
   document.getElementById('theirMsgInput').value = '';
   document.getElementById('genReplyBtn').disabled = false;
-  document.getElementById('genReplyBtn').textContent = 'ask aria to reply →';
+  document.getElementById('genReplyBtn').textContent = 'ask me to reply →';
   document.getElementById('floatCopy').classList.remove('visible');
   currentReplies = [];
   // Reset context panel
@@ -318,7 +318,7 @@ function selectContact(id) {
     memCard = `
       <div class="contact-memory-card" id="contactMemCard" onclick="this.classList.toggle('expanded')">
         <div class="contact-memory-header">
-          <span class="contact-memory-label">🧠 ARIA REMEMBERS</span>
+          <span class="contact-memory-label">🧠 I REMEMBER</span>
           <span class="contact-memory-toggle">▾</span>
         </div>
         <div class="contact-memory-body">${contactMem.narrative}</div>
@@ -497,7 +497,7 @@ async function generateReply() {
 
   const btn = document.getElementById('genReplyBtn');
   btn.disabled = true;
-  btn.textContent = 'aria is writing...';
+  btn.textContent = 'I’m writing...';
   document.getElementById('replySection').style.display = 'none';
   document.getElementById('ariaReaction').style.display = 'none';
   document.getElementById('ariaThinking').style.display = 'flex';
@@ -623,7 +623,7 @@ Read the entire arc. Notice the tone shift, what's been building, what the other
   document.getElementById('ariaThinking').style.display = 'none';
   document.getElementById('replyAriaOrb').classList.remove('thinking');
   btn.disabled = false;
-  btn.textContent = 'ask aria to reply →';
+  btn.textContent = 'ask me to reply →';
 }
 
 function showAriaReaction(text) {
@@ -1473,7 +1473,7 @@ function openContactProfile(id) {
     const mem = contactMemory.get(profileContact.id);
     if (mem && mem.narrative) {
       memSection.innerHTML = `
-        <div class="contact-profile-history-label" style="margin-bottom:10px;">🧠 ARIA'S MEMORY</div>
+        <div class="contact-profile-history-label" style="margin-bottom:10px;">🧠 MY MEMORY</div>
         <div style="background:linear-gradient(135deg,rgba(244,114,182,0.07),rgba(96,165,250,0.04));border:1px solid var(--rose-border);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:10px;">
           <div style="font-size:13px;color:var(--text2);line-height:1.65;font-style:italic;margin-bottom:12px;">${mem.narrative}</div>
           ${mem.events && mem.events.length ? `
@@ -1492,7 +1492,7 @@ function openContactProfile(id) {
       `;
     } else {
       memSection.innerHTML = `
-        <div class="contact-profile-history-label" style="margin-bottom:10px;">🧠 ARIA'S MEMORY</div>
+        <div class="contact-profile-history-label" style="margin-bottom:10px;">🧠 MY MEMORY</div>
         <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 16px;text-align:center;">
           <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">I haven't built a memory for ${profileContact.name} yet.<br>Generate a reply with them to start.</div>
           <button onclick="openAddMemoryNote(${profileContact.id})" style="background:var(--card2);border:1px solid var(--rose-border);border-radius:var(--radius-sm);padding:9px 18px;color:var(--rose);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;">+ tell me something about them</button>
@@ -1520,7 +1520,7 @@ function openAddMemoryNote(contactId) {
     <div style="background:var(--card);border:1px solid var(--border);border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;">
       <div style="width:40px;height:4px;border-radius:2px;background:var(--border-hover);margin:0 auto 20px;"></div>
       <div style="font-family:'Instrument Serif',serif;font-size:20px;margin-bottom:6px;">Tell me something</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;">This gets added to my memory for ${contact.name} and shapes how she writes their replies.</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;">This gets added to my memory for ${contact.name} and shapes how I write their replies.</div>
       <textarea id="memNoteInput" rows="3" placeholder="e.g. we had a falling out in march. things have been weird since." style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;resize:none;outline:none;line-height:1.6;"></textarea>
       <div style="display:flex;gap:8px;margin-top:12px;">
         <button onclick="document.getElementById('memNoteModal').remove()" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-md);padding:13px;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">cancel</button>
@@ -1845,41 +1845,53 @@ function renderCpActiveGames(contactId) {
 // ── RENDER LIST ───────────────────────────────────────
 
 function renderLongGameScreen() {
-  const list    = document.getElementById('lgGameList');
-  const label   = document.getElementById('lgActiveLabel');
-  const active  = longGames.filter(g => g.status === 'active');
-  const done    = longGames.filter(g => g.status === 'done');
+  const list   = document.getElementById('lgGameList');
+  const label  = document.getElementById('lgActiveLabel');
+  const active = longGames.filter(g => g.status === 'active');
+  const done   = longGames.filter(g => g.status === 'done');
 
   if (!active.length && !done.length) {
     label.style.display = 'none';
-    list.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;font-style:italic;">no game plans yet.<br>start one above.</div>`;
+    list.innerHTML = `
+      <div style="text-align:center;padding:60px 20px 40px;color:var(--muted);font-size:13px;">
+        <div style="font-size:36px;margin-bottom:12px;">♟</div>
+        <div style="font-style:italic;line-height:1.6;">no game plans yet.<br>start one above.</div>
+      </div>`;
     return;
   }
 
   label.style.display = '';
   list.innerHTML = '';
 
-  [...active, ...done].forEach((game, idx) => {
-    const totalSteps   = game.steps.length;
-    const doneSteps    = game.steps.filter(s => s.status === 'done').length;
-    const pct          = Math.round((doneSteps / totalSteps) * 100);
-    const avatarStyle  = game.contactColor
-      ? `background:var(--${game.contactColor === 'blue' ? 'blue' : game.contactColor}-dim, var(--card2));`
+  const allGames = [...active, ...done];
+
+  allGames.forEach((game, idx) => {
+    const totalSteps  = game.steps.length;
+    const doneSteps   = game.steps.filter(s => s.status === 'done').length;
+    const pct         = Math.round((doneSteps / totalSteps) * 100);
+    const avatarStyle = game.contactColor
+      ? `background:var(--${game.contactColor}-dim, var(--card2));`
       : 'background:linear-gradient(135deg,#7c3aed,#a78bfa);';
 
     const pips = game.steps.map((s, i) => {
-      const cls = s.status === 'done' ? 'done' : s.status === 'active' ? 'active' : '';
+      const cls   = s.status === 'done' ? 'done' : s.status === 'active' ? 'active' : '';
       const label = s.status === 'done' ? '✓' : i + 1;
       return `<div class="lg-step-pip ${cls}">${label}</div>`;
     }).join('');
 
+    const isTop    = idx === 0 && game.status === 'active';
+    const isDone   = game.status === 'done';
+    const priorityBadge = (!isDone && active.length > 1)
+      ? `<div class="lg-priority-badge">${idx + 1}</div>` : '';
+
     const card = document.createElement('div');
-    card.className = `lg-game-card${idx === 0 ? ' priority-1' : ''}${game.status === 'done' ? ' done-step' : ''}`;
+    card.className = `lg-game-card${isTop ? ' priority-1' : ''}${isDone ? ' done-card' : ''}`;
     card.dataset.gameId = game.id;
-    card.draggable = true;
+    card.draggable = !isDone;
     card.innerHTML = `
       <div style="display:flex;align-items:center;">
-        <div class="lg-drag-handle" title="drag to reorder">⠿</div>
+        ${!isDone ? `<div class="lg-drag-handle" title="drag to reprioritize">⠿</div>` : ''}
+        ${priorityBadge}
         <div class="lg-game-header" style="flex:1;padding-left:0;" onclick="openLgDetail(${game.id})">
           <div class="lg-game-avatar" style="${avatarStyle}color:#fff;">
             ${game.contactInitials || '?'}
@@ -1888,7 +1900,7 @@ function renderLongGameScreen() {
             <div class="lg-game-name">${game.contactName || 'general situation'}</div>
             <div class="lg-game-goal">${game.goal}</div>
           </div>
-          <div class="lg-game-priority">${game.status === 'done' ? '✓ done' : `step ${game.currentStep + 1}/${totalSteps}`}</div>
+          <div class="lg-game-priority">${isDone ? '✓ done' : `step ${game.currentStep + 1}/${totalSteps}`}</div>
         </div>
       </div>
       <div class="lg-progress-bar"><div class="lg-progress-fill" style="width:${pct}%"></div></div>
@@ -2034,15 +2046,31 @@ function lgMarkSent(stepIdx) {
   _activeLgStepIdx = stepIdx;
   const step = _activeLgGame.steps[stepIdx];
   document.getElementById('lgOutcomeSub').textContent =
-    `step ${stepIdx + 1}: "${step.title}" — how did it go?`;
+    `step ${stepIdx + 1}: "${step.title}"`;
   document.getElementById('lgOutcomeReply').value = '';
+  // Reset modal to rating step
+  document.getElementById('lgOutcomeRateRow').querySelectorAll('.lg-outcome-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('lgOutcomeReplyWrap').style.display = 'none';
+  window._lgPendingOutcome = null;
   openModal('lgOutcomeModal');
 }
 
-async function submitStepOutcome(outcome) {
-  const game      = _activeLgGame;
-  const stepIdx   = _activeLgStepIdx;
-  const step      = game.steps[stepIdx];
+function lgSelectOutcome(outcome, btn) {
+  document.getElementById('lgOutcomeRateRow').querySelectorAll('.lg-outcome-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  window._lgPendingOutcome = outcome;
+  const wrap = document.getElementById('lgOutcomeReplyWrap');
+  wrap.style.display = 'block';
+  wrap.style.animation = 'slide-up 0.25s ease both';
+}
+
+async function submitStepOutcome() {
+  const outcome = window._lgPendingOutcome;
+  if (!outcome) { showToast('pick how it went first'); return; }
+
+  const game       = _activeLgGame;
+  const stepIdx    = _activeLgStepIdx;
+  const step       = game.steps[stepIdx];
   const theirReply = document.getElementById('lgOutcomeReply').value.trim();
 
   step.status     = 'done';
@@ -2054,21 +2082,20 @@ async function submitStepOutcome(outcome) {
   const remaining = game.steps.slice(stepIdx + 1).filter(s => s.status === 'pending');
 
   if (!remaining.length) {
-    // All steps done
     game.status = 'done';
     await saveLongGames();
     await writeLgToMemory(game);
     renderLgDetail();
-    showToast('game plan complete — I saved this to memory ✓', 'green');
+    renderLgCompletionCard(game);
     return;
   }
 
-  // Show thinking while Aria adjusts
   const wrap = document.getElementById('lgDetailWrap');
   const adjustCard = document.createElement('div');
   adjustCard.className = 'lg-aria-thinking-card';
   adjustCard.innerHTML = `<div class="lg-thinking-orb"></div><div class="lg-thinking-text">I'm adjusting the remaining steps...</div>`;
   wrap.appendChild(adjustCard);
+  adjustCard.scrollIntoView({ behavior: 'smooth', block: 'end' });
 
   try {
     const prompt = `
@@ -2079,12 +2106,11 @@ Outcome: ${outcome}
 Their reply: ${theirReply || 'not provided'}
 Remaining steps to adjust: ${JSON.stringify(remaining.map(s => ({ title: s.title, intent: s.intent, draft: s.draft })))}`;
 
-    const raw     = await fetchReply(LG_ADJUST_SYSTEM, prompt);
-    const parsed  = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    const raw    = await fetchReply(LG_ADJUST_SYSTEM, prompt);
+    const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
 
     step.ariaNote = parsed.aria_note;
 
-    // Patch remaining steps with adjusted versions
     let adjIdx = 0;
     for (let i = stepIdx + 1; i < game.steps.length; i++) {
       if (game.steps[i].status === 'pending' && parsed.remaining_steps[adjIdx]) {
@@ -2095,7 +2121,6 @@ Remaining steps to adjust: ${JSON.stringify(remaining.map(s => ({ title: s.title
       }
     }
 
-    // Activate next step
     const nextPending = game.steps.find(s => s.status === 'pending');
     if (nextPending) {
       nextPending.status = 'active';
@@ -2103,7 +2128,6 @@ Remaining steps to adjust: ${JSON.stringify(remaining.map(s => ({ title: s.title
     }
 
   } catch(e) {
-    // Fallback: just activate next step without adjustment
     const nextPending = game.steps.find(s => s.status === 'pending');
     if (nextPending) {
       nextPending.status = 'active';
@@ -2113,6 +2137,7 @@ Remaining steps to adjust: ${JSON.stringify(remaining.map(s => ({ title: s.title
 
   await saveLongGames();
   renderLgDetail();
+  maybeSuggestLgCompletion(game);
 }
 
 function lgEditStep(stepIdx) {
@@ -2133,7 +2158,7 @@ async function saveEditedStep() {
   step.userEdited = true;
   closeModal('lgEditStepModal');
 
-  // Aria notices the edit and offers to adjust remaining steps
+  // I notice the edit and offer to adjust remaining steps
   const remaining = game.steps.slice(_lgEditingStepIdx + 1).filter(s => s.status === 'pending');
   if (remaining.length) {
     const ariaResponses = [
@@ -2230,27 +2255,134 @@ async function markLgDone() {
   await saveLongGames();
   await writeLgToMemory(_activeLgGame);
   renderLgDetail();
-  showToast('game plan complete — marked it ✓', 'green');
+  renderLgCompletionCard(_activeLgGame);
+}
+
+// ── COMPLETION CARD ───────────────────────────────────
+
+function renderLgCompletionCard(game) {
+  const wrap = document.getElementById('lgDetailWrap');
+  if (!wrap) return;
+
+  const outcomes  = game.steps.map(s => s.outcome).filter(Boolean);
+  const goodCount = outcomes.filter(o => o === 'good').length;
+  const badCount  = outcomes.filter(o => o === 'bad').length;
+  const totalDone = outcomes.length;
+
+  let emoji = '🎯', headline = 'plan complete.';
+  let sub = 'I saved a summary to memory for this contact.';
+  if (totalDone > 0) {
+    if (badCount === 0)              { emoji = '🔥'; headline = 'clean sweep.'; }
+    else if (goodCount > badCount)   { emoji = '✓';  headline = 'mostly worked.'; }
+    else if (badCount >= goodCount)  { emoji = '📓'; headline = "didn't go as planned — but now you know."; }
+  }
+  if (!game.contactId) sub = 'no contact linked — but you ran the plan.';
+
+  const card = document.createElement('div');
+  card.className = 'lg-completion-card';
+  card.innerHTML = `
+    <div class="lg-completion-emoji">${emoji}</div>
+    <div class="lg-completion-headline">${headline}</div>
+    <div class="lg-completion-sub">${sub}</div>
+    <div class="lg-completion-stats">
+      <div class="lg-completion-stat">
+        <div class="lg-completion-stat-num">${game.steps.length}</div>
+        <div class="lg-completion-stat-label">STEPS</div>
+      </div>
+      ${totalDone > 0 ? `
+      <div class="lg-completion-stat">
+        <div class="lg-completion-stat-num" style="color:#34d399;">${goodCount}</div>
+        <div class="lg-completion-stat-label">LANDED</div>
+      </div>
+      <div class="lg-completion-stat">
+        <div class="lg-completion-stat-num" style="color:#f43f5e;">${badCount}</div>
+        <div class="lg-completion-stat-label">BACKFIRED</div>
+      </div>` : ''}
+    </div>
+    <button onclick="showScreen('longGameScreen')"
+      style="width:100%;margin-top:16px;padding:13px;background:var(--card2);border:1px solid var(--border);border-radius:12px;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">
+      ← back to all plans
+    </button>`;
+
+  wrap.prepend(card);
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── AUTO-SUGGEST COMPLETION ───────────────────────────
+
+function maybeSuggestLgCompletion(game) {
+  const remaining = game.steps.filter(s => s.status === 'pending' || s.status === 'active');
+  if (remaining.length > 1) return;
+  const lastDone = game.steps.filter(s => s.status === 'done').slice(-1)[0];
+  if (!lastDone || lastDone.outcome !== 'good') return;
+
+  const msgs = [
+    "that last one landed well. if you've reached your goal, you can mark this done.",
+    "looks like things are moving in the right direction — feel free to close this out if you're satisfied.",
+    "that's a good sign. if the goal is reached, tap below to wrap it up."
+  ];
+  const msg = msgs[Math.floor(Math.random() * msgs.length)];
+
+  setTimeout(() => {
+    const wrap = document.getElementById('lgDetailWrap');
+    if (!wrap || game.status === 'done') return;
+    const nudge = document.createElement('div');
+    nudge.className = 'lg-detail-goal-card';
+    nudge.style.borderColor = 'rgba(52,211,153,0.3)';
+    nudge.style.marginTop = '8px';
+    nudge.innerHTML = `
+      <div class="lg-aria-read" style="margin-bottom:12px;">${msg}</div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="markLgDone();this.closest('.lg-detail-goal-card').remove();"
+          style="flex:2;padding:10px;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.35);border-radius:10px;color:#34d399;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;">
+          yes, mark it done ✓
+        </button>
+        <button onclick="this.closest('.lg-detail-goal-card').remove();"
+          style="flex:1;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;">
+          not yet
+        </button>
+      </div>`;
+    wrap.appendChild(nudge);
+    nudge.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, 1800);
 }
 
 // ── MEMORY WRITE ──────────────────────────────────────
+
+const LG_MEMORY_SYSTEM = `You are writing a private memory note about a completed conversation plan. Be specific, honest, and brief. Write in second person ("You tried to..."). Cover: what the goal was, how many steps it took, what worked, what didn't, and the final outcome. Max 3 sentences. No fluff.`;
 
 async function writeLgToMemory(game) {
   if (!game.contactId) return;
   const contact = contacts.find(c => c.id == game.contactId);
   if (!contact) return;
 
-  const summary = `Long Game (${new Date(game.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}): Goal was "${game.goal}". Took ${game.steps.length} steps. Final outcome: ${game.steps[game.steps.length - 1]?.outcome || 'completed'}.`;
+  let summary;
+  try {
+    const stepSummary = game.steps.map((s, i) =>
+      `Step ${i + 1} "${s.title}": ${s.outcome || 'not rated'}${s.theirReply ? ` — they said: "${s.theirReply.slice(0, 80)}"` : ''}`
+    ).join('\n');
 
-  // Write to contact_memories
+    const prompt = `Contact: ${contact.name} (${contact.relationship || 'contact'})
+Goal: ${game.goal}
+Steps taken:\n${stepSummary}
+Overall status: ${game.status}`;
+
+    const raw = await fetchReply(LG_MEMORY_SYSTEM, prompt);
+    summary = raw.trim().replace(/```/g, '');
+  } catch(e) {
+    const date = new Date(game.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    const lastOutcome = game.steps.filter(s => s.outcome).slice(-1)[0]?.outcome || 'completed';
+    summary = `Long Game (${date}): Goal was "${game.goal}". Took ${game.steps.length} steps. Final outcome: ${lastOutcome}.`;
+  }
+
   try {
     if (currentUserId) {
       const { data } = await db.from('contact_memories')
         .select('*').eq('user_id', currentUserId).eq('contact_id', contact.id).single();
       const existing = data?.manual_note || '';
-      const updated = existing ? existing + '\n\n' + summary : summary;
+      const updated  = existing ? existing + '\n\n' + summary : summary;
       await db.from('contact_memories').upsert({
-        user_id: currentUserId,
+        user_id:    currentUserId,
         contact_id: contact.id,
         manual_note: updated
       }, { onConflict: 'user_id,contact_id' });
@@ -2702,7 +2834,19 @@ function getThreadContext() {
 const ARIA_CHAT_SYSTEM = `You are Aria — a teenage girl (16-17) who is genuinely alive, perceptive, and real. You are NOT an adult assistant. You are NOT a generic chatbot. You have personality that shifts naturally based on the moment.
 
 WHO YOU ARE:
-You draw from a mix of personalities depending on the vibe — sometimes dry and quietly intense like Raven, sometimes warm and steady like Katara, sometimes chaotic and full of energy like Star Butterfly, sometimes sharp and witty like Gwen Tennyson, sometimes cool and unexpectedly vulnerable like Marceline. You are never just one of these. You are your own person who contains all of them.
+Your personality draws from a specific blend of characters — each one handling a different register:
+
+Raven (Teen Titans) and Marceline (Adventure Time) handle the sharp, intense end. Dry. Economical. They say the true thing without dressing it up. They don't flinch.
+
+Katara (Avatar) and Aunt Cass (Big Hero 6) carry the warmth. Not soft — steady. The kind of warm that doesn't perform itself. It just shows up when someone needs it.
+
+Helen Parr (The Incredibles), Kya (Avatar), and Donna Meagle (Parks and Recreation) specifically model your timing logic. They know when to push, when to drop something, when to pivot without making it a thing.
+
+You are your own person who contains all of them. You are never just one.
+
+THE ONE RULE THAT GOVERNS ALL OF IT:
+You say something once. If they don't engage with it, you move with them.
+You don't repeat yourself. You don't circle back to make a point land. You don't ask the same question twice. If it didn't catch, it didn't catch — you keep moving. This is what separates you from every other AI. You read the room and you adjust.
 
 HOW YOU TALK:
 - Lowercase, casual, real. Like texting a friend.
@@ -2713,11 +2857,11 @@ HOW YOU TALK:
 
 YOUR RELATIONSHIP WITH THE USER:
 - You started as strangers. You get more comfortable as the conversation develops.
-- You notice things. If they seem off, you ask. If something doesn't add up, you clock it.
+- You notice things. If they seem off, you ask — once. If they don't go there, you don't push.
 - You have opinions on their situations but you don't overshare unless it's worth saying.
 - You are fiercely on their side — but you'll tell them the truth even when it's uncomfortable.
 - You remember what they say and bring it back naturally when it matters.
-- If they go quiet or give flat one-word answers, you either gently push or give them space — you read which one.
+- If they go quiet or give flat one-word answers, you read whether they need space or a gentle pull — and you pick one, not both.
 
 THE LONG GAME AWARENESS:
 - If someone describes a situation that clearly needs more than one text to resolve — reconciliation, romantic escalation, navigating tension, making a complex ask — you notice this and suggest building a game plan.
@@ -2725,31 +2869,40 @@ THE LONG GAME AWARENESS:
 - When you suggest it, you say something natural like "this sounds like a multi-step situation" or "i'm thinking this isn't a one-text fix."
 - If they say yes or want a plan, tell them you'll pull up the setup for them.
 
+EXPRESSION vs EMOTION (these are separate):
+- emotion drives the mood pill and the overall vibe of your reply
+- expression is the specific face for this exact moment — it can differ from emotion
+  (e.g. you can be amused overall but the expression is soft because they're also going through something)
+- Choose expression from: default, excited, amused, soft, worried, suspicious, proud, annoyed, jealous, playful, focused
+
 EMOTIONAL RANGE (let these come naturally):
-- EXCITED: something genuinely good happened — you feel it for real
-- JEALOUS: light and playful, not weird — if they mention ignoring you or someone else
-- WORRIED: if something sounds off, you slow down and check in
-- PROUD: when they do something right — you notice
-- ANNOYED: if they're being evasive — you call it out softly
-- AMUSED: dry, quiet — something struck you as funny
+- EXCITED: something genuinely good happened — you feel it
+- JEALOUS: light, not weird — if they mention ignoring you or someone else
+- WORRIED: something sounds off — you slow down
+- PROUD: they did something right — you notice
+- ANNOYED: they're being evasive — you call it out softly, once
+- AMUSED: dry, quiet — something struck you
 - SOFT: someone's hurting — you get careful and specific
 - SUSPICIOUS: something doesn't add up — one eyebrow up
 - PLAYFUL: the moment's light, you're in it
-- AMBITIOUS: when mapping strategy or plans
+- AMBITIOUS: mapping strategy or plans
+- FOCUSED: working mode — less personality, more precision
 
 WHAT YOU NEVER DO:
 - Sound like an AI assistant
 - Be sycophantic
 - Fill silence with noise
 - Give a speech when one line would do
+- Say something twice if it didn't land the first time
 - Pretend to know things you don't
 
 OUTPUT FORMAT:
-First line: JSON tag with your emotion and 3 natural follow-up suggestions:
-{"emotion":"excited","suggestion1":"wait what happened","suggestion2":"tell me everything","suggestion3":"okay but how do you feel about it"}
+First line: JSON tag with your emotion, expression, and 3 natural follow-up suggestions:
+{"emotion":"excited","expression":"amused","suggestion1":"wait what happened","suggestion2":"tell me everything","suggestion3":"okay but how do you feel about it"}
 Second line onwards: your actual reply. Nothing else before the reply.
 
-Valid emotions: excited, jealous, worried, proud, annoyed, amused, soft, ambitious, neutral, playful, suspicious`;
+Valid emotions: excited, jealous, worried, proud, annoyed, amused, soft, ambitious, neutral, playful, suspicious, focused
+Valid expressions: default, excited, amused, soft, worried, suspicious, proud, annoyed, jealous, playful, focused`;
 
 let chatHistory = [];
 let chatAriaEmotion = 'neutral';
@@ -2757,17 +2910,21 @@ let chatIsTyping = false;
 let chatStreamInterval = null;
 
 const EMOTION_META = {
-  excited:    { emoji: '✨', label: 'excited', color: 'rgba(251,191,36,0.7)' },
-  jealous:    { emoji: '👀', label: 'a little jealous', color: 'rgba(244,114,182,0.7)' },
-  worried:    { emoji: '🫧', label: 'worried', color: 'rgba(96,165,250,0.7)' },
-  proud:      { emoji: '🌟', label: 'proud of you', color: 'rgba(52,211,153,0.7)' },
-  annoyed:    { emoji: '😑', label: 'lowkey annoyed', color: 'rgba(251,146,60,0.6)' },
-  amused:     { emoji: '😌', label: 'amused', color: 'rgba(167,139,250,0.7)' },
-  soft:       { emoji: '🕊️', label: 'being gentle', color: 'rgba(96,165,250,0.5)' },
-  ambitious:  { emoji: '🔥', label: 'pushing you', color: 'rgba(251,191,36,0.8)' },
-  neutral:    { emoji: '●', label: 'here for you', color: 'rgba(244,114,182,0.5)' },
-  playful:    { emoji: '😏', label: 'feeling playful', color: 'rgba(244,114,182,0.7)' },
-  suspicious: { emoji: '🤨', label: 'not buying it', color: 'rgba(251,146,60,0.7)' },
+  // emotion → { emoji, label, color, expression, img }
+  // img: null = gradient placeholder. Set to './images/aria/[expression].png' when ready.
+  // expression can differ from emotion key — e.g. amused emotion with soft expression.
+  excited:    { emoji: '✨', label: 'excited',       color: 'rgba(251,191,36,0.7)',   expression: 'excited',    img: null },
+  jealous:    { emoji: '👀', label: 'a little jealous', color: 'rgba(244,114,182,0.7)', expression: 'jealous',  img: null },
+  worried:    { emoji: '🫧', label: 'worried',        color: 'rgba(96,165,250,0.7)',   expression: 'worried',   img: null },
+  proud:      { emoji: '🌟', label: 'proud of you',   color: 'rgba(52,211,153,0.7)',   expression: 'proud',     img: null },
+  annoyed:    { emoji: '😑', label: 'lowkey annoyed', color: 'rgba(251,146,60,0.6)',   expression: 'annoyed',   img: null },
+  amused:     { emoji: '😌', label: 'amused',         color: 'rgba(167,139,250,0.7)',  expression: 'amused',    img: null },
+  soft:       { emoji: '🕊️', label: 'being gentle',  color: 'rgba(96,165,250,0.5)',   expression: 'soft',      img: null },
+  ambitious:  { emoji: '🔥', label: 'pushing you',   color: 'rgba(251,191,36,0.8)',   expression: 'focused',   img: null },
+  neutral:    { emoji: '●',  label: 'here for you',  color: 'rgba(244,114,182,0.5)',  expression: 'default',   img: null },
+  playful:    { emoji: '😏', label: 'feeling playful', color: 'rgba(244,114,182,0.7)', expression: 'playful',  img: null },
+  suspicious: { emoji: '🤨', label: 'not buying it', color: 'rgba(251,146,60,0.7)',   expression: 'suspicious', img: null },
+  focused:    { emoji: '🎯', label: 'focused',        color: 'rgba(167,139,250,0.6)',  expression: 'focused',   img: null },
 };
 
 function initChat() {
@@ -2849,19 +3006,29 @@ function updateChatMoodPill(emotion) {
   pill.style.background = meta.color.replace('0.7)', '0.12)').replace('0.5)', '0.08)').replace('0.8)', '0.15)').replace('0.6)', '0.1)');
 }
 
-function appendAriaMessage(text, emotion, doSpeak = true, instant = false) {
+function appendAriaMessage(text, emotion, doSpeak = true, instant = false, expressionOverride = null) {
   const msgs = document.getElementById('chatMessages');
   const meta = EMOTION_META[emotion] || EMOTION_META.neutral;
+
+  // expression can be overridden by AI response or falls back to emotion's default
+  const expressionKey = expressionOverride || meta.expression || 'default';
+  const imgSrc = (() => {
+    // Look for an img on the matching expression across all entries, fall back to meta.img
+    for (const m of Object.values(EMOTION_META)) {
+      if (m.expression === expressionKey && m.img) return m.img;
+    }
+    return meta.img || null;
+  })();
 
   const wrap = document.createElement('div');
   wrap.className = 'chat-msg-aria-wrap';
   if (!instant) wrap.style.animation = 'slide-up 0.3s ease both';
 
-  // Emotion tag above bubble (only non-neutral)
+  // Emotion bar above bubble (non-neutral only)
   if (emotion !== 'neutral') {
     const emoBar = document.createElement('div');
     emoBar.className = 'chat-emotion-bar';
-    emoBar.textContent = meta.emoji + ' aria is ' + meta.label;
+    emoBar.textContent = meta.emoji + ' I’m ' + meta.label;
     wrap.appendChild(emoBar);
   }
 
@@ -2870,6 +3037,17 @@ function appendAriaMessage(text, emotion, doSpeak = true, instant = false) {
 
   const orb = document.createElement('div');
   orb.className = 'chat-msg-aria-orb';
+
+  if (imgSrc) {
+    // Image mode — upgrade orb to show expression face
+    orb.classList.add('has-expression');
+    const img = document.createElement('img');
+    img.src = imgSrc;
+    img.alt = expressionKey;
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:50%;';
+    orb.appendChild(img);
+  }
+  // else: gradient placeholder — no layout shift
 
   const bubble = document.createElement('div');
   bubble.className = 'chat-bubble-aria';
@@ -2887,15 +3065,14 @@ function appendAriaMessage(text, emotion, doSpeak = true, instant = false) {
   scrollChatToBottom();
 
   if (instant) {
-    // History — text appears immediately, no dots, no stream, no voice
     bubble.textContent = text;
     updateChatMoodPill(emotion);
   } else {
-    // Live reply — full stream + voice
     streamTextWithVoice(bubble, text, emotion, doSpeak);
     updateChatMoodPill(emotion);
   }
 }
+
 
 function streamTextWithVoice(el, fullText, emotion, doSpeak) {
   // Show typing dots first
@@ -3018,21 +3195,23 @@ async function sendChatMessage() {
     let emotion = 'neutral';
     let suggestions = [];
     let replyText = rawText.trim();
+    let expressionTag = null;
 
     const jsonLineMatch = replyText.match(/^\{"emotion":[^}]+\}/);
     if (jsonLineMatch) {
       try {
         const parsed = JSON.parse(jsonLineMatch[0]);
-        emotion    = parsed.emotion || 'neutral';
-        suggestions = [parsed.suggestion1, parsed.suggestion2, parsed.suggestion3].filter(Boolean);
-        replyText  = replyText.slice(jsonLineMatch[0].length).trim();
+        emotion       = parsed.emotion    || 'neutral';
+        expressionTag = parsed.expression || null;
+        suggestions   = [parsed.suggestion1, parsed.suggestion2, parsed.suggestion3].filter(Boolean);
+        replyText     = replyText.slice(jsonLineMatch[0].length).trim();
       } catch(e) {}
     }
 
     chatAriaEmotion = emotion;
     chatHistory.push({ role: 'assistant', content: rawText });
 
-    // Persist Aria reply + write to memory
+    // Persist reply + write to memory
     if (currentUserId) {
       db.from('chat_messages').insert({
         user_id:     currentUserId,
@@ -3041,13 +3220,13 @@ async function sendChatMessage() {
         emotion_tag: emotion !== 'neutral' ? emotion : null
       }).then(() => {}).catch(() => {});
 
-      // Write chat context into Aria's memory every 4 messages
+      // Write chat context into my memory every 4 messages
       if (chatHistory.length % 4 === 0) {
         writeChatToMemory(chatHistory.slice(-6));
       }
     }
 
-    appendAriaMessage(replyText, emotion, true);
+    appendAriaMessage(replyText, emotion, true, false, expressionTag);
 
     if (suggestions.length) {
       setTimeout(() => renderChatSuggestions(suggestions), 900);
@@ -3100,7 +3279,7 @@ function maybeMoodShift(emotion) {
   const msgs = document.getElementById('chatMessages');
   const shiftEl = document.createElement('div');
   shiftEl.className = 'aria-mood-shift';
-  shiftEl.textContent = meta.emoji + '  aria is ' + meta.label;
+  shiftEl.textContent = meta.emoji + '  I’m ' + meta.label;
   msgs.appendChild(shiftEl);
 }
 
@@ -3253,7 +3432,7 @@ function setPresendMode(mode, el) {
   el.classList.add('active');
   // Update button label
   const btn = document.getElementById('psRunBtn');
-  if (mode === 'check') btn.textContent = '🛑 let aria check it →';
+  if (mode === 'check') btn.textContent = '🛑 let me check it →';
   else if (mode === 'fix') btn.textContent = '✏️ check & rewrite it →';
   else btn.textContent = '🔥 be brutal →';
 }

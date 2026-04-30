@@ -1349,13 +1349,15 @@ input[type=range]::-webkit-slider-thumb {
   background: radial-gradient(circle at 35% 35%, #fed7aa, #ea7c1a);
   box-shadow: 0 0 10px rgba(249,115,22,0.3); margin-bottom: 2px;
   overflow: hidden;
-  transition: width 0.2s ease, height 0.2s ease, box-shadow 0.2s ease;
+  transition: width 0.2s ease, height 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 .chat-msg-aria-orb.has-expression {
+  /* Image mode — no layout shift, same margin, just larger and transparent */
   width: 38px; height: 38px;
   background: transparent;
   box-shadow: 0 0 14px rgba(249,115,22,0.45);
   border: 1.5px solid rgba(249,115,22,0.3);
+  margin-bottom: 0;
 }
 .chat-msg-aria-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .chat-bubble-aria {
@@ -2547,3 +2549,44 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   padding-bottom: 100px;
   overflow-y: auto;
 }
+
+/* ── LONG GAME: outcome selected state ── */
+.lg-outcome-btn.selected {
+  transform: scale(1.04);
+  box-shadow: 0 0 0 2px currentColor;
+  font-weight: 600;
+}
+
+/* ── LONG GAME: priority badge ── */
+.lg-priority-badge {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(167,139,250,0.15);
+  border: 1px solid rgba(167,139,250,0.35);
+  color: #a78bfa; font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-right: 8px;
+}
+
+/* ── LONG GAME: done card ── */
+.lg-game-card.done-card { opacity: 0.55; }
+
+/* ── LONG GAME: completion card ── */
+.lg-completion-card {
+  background: linear-gradient(135deg, rgba(167,139,250,0.08), rgba(52,211,153,0.05));
+  border: 1px solid rgba(167,139,250,0.25);
+  border-radius: 16px; padding: 28px 20px 20px;
+  text-align: center; margin-bottom: 16px;
+}
+.lg-completion-emoji { font-size: 40px; margin-bottom: 10px; }
+.lg-completion-headline {
+  font-family: 'Instrument Serif', serif;
+  font-size: 22px; color: var(--text); margin-bottom: 6px;
+}
+.lg-completion-sub { font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
+.lg-completion-stats { display: flex; gap: 8px; justify-content: center; margin-bottom: 4px; }
+.lg-completion-stat {
+  background: var(--card2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 16px; min-width: 60px;
+}
+.lg-completion-stat-num { font-size: 20px; font-weight: 700; color: var(--text); }
+.lg-completion-stat-label { font-size: 9px; color: var(--muted); letter-spacing: 1px; margin-top: 2px; }
