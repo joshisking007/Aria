@@ -3784,7 +3784,16 @@ async function renderMemoryScreen() {
   sqlNotice.style.display = 'none';
 
   // Always do a fresh load so the screen is never stale
-  await ariaMemory.load();
+  // Wrap in a timeout so a slow/dead Supabase connection can't hang the screen forever
+  try {
+    await Promise.race([
+      ariaMemory.load(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
+    ]);
+  } catch(e) {
+    // Timed out or errored — render whatever we have in store already
+    console.warn('renderMemoryScreen: load timed out, rendering with cached store');
+  }
 
   if (!ariaMemory.isTableAvailable()) {
     statusEl.textContent = '● setup needed';
@@ -3859,8 +3868,8 @@ async function forceMemoryLearn() {
   showToast('going back through everything…');
   await ariaMemory.learnWritingStyle();
   await ariaMemory.learnFromHistory(replyHistory);
-  await ariaMemory.load();
-  renderMemoryScreen();
+  // renderMemoryScreen will handle the load internally with its timeout wrapper
+  await renderMemoryScreen();
   showToast('memory updated ✓', 'green');
 }
 
