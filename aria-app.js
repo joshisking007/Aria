@@ -2970,14 +2970,17 @@ function initChat() {
 
         scrollChatToBottom();
 
-        // Aria greets them back
+        // Aria greets them back — push into chatHistory BEFORE the timeout so she owns it
         const returns = [
           "you're back. pick up where we left off?",
-          "hey, i remember you. what's on your mind now.",
-          "good, you came back. i was thinking about what you said."
+          "hey, you came back. what's going on now.",
+          "good. i was hoping you'd come back.",
+          "oh. you again. i mean — hey.",
         ];
+        const returnGreeting = returns[Math.floor(Math.random() * returns.length)];
+        chatHistory.push({ role: 'assistant', content: returnGreeting });
         setTimeout(() => {
-          appendAriaMessage(returns[Math.floor(Math.random() * returns.length)], 'playful', false);
+          appendAriaMessage(returnGreeting, 'playful', false);
         }, 500);
       })
       .catch(() => _chatGreet());
@@ -2995,6 +2998,7 @@ function _chatGreet() {
     "oh good, you're here. i had a feeling today was going to be interesting.",
   ];
   const opener = openers[Math.floor(Math.random() * openers.length)];
+  chatHistory.push({ role: 'assistant', content: opener });
   setTimeout(() => appendAriaMessage(opener, 'neutral', false), 600);
   renderChatSuggestions(["i need help texting someone", "i'm kind of stressed", "what can you actually do?", "just wanted to talk"]);
 }
@@ -3762,7 +3766,7 @@ function humanizeMemoryEntry(cat, key, value) {
   return `${label}: ${value}`;
 }
 
-function renderMemoryScreen() {
+async function renderMemoryScreen() {
   const body = document.getElementById('memoryBody');
   const statusEl = document.getElementById('memoryStatus');
   const sqlNotice = document.getElementById('memorySqlNotice');
@@ -3773,6 +3777,14 @@ function renderMemoryScreen() {
     sqlNotice.style.display = 'none';
     return;
   }
+
+  // Show loading state while we (re)fetch from Supabase
+  statusEl.textContent = '● loading…';
+  body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon" style="font-size:28px;animation:pulse 1.4s ease-in-out infinite;">🧠</div><div style="margin-top:8px;color:var(--muted);font-size:13px;">pulling up what i know about you…</div></div>`;
+  sqlNotice.style.display = 'none';
+
+  // Always do a fresh load so the screen is never stale
+  await ariaMemory.load();
 
   if (!ariaMemory.isTableAvailable()) {
     statusEl.textContent = '● setup needed';
