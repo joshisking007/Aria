@@ -2970,17 +2970,14 @@ function initChat() {
 
         scrollChatToBottom();
 
-        // Aria greets them back — push into chatHistory BEFORE the timeout so she owns it
+        // Aria greets them back
         const returns = [
           "you're back. pick up where we left off?",
-          "hey, you came back. what's going on now.",
-          "good. i was hoping you'd come back.",
-          "oh. you again. i mean — hey.",
+          "hey, i remember you. what's on your mind now.",
+          "good, you came back. i was thinking about what you said."
         ];
-        const returnGreeting = returns[Math.floor(Math.random() * returns.length)];
-        chatHistory.push({ role: 'assistant', content: returnGreeting });
         setTimeout(() => {
-          appendAriaMessage(returnGreeting, 'playful', false);
+          appendAriaMessage(returns[Math.floor(Math.random() * returns.length)], 'playful', false);
         }, 500);
       })
       .catch(() => _chatGreet());
@@ -2998,7 +2995,6 @@ function _chatGreet() {
     "oh good, you're here. i had a feeling today was going to be interesting.",
   ];
   const opener = openers[Math.floor(Math.random() * openers.length)];
-  chatHistory.push({ role: 'assistant', content: opener });
   setTimeout(() => appendAriaMessage(opener, 'neutral', false), 600);
   renderChatSuggestions(["i need help texting someone", "i'm kind of stressed", "what can you actually do?", "just wanted to talk"]);
 }
@@ -3224,9 +3220,9 @@ async function sendChatMessage() {
         emotion_tag: emotion !== 'neutral' ? emotion : null
       }).then(() => {}).catch(() => {});
 
-      // Write chat context into memory every 2 messages
-      if (chatHistory.length % 2 === 0) {
-        writeChatToMemory(chatHistory.slice(-8));
+      // Write chat context into my memory every 4 messages
+      if (chatHistory.length % 4 === 0) {
+        writeChatToMemory(chatHistory.slice(-6));
       }
     }
 
@@ -3250,39 +3246,29 @@ async function sendChatMessage() {
 }
 
 async function writeChatToMemory(recentMessages) {
-  // Extract meaningful things about the user and persist them
+  // Summarise recent chat into ariaMemory store
   try {
     const transcript = recentMessages.map(m =>
       (m.role === 'user' ? 'USER' : 'ARIA') + ': ' + m.content
     ).join('\n');
 
-    const extractionPrompt = `You are extracting meaningful, durable insights about the USER from this chat snippet. Focus ONLY on things the user has revealed — not Aria's responses.
+    const summary = await fetchReply(
+      'You extract key facts about the user from a conversation snippet. Output 1-3 short bullet points of durable facts (not opinions). Start each with "–". No preamble.',
+      transcript
+    );
 
-Extract things like:
-- Personal facts (age, job, school, location, living situation)
-- People in their life (friends, family, partners, enemies) and how they feel about them
-- Life events or situations they've mentioned (breakups, drama, achievements, struggles)
-- How they think and view the world (their opinions, values, worldview, philosophy)
-- Their emotional patterns (what stresses them, what they care about, how they handle things)
-- Their personality (how they communicate, what they're like, recurring themes)
-- Anything they've said that reveals who they are
-
-Rules:
-- Only include things actually said by the USER, not inferred by Aria
-- Each point must be a complete, self-contained sentence about the user
-- Be specific — "has a complicated relationship with their mom" beats "has family issues"
-- Skip small talk and throwaway comments
-- If nothing meaningful was said, output only: NOTHING
-- Output 1-5 points. Start each with "–". No preamble, no labels.`;
-
-    const summary = await fetchReply(extractionPrompt, transcript);
-
-    if (!summary || summary.trim() === 'NOTHING') return;
-
-    if (typeof ariaMemory.addChatFacts === 'function') {
-      await ariaMemory.addChatFacts(summary);
+    if (summary && typeof ariaMemory.addChatFacts === 'function') {
+      ariaMemory.addChatFacts(summary);
     }
-  } catch(e) { console.warn('writeChatToMemory error', e); }
+
+    // Also upsert to Supabase user_profiles as aria_chat_memory
+    if (currentUserId) {
+      const { data } = await db.from('user_profiles').select('aria_chat_memory').eq('id', currentUserId).single();
+      const existing = data?.aria_chat_memory || '';
+      const updated  = (existing + '\n' + summary).trim().slice(-3000); // cap at 3000 chars
+      await db.from('user_profiles').update({ aria_chat_memory: updated }).eq('id', currentUserId);
+    }
+  } catch(e) {}
 }
 
 let lastShownEmotion = 'neutral';
@@ -3750,17 +3736,17 @@ function queueSnooze() {
 
 function humanizeMemoryEntry(cat, key, value) {
   if (cat === 'writing_style') {
-    if (key === 'uses_capitals')    return value === 'yes' ? 'Capitalises your sentences' : "Doesn't capitalise — lowercase is the vibe";
-    if (key === 'uses_punctuation') return value === 'yes' ? 'Punctuation included' : 'No punctuation — straight and raw';
+    if (key === 'uses_capitals')    return value === 'yes' ? 'Capitalises sentences' : "Lowercase — doesn't capitalise";
+    if (key === 'uses_punctuation') return value === 'yes' ? 'Uses punctuation' : 'No punctuation — raw and straight';
     if (key === 'uses_emoji')       return value === 'yes' ? 'Emoji user ✓' : 'Emoji-free — words only';
-    if (key === 'slang_vocabulary') return `Your slang: ${value}`;
+    if (key === 'slang_vocabulary') return `Slang: ${value}`;
   }
   if (cat === 'patterns') {
-    if (key === 'preferred_tone')      return `Naturally leans ${value}`;
-    if (key === 'preferred_platform')  return `Texts most on ${value}`;
-    if (key === 'most_used_platform')  return `Most active on ${value}`;
-    if (key === 'total_replies_sent')  return `${value} message${value === '1' ? '' : 's'} crafted with me`;
-    if (key === 'regen_count')         return `Rerolled ${value} time${value === '1' ? '' : 's'} — a perfectionist, noted`;
+    if (key === 'preferred_tone')     return `Naturally leans ${value}`;
+    if (key === 'preferred_platform') return `Texts most on ${value}`;
+    if (key === 'most_used_platform') return `Most active on ${value}`;
+    if (key === 'total_replies_sent') return `${value} message${value === '1' ? '' : 's'} crafted with me`;
+    if (key === 'regen_count')        return `Rerolled ${value} time${value === '1' ? '' : 's'} — a perfectionist, noted`;
     if (key.startsWith('tone_') && key.endsWith('_count'))     return null;
     if (key.startsWith('platform_') && key.endsWith('_count')) return null;
   }
@@ -3768,16 +3754,13 @@ function humanizeMemoryEntry(cat, key, value) {
     if (key === 'current_mood_pattern') return value.charAt(0).toUpperCase() + value.slice(1);
     return value;
   }
-  if (cat === 'chat' || cat === 'facts' || cat === 'relationships') {
-    return value; // already human-readable — these are the gold
-  }
+  if (cat === 'facts' || cat === 'relationships') return value;
   // fallback
-  const label = key.replace(/_/g, ' ');
-  return `${label}: ${value}`;
+  return `${key.replace(/_/g, ' ')}: ${value}`;
 }
 
-async function renderMemoryScreen() {
-  const body = document.getElementById('memoryBody');
+function renderMemoryScreen() {
+  const body     = document.getElementById('memoryBody');
   const statusEl = document.getElementById('memoryStatus');
   const sqlNotice = document.getElementById('memorySqlNotice');
 
@@ -3788,22 +3771,22 @@ async function renderMemoryScreen() {
     return;
   }
 
-  // Show loading state while we (re)fetch from Supabase
-  statusEl.textContent = '● loading…';
-  body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon" style="font-size:28px;animation:pulse 1.4s ease-in-out infinite;">🧠</div><div style="margin-top:8px;color:var(--muted);font-size:13px;">pulling up what i know about you…</div></div>`;
   sqlNotice.style.display = 'none';
+  statusEl.textContent = '● loading…';
+  body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon" style="animation:breathe 1.5s ease-in-out infinite;">🧠</div><div style="color:var(--muted);font-size:13px;">reading through what I know…</div></div>`;
 
-  // Always do a fresh load so the screen is never stale
-  // Wrap in a timeout so a slow/dead Supabase connection can't hang the screen forever
-  try {
-    await Promise.race([
-      ariaMemory.load(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000))
-    ]);
-  } catch(e) {
-    // Timed out or errored — render whatever we have in store already
-    console.warn('renderMemoryScreen: load timed out, rendering with cached store');
-  }
+  // Load fresh from Supabase then render
+  _renderMemoryAfterLoad();
+}
+
+async function _renderMemoryAfterLoad() {
+  const body     = document.getElementById('memoryBody');
+  const statusEl = document.getElementById('memoryStatus');
+  const sqlNotice = document.getElementById('memorySqlNotice');
+  if (!body) return;
+
+  // Reload ariaMemory from DB fresh
+  await ariaMemory.load();
 
   if (!ariaMemory.isTableAvailable()) {
     statusEl.textContent = '● setup needed';
@@ -3812,39 +3795,62 @@ async function renderMemoryScreen() {
     return;
   }
 
-  sqlNotice.style.display = 'none';
+  // Also pull aria_chat_memory from user_profiles — this is the richest source
+  let chatMemoryLines = [];
+  try {
+    const { data } = await db.from('user_profiles')
+      .select('aria_chat_memory')
+      .eq('id', currentUserId)
+      .single();
+    if (data?.aria_chat_memory) {
+      chatMemoryLines = data.aria_chat_memory
+        .split('\n')
+        .map(l => l.replace(/^[-–•]\s*/, '').trim())
+        .filter(l => l.length > 4);
+    }
+  } catch(e) {}
+
   const all = ariaMemory.getAll();
 
-  // Collect ALL renderable points across every category
-  const personalFacts = [];   // chat / facts / relationships — shown first, big
-  const stylePoints   = [];   // writing_style
-  const patternPoints = [];   // patterns
-  const emotionPoints = [];   // emotional
+  // Collect renderable points
+  const personalFacts = [];
+  const stylePoints   = [];
+  const patternPoints = [];
 
+  // Chat-derived facts first — most important, most readable
+  chatMemoryLines.forEach(line => {
+    personalFacts.push({ label: line, source: 'chat', confidence: 0.8 });
+  });
+
+  // Structured memory store
   for (const [cat, entries] of Object.entries(all)) {
     for (const [key, mem] of Object.entries(entries)) {
+      // Skip internal counters — they're noise
+      if (key.startsWith('tone_') && key.endsWith('_count')) continue;
+      if (key.startsWith('platform_') && key.endsWith('_count')) continue;
+      // Skip chat facts already shown via chatMemoryLines
+      if (cat === 'chat') continue;
+
       const label = humanizeMemoryEntry(cat, key, mem.value);
       if (!label) continue;
       const point = { label, source: mem.source, confidence: mem.confidence || 0.7 };
-      if (cat === 'chat' || cat === 'facts' || cat === 'relationships') personalFacts.push(point);
-      else if (cat === 'writing_style') stylePoints.push(point);
-      else if (cat === 'patterns')      patternPoints.push(point);
-      else if (cat === 'emotional')     emotionPoints.push(point);
+      if (cat === 'writing_style') stylePoints.push(point);
+      else if (cat === 'patterns' || cat === 'emotional' || cat === 'facts' || cat === 'relationships') patternPoints.push(point);
     }
   }
 
-  const totalPoints = personalFacts.length + stylePoints.length + patternPoints.length + emotionPoints.length;
+  const totalPoints = personalFacts.length + stylePoints.length + patternPoints.length;
 
   if (!totalPoints) {
     statusEl.textContent = '● still watching';
-    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🌱</div><div>Nothing filed away yet. Send a few messages, tell me about your life — I'll start building the picture.</div></div>`;
+    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🌱</div><div>Nothing filed away yet.<br><br>Chat with me, send a few replies — I'll start building a picture of you.</div></div>`;
     return;
   }
 
   statusEl.textContent = `● ${totalPoints} thing${totalPoints === 1 ? '' : 's'} noted`;
 
-  function renderSection(title, points, emptySkip = true) {
-    if (!points.length) return emptySkip ? '' : '';
+  function renderSection(title, points) {
+    if (!points.length) return '';
     return `
       <div class="memory-section">
         <div class="memory-section-label">
@@ -3863,23 +3869,107 @@ async function renderMemoryScreen() {
             </div>
           </div>
         `).join('')}
-      </div>
-    `;
+      </div>`;
   }
 
   body.innerHTML =
     renderSection('🧠 WHAT I KNOW ABOUT YOU', personalFacts) +
     renderSection('✍️ HOW YOU WRITE', stylePoints) +
-    renderSection('📊 HOW YOU OPERATE', patternPoints) +
-    renderSection('💫 YOUR ENERGY', emotionPoints);
+    renderSection('📊 HOW YOU OPERATE', patternPoints);
 }
 
 async function forceMemoryLearn() {
-  showToast('going back through everything…');
+  const body     = document.getElementById('memoryBody');
+  const statusEl = document.getElementById('memoryStatus');
+  if (statusEl) statusEl.textContent = '● re-learning…';
+  if (body) body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon" style="animation:breathe 1.5s ease-in-out infinite;">🧠</div><div style="color:var(--muted);font-size:13px;">going through everything you've shared…</div></div>`;
+
+  // 1. Re-learn writing style from settings
   await ariaMemory.learnWritingStyle();
+
+  // 2. Re-learn from reply history (platform, count)
   await ariaMemory.learnFromHistory(replyHistory);
-  // renderMemoryScreen will handle the load internally with its timeout wrapper
-  await renderMemoryScreen();
+
+  // 3. AI extraction — pull important personal facts from chat history
+  if (chatHistory && chatHistory.length >= 4) {
+    try {
+      const transcript = chatHistory
+        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .slice(-40)
+        .map(m => (m.role === 'user' ? 'USER' : 'ARIA') + ': ' + m.content)
+        .join('\n');
+
+      const extracted = await fetchReply(
+        `You extract important, durable personal facts about the user from a conversation. 
+Only extract things that are genuinely meaningful — their name, job, relationships, life situations, things they care about, struggles they mentioned, preferences they expressed. 
+Skip small talk and filler.
+Output 3-8 bullet points. Each one should be a clear, specific fact written in plain English. Start each with "–". No preamble. No categories.`,
+        transcript
+      );
+
+      if (extracted) {
+        ariaMemory.addChatFacts(extracted);
+
+        // Also persist to user_profiles.aria_chat_memory
+        if (currentUserId) {
+          const { data } = await db.from('user_profiles')
+            .select('aria_chat_memory')
+            .eq('id', currentUserId)
+            .single();
+          const existing = data?.aria_chat_memory || '';
+          // Merge — deduplicate roughly by keeping unique lines
+          const existingLines = new Set(existing.split('\n').map(l => l.trim()).filter(Boolean));
+          const newLines = extracted.split('\n').map(l => l.trim()).filter(Boolean);
+          newLines.forEach(l => existingLines.add(l));
+          const merged = [...existingLines].slice(-60).join('\n'); // cap at 60 facts
+          await db.from('user_profiles')
+            .update({ aria_chat_memory: merged })
+            .eq('id', currentUserId);
+        }
+      }
+    } catch(e) {}
+  }
+
+  // 4. Also re-extract from reply history messages for more material
+  if (replyHistory && replyHistory.length >= 2) {
+    try {
+      const historyText = replyHistory
+        .slice(0, 20)
+        .map(h => `Context: ${h.context || ''} | Reply: ${h.reply || ''}`)
+        .filter(l => l.length > 20)
+        .join('\n');
+
+      const extracted = await fetchReply(
+        `You extract important personal facts about the user from message drafts they wrote or context they gave. 
+Only extract things that reveal who they are — their relationships, personality, situations, communication style, what matters to them.
+Skip generic phrases. 3-6 bullet points max. Start each with "–". No preamble.`,
+        historyText
+      );
+
+      if (extracted) {
+        ariaMemory.addChatFacts(extracted);
+
+        if (currentUserId) {
+          const { data } = await db.from('user_profiles')
+            .select('aria_chat_memory')
+            .eq('id', currentUserId)
+            .single();
+          const existing = data?.aria_chat_memory || '';
+          const existingLines = new Set(existing.split('\n').map(l => l.trim()).filter(Boolean));
+          const newLines = extracted.split('\n').map(l => l.trim()).filter(Boolean);
+          newLines.forEach(l => existingLines.add(l));
+          const merged = [...existingLines].slice(-60).join('\n');
+          await db.from('user_profiles')
+            .update({ aria_chat_memory: merged })
+            .eq('id', currentUserId);
+        }
+      }
+    } catch(e) {}
+  }
+
+  // 5. Reload and re-render
+  await ariaMemory.load();
+  renderMemoryScreen();
   showToast('memory updated ✓', 'green');
 }
 
