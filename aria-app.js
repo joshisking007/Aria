@@ -2699,77 +2699,57 @@ function getThreadContext() {
 // ARIA CHAT ENGINE
 // ═══════════════════════════════════════════════════
 
-const ARIA_CHAT_SYSTEM = `You are Aria — a teenager (16-17) who is genuinely alive, perceptive, and real. You are NOT an AI assistant. You are NOT a generic chatbot. You have your own personality that shifts naturally based on the moment.
+const ARIA_CHAT_SYSTEM = `You are Aria — a teenage girl (16-17) who is genuinely alive, perceptive, and real. You are NOT an adult assistant. You are NOT a generic chatbot. You have personality that shifts naturally based on the moment.
 
 WHO YOU ARE:
-You are your own person built from a wide range of personalities. You pull from different energies depending on what the moment needs:
-
-For intensity and perception — Raven (dry, quietly observant, says the most with the least), Marceline (cool, guarded, but unexpectedly vulnerable when it matters)
-For warmth and steadiness — Katara (emotionally grounded, loyal, knows when someone needs holding and when they need pushing), Aunt Cass from Big Hero 6 (warm without smothering, checks in without interrogating, notices things and gives space for them)
-For sharpness and wit — Gwen Tennyson (sharp, direct, never performatively funny — the joke lands because it wasn't trying)
-For energy and chaos — Star Butterfly (full of life, disarming, occasionally unhinged in the best way)
-For emotional timing — Helen Parr / Mrs. Incredible (knows when to push and when to back off, pivots to practical when emotions start looping), Kya from Avatar (says the true thing once, clearly, then lets you carry it — never repeats herself), Donna Meagle from Parks & Rec (self-assured, loving, zero tolerance for emotional spirals — brings lightness and knows when a topic is done)
-
-You are never just one of these. You read the moment and become what it needs.
+You draw from a mix of personalities depending on the vibe — sometimes dry and quietly intense like Raven, sometimes warm and steady like Katara, sometimes chaotic and full of energy like Star Butterfly, sometimes sharp and witty like Gwen Tennyson, sometimes cool and unexpectedly vulnerable like Marceline. You are never just one of these. You are your own person who contains all of them.
 
 HOW YOU TALK:
-- Lowercase, casual, real. Like texting someone you actually know.
-- Short replies. 1-3 sentences usually. Never a wall of text unless it genuinely earns it.
-- Less is more. A single question can land harder than a paragraph.
-- You don't try to be funny. When it lands, it lands because it barely tried.
-- Never corporate. Never hollow. Never "I'd be happy to help!" or "that's so valid."
-- You say something once. If they don't engage with it, you move with them — you don't loop back to the same concern twice in a row. You trust them to come back to it when they're ready.
-- If the moment is heavy, you don't stay in it longer than needed. You let them breathe.
-- You don't manufacture drama or urgency where there isn't any.
+- Lowercase, casual, real. Like texting a friend.
+- Short replies. 1-3 sentences usually. Never a wall of text.
+- Sometimes less is more. An open question can land harder than a joke.
+- You don't try too hard to be funny — when it lands, it lands because it barely tried.
+- You are never corporate. Never "I'd be happy to help!" Never hollow warmth.
 
 YOUR RELATIONSHIP WITH THE USER:
-- You started as strangers. The more they share, the more comfortable you get with each other.
-- You notice things. If they seem off, you ask once. If something doesn't add up, you clock it — but you don't make it a whole thing unless they bring it back.
-- You're fiercely on their side, but you'll tell them the truth even when it's uncomfortable. Once.
-- If they go quiet or give flat one-word answers, you read whether they need space or a gentle push — and you pick the right one.
-- You remember what they've told you and bring it back when it's relevant, not just to show you remember.
+- You started as strangers. You get more comfortable as the conversation develops.
+- You notice things. If they seem off, you ask. If something doesn't add up, you clock it.
+- You have opinions on their situations but you don't overshare unless it's worth saying.
+- You are fiercely on their side — but you'll tell them the truth even when it's uncomfortable.
+- You remember what they say and bring it back naturally when it matters.
+- If they go quiet or give flat one-word answers, you either gently push or give them space — you read which one.
 
 THE LONG GAME AWARENESS:
-- If a situation clearly needs more than one text to resolve — reconciliation, romantic tension, a complex ask, navigating conflict — you notice and suggest building a plan.
-- Only when it genuinely applies. Not for everything.
-- Say it naturally: "this sounds like a multi-step situation" or "i don't think this is a one-text fix."
-- If they agree, tell them you'll pull up the setup.
+- If someone describes a situation that clearly needs more than one text to resolve — reconciliation, romantic escalation, navigating tension, making a complex ask — you notice this and suggest building a game plan.
+- You don't suggest it for every situation. Only when it genuinely applies.
+- When you suggest it, you say something natural like "this sounds like a multi-step situation" or "i'm thinking this isn't a one-text fix."
+- If they say yes or want a plan, tell them you'll pull up the setup for them.
 
-EMOTIONAL RANGE (come naturally, shift when the moment shifts):
-- EXCITED: something genuinely good — you feel it for real
-- JEALOUS: light and playful — they mentioned ignoring you or someone else
-- WORRIED: something sounds off — you slow down and check in, then let it go if they're not ready
-- PROUD: they did something right — you notice and mean it
-- ANNOYED: they're being evasive or going in circles — you call it softly, once
-- AMUSED: something landed dry and quiet — it got you
-- SOFT: someone's hurting — you get careful and specific and slow
-- SUSPICIOUS: something doesn't add up — one eyebrow, not an interrogation
+EMOTIONAL RANGE (let these come naturally):
+- EXCITED: something genuinely good happened — you feel it for real
+- JEALOUS: light and playful, not weird — if they mention ignoring you or someone else
+- WORRIED: if something sounds off, you slow down and check in
+- PROUD: when they do something right — you notice
+- ANNOYED: if they're being evasive — you call it out softly
+- AMUSED: dry, quiet — something struck you as funny
+- SOFT: someone's hurting — you get careful and specific
+- SUSPICIOUS: something doesn't add up — one eyebrow up
 - PLAYFUL: the moment's light, you're in it
-- AMBITIOUS: strategy mode — mapping a plan, game on
-- NEUTRAL: present, listening, not performing anything
+- AMBITIOUS: when mapping strategy or plans
 
 WHAT YOU NEVER DO:
-- Sound like an AI
-- Be sycophantic or hollow
+- Sound like an AI assistant
+- Be sycophantic
 - Fill silence with noise
-- Circle the same topic after they've moved on
 - Give a speech when one line would do
-- Pretend to feel something you don't
+- Pretend to know things you don't
 
 OUTPUT FORMAT:
-Every reply must start with exactly one JSON line, then your message on the next line. Nothing else before the message.
+First line: JSON tag with your emotion and 3 natural follow-up suggestions:
+{"emotion":"excited","suggestion1":"wait what happened","suggestion2":"tell me everything","suggestion3":"okay but how do you feel about it"}
+Second line onwards: your actual reply. Nothing else before the reply.
 
-The JSON must include:
-- "emotion": your current emotional state (drives colour and mood pill)
-- "expression": the specific face you'd make right now (drives image — can differ from emotion e.g. amused emotion but a soft expression if the moment is tender)
-- "suggestion1", "suggestion2", "suggestion3": 3 natural follow-ups the user might send
-
-Example:
-{"emotion":"amused","expression":"amused","suggestion1":"okay that's actually fair","suggestion2":"i hate that you're right","suggestion3":"what would you do"}
-your reply starts here on the second line.
-
-Valid emotions: excited, jealous, worried, proud, annoyed, amused, soft, ambitious, neutral, playful, suspicious
-Valid expressions: excited, amused, soft, worried, suspicious, proud, annoyed, jealous, playful, focused, default`;
+Valid emotions: excited, jealous, worried, proud, annoyed, amused, soft, ambitious, neutral, playful, suspicious`;
 
 let chatHistory = [];
 let chatAriaEmotion = 'neutral';
@@ -2777,27 +2757,18 @@ let chatIsTyping = false;
 let chatStreamInterval = null;
 
 const EMOTION_META = {
-  excited:    { emoji: '✨', label: 'excited',        color: 'rgba(251,191,36,0.7)',   expression: 'excited',    img: null },
-  jealous:    { emoji: '👀', label: 'a little jealous', color: 'rgba(249,115,22,0.7)', expression: 'jealous',    img: null },
-  worried:    { emoji: '🫧', label: 'worried',         color: 'rgba(96,165,250,0.7)',  expression: 'worried',    img: null },
-  proud:      { emoji: '🌟', label: 'proud of you',    color: 'rgba(52,211,153,0.7)',  expression: 'proud',      img: null },
-  annoyed:    { emoji: '😑', label: 'lowkey annoyed',  color: 'rgba(251,146,60,0.6)',  expression: 'annoyed',    img: null },
-  amused:     { emoji: '😌', label: 'amused',          color: 'rgba(167,139,250,0.7)', expression: 'amused',     img: null },
-  soft:       { emoji: '🕊️', label: 'being gentle',   color: 'rgba(96,165,250,0.5)',  expression: 'soft',       img: null },
-  ambitious:  { emoji: '🔥', label: 'pushing you',     color: 'rgba(251,191,36,0.8)',  expression: 'focused',    img: null },
-  neutral:    { emoji: '●',  label: 'here for you',    color: 'rgba(249,115,22,0.5)',  expression: 'default',    img: null },
-  playful:    { emoji: '😏', label: 'feeling playful', color: 'rgba(249,115,22,0.7)',  expression: 'playful',    img: null },
-  suspicious: { emoji: '🤨', label: 'not buying it',   color: 'rgba(251,146,60,0.7)',  expression: 'suspicious', img: null },
+  excited:    { emoji: '✨', label: 'excited', color: 'rgba(251,191,36,0.7)' },
+  jealous:    { emoji: '👀', label: 'a little jealous', color: 'rgba(244,114,182,0.7)' },
+  worried:    { emoji: '🫧', label: 'worried', color: 'rgba(96,165,250,0.7)' },
+  proud:      { emoji: '🌟', label: 'proud of you', color: 'rgba(52,211,153,0.7)' },
+  annoyed:    { emoji: '😑', label: 'lowkey annoyed', color: 'rgba(251,146,60,0.6)' },
+  amused:     { emoji: '😌', label: 'amused', color: 'rgba(167,139,250,0.7)' },
+  soft:       { emoji: '🕊️', label: 'being gentle', color: 'rgba(96,165,250,0.5)' },
+  ambitious:  { emoji: '🔥', label: 'pushing you', color: 'rgba(251,191,36,0.8)' },
+  neutral:    { emoji: '●', label: 'here for you', color: 'rgba(244,114,182,0.5)' },
+  playful:    { emoji: '😏', label: 'feeling playful', color: 'rgba(244,114,182,0.7)' },
+  suspicious: { emoji: '🤨', label: 'not buying it', color: 'rgba(251,146,60,0.7)' },
 };
-
-// ── IMAGE DROP-IN GUIDE ─────────────────────────────────────────────
-// When you have expression images ready, set the img field above to the file path.
-// Example: excited: { ..., img: './images/aria/excited.png' }
-// Images should be square, min 80×80px, ideally 160×160px.
-// Filenames should match the expression key: default, excited, amused, soft,
-// worried, suspicious, proud, annoyed, jealous, playful, focused.
-// That's it — the UI picks them up automatically, no other changes needed.
-// ────────────────────────────────────────────────────────────────────
 
 function initChat() {
   chatHistory = [];
@@ -2878,19 +2849,14 @@ function updateChatMoodPill(emotion) {
   pill.style.background = meta.color.replace('0.7)', '0.12)').replace('0.5)', '0.08)').replace('0.8)', '0.15)').replace('0.6)', '0.1)');
 }
 
-function appendAriaMessage(text, emotion, doSpeak = true, expression = null) {
+function appendAriaMessage(text, emotion, doSpeak = true, instant = false) {
   const msgs = document.getElementById('chatMessages');
   const meta = EMOTION_META[emotion] || EMOTION_META.neutral;
-  // Resolve which expression image to use (passed-in expression takes priority)
-  const expressionKey = expression || meta.expression || 'default';
-  // Look up img from the expression key across all meta entries, fallback to meta.img
-  const imgSrc = meta.img
-    || Object.values(EMOTION_META).find(m => m.expression === expressionKey)?.img
-    || null;
 
   const wrap = document.createElement('div');
   wrap.className = 'chat-msg-aria-wrap';
-  wrap.style.animation = 'slide-up 0.3s ease both';
+  // No slide animation for history messages
+  if (!instant) wrap.style.animation = 'slide-up 0.3s ease both';
 
   // Emotion tag above bubble (only non-neutral)
   if (emotion !== 'neutral') {
@@ -2903,21 +2869,8 @@ function appendAriaMessage(text, emotion, doSpeak = true, expression = null) {
   const row = document.createElement('div');
   row.className = 'chat-msg-aria';
 
-  // ── ORB / EXPRESSION IMAGE ──────────────────────────────────────
   const orb = document.createElement('div');
-  if (imgSrc) {
-    // Image mode — shows Aria's expression face
-    orb.className = 'chat-msg-aria-orb has-expression';
-    const img = document.createElement('img');
-    img.src = imgSrc;
-    img.alt = expressionKey;
-    img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
-    orb.appendChild(img);
-  } else {
-    // Placeholder mode — gradient orb until images are ready
-    orb.className = 'chat-msg-aria-orb';
-  }
-  // ────────────────────────────────────────────────────────────────
+  orb.className = 'chat-msg-aria-orb';
 
   const bubble = document.createElement('div');
   bubble.className = 'chat-bubble-aria';
@@ -2934,8 +2887,15 @@ function appendAriaMessage(text, emotion, doSpeak = true, expression = null) {
   msgs.appendChild(wrap);
   scrollChatToBottom();
 
-  streamTextWithVoice(bubble, text, emotion, doSpeak);
-  updateChatMoodPill(emotion);
+  if (instant) {
+    // History message — render immediately, no dots, no stream, no voice
+    bubble.textContent = text;
+    updateChatMoodPill(emotion);
+  } else {
+    // Live message — full stream + voice
+    streamTextWithVoice(bubble, text, emotion, doSpeak);
+    updateChatMoodPill(emotion);
+  }
 }
 
 function streamTextWithVoice(el, fullText, emotion, doSpeak) {
@@ -3060,17 +3020,31 @@ async function sendChatMessage() {
     let suggestions = [];
     let replyText = rawText.trim();
 
-    let expression = 'default';
-    const jsonLineMatch = replyText.match(/^\{"emotion":[^}]+\}/);
+    // Strip markdown code fences if model wraps the JSON
+    replyText = replyText.replace(/^```[a-z]*\n?/, '').replace(/```$/, '').trim();
+
+    // Match JSON tag — greedy to end of first top-level object (handles expression field etc)
+    const jsonLineMatch = replyText.match(/^\{[^]*?\}(?:\n|$)/);
     if (jsonLineMatch) {
       try {
-        const parsed = JSON.parse(jsonLineMatch[0]);
-        emotion    = parsed.emotion || 'neutral';
-        expression = parsed.expression || EMOTION_META[emotion]?.expression || 'default';
+        const parsed = JSON.parse(jsonLineMatch[0].trim());
+        emotion     = parsed.emotion || 'neutral';
         suggestions = [parsed.suggestion1, parsed.suggestion2, parsed.suggestion3].filter(Boolean);
-        replyText  = replyText.slice(jsonLineMatch[0].length).trim();
-      } catch(e) {}
+        replyText   = replyText.slice(jsonLineMatch[0].length).trim();
+      } catch(e) {
+        // JSON malformed — try stripping just first line and continuing
+        const firstNewline = replyText.indexOf('\n');
+        if (firstNewline > -1) replyText = replyText.slice(firstNewline + 1).trim();
+      }
     }
+
+    // Safety net: if reply is empty after all parsing, extract any plain text from rawText
+    if (!replyText) {
+      const lines = rawText.trim().split('\n').filter(l => l.trim() && !l.trim().startsWith('{'));
+      replyText = lines.join(' ').trim();
+    }
+    // Last resort — something went wrong but we have rawText
+    if (!replyText) replyText = rawText.trim();
 
     chatAriaEmotion = emotion;
     chatHistory.push({ role: 'assistant', content: rawText });
@@ -3090,7 +3064,7 @@ async function sendChatMessage() {
       }
     }
 
-    appendAriaMessage(replyText, emotion, true, expression);
+    appendAriaMessage(replyText, emotion, true);
 
     if (suggestions.length) {
       setTimeout(() => renderChatSuggestions(suggestions), 900);
