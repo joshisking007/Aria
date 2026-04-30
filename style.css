@@ -2590,3 +2590,40 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 }
 .lg-completion-stat-num { font-size: 20px; font-weight: 700; color: var(--text); }
 .lg-completion-stat-label { font-size: 9px; color: var(--muted); letter-spacing: 1px; margin-top: 2px; }
+
+/* ── MEMORY SCREEN: loading progress ── */
+.memory-loading-wrap {
+  padding: 40px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.memory-loading-label {
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+  text-align: center;
+  min-height: 20px;
+  transition: opacity 0.3s;
+}
+.memory-progress-track {
+  width: 100%;
+  max-width: 260px;
+  height: 4px;
+  background: var(--card2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.memory-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--rose), #f472b6);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+.memory-loading-pct {
+  font-size: 11px;
+  color: var(--rose);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}

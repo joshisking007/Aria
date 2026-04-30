@@ -21,6 +21,11 @@ function updateStats() {
 const screensWithNav = ['introScreen','historyScreen','moodScreen','profileScreen','glowupScreen','redflagScreen','vibeScreen','queueScreen','contactProfileScreen','onboardScreen','presendScreen','memoryScreen','longGameScreen','lgDetailScreen','lgArcPreviewScreen'];
 
 function showScreen(id) {
+  // If leaving chat screen, write conversation summary
+  const currentScreen = document.querySelector('.screen[style*="display: block"], .screen:not([style*="display: none"])');
+  if (currentScreen && currentScreen.id === 'chatScreen' && id !== 'chatScreen') {
+    _onLeaveChatScreen();
+  }
   ariaVoice.stop();
   // Reset thread mode when leaving reply screen
   if (id !== 'replyScreen' && threadModeActive) {
@@ -2930,6 +2935,7 @@ const EMOTION_META = {
 function initChat() {
   chatHistory = [];
   chatAriaEmotion = 'neutral';
+  _sessionSummarised = false; // allow summary to be written for this new session
   const msgs = document.getElementById('chatMessages');
   msgs.innerHTML = '<div class="chat-date-label">TODAY</div>';
   updateChatMoodPill('neutral');
@@ -2970,15 +2976,30 @@ function initChat() {
 
         scrollChatToBottom();
 
-        // Aria greets them back
-        const returns = [
-          "you're back. pick up where we left off?",
-          "hey, i remember you. what's on your mind now.",
-          "good, you came back. i was thinking about what you said."
-        ];
-        setTimeout(() => {
-          appendAriaMessage(returns[Math.floor(Math.random() * returns.length)], 'playful', false);
-        }, 500);
+        // Greeting on return — memory-aware if we have context
+        getAriaMemoryContext().then(memCtx => {
+          let greeting;
+          if (memCtx) {
+            // She knows this person — greet accordingly
+            const returns = [
+              "you're back. what's going on.",
+              "hey, i remember you. pick up where we left off?",
+              "good, you came back. what do you need.",
+              "hey. i've got context on you — talk to me.",
+            ];
+            greeting = returns[Math.floor(Math.random() * returns.length)];
+          } else {
+            const returns = [
+              "you're back. pick up where we left off?",
+              "hey, i remember you. what's on your mind now.",
+              "good, you came back. what do you need.",
+            ];
+            greeting = returns[Math.floor(Math.random() * returns.length)];
+          }
+          // Push greeting into chatHistory so she can stand behind it
+          chatHistory.push({ role: 'assistant', content: greeting });
+          setTimeout(() => appendAriaMessage(greeting, 'neutral', false), 500);
+        });
       })
       .catch(() => _chatGreet());
   } else {
@@ -2987,15 +3008,30 @@ function initChat() {
 }
 
 function _chatGreet() {
-  const openers = [
-    "okay i'm here. what's going on with you.",
-    "hey. something on your mind or are you just bored.",
-    "finally. i was starting to think you forgot about me.",
-    "hi. talk to me.",
-    "oh good, you're here. i had a feeling today was going to be interesting.",
-  ];
-  const opener = openers[Math.floor(Math.random() * openers.length)];
-  setTimeout(() => appendAriaMessage(opener, 'neutral', false), 600);
+  getAriaMemoryContext().then(memCtx => {
+    let opener;
+    if (memCtx) {
+      // Has prior context — she knows them even without chat history
+      const knowsYou = [
+        "hey. i've got some notes on you. what's going on today.",
+        "okay, i know a bit about you already. what do you need.",
+        "hi. i have some context — talk to me.",
+      ];
+      opener = knowsYou[Math.floor(Math.random() * knowsYou.length)];
+    } else {
+      const openers = [
+        "okay i'm here. what's going on with you.",
+        "hey. something on your mind or are you just bored.",
+        "finally. i was starting to think you forgot about me.",
+        "hi. talk to me.",
+        "oh good, you're here. i had a feeling today was going to be interesting.",
+      ];
+      opener = openers[Math.floor(Math.random() * openers.length)];
+    }
+    // Push into chatHistory so she can stand behind it
+    chatHistory.push({ role: 'assistant', content: opener });
+    setTimeout(() => appendAriaMessage(opener, 'neutral', false), 600);
+  });
   renderChatSuggestions(["i need help texting someone", "i'm kind of stressed", "what can you actually do?", "just wanted to talk"]);
 }
 
@@ -3143,6 +3179,56 @@ function appendUserMessage(text, silent = false) {
   scrollChatToBottom();
 }
 
+// ── MEMORY CONTEXT BUILDER ────────────────────────────
+// Pulls from both ariaMemory store AND aria_chat_memory in user_profiles.
+// Called before every reply so she always knows who she's talking to.
+
+async function getAriaMemoryContext() {
+  const parts = [];
+
+  // 1. Structured memory store (writing style, patterns, emotional)
+  const structured = ariaMemory.getSummary ? ariaMemory.getSummary() : '';
+  if (structured) parts.push(structured);
+
+  // 2. Chat-derived personal facts + conversation log from user_profiles
+  if (currentUserId) {
+    try {
+      const { data } = await db
+        .from('user_profiles')
+        .select('aria_chat_memory, aria_conversation_log')
+        .eq('id', currentUserId)
+        .single();
+
+      // Personal facts
+      if (data?.aria_chat_memory) {
+        const lines = data.aria_chat_memory
+          .split('\n')
+          .map(l => l.replace(/^[-–•]\s*/, '').trim())
+          .filter(l => l.length > 4)
+          .slice(-30);
+        if (lines.length) parts.push('FACTS ABOUT THIS USER:\n' + lines.join('\n'));
+      }
+
+      // Conversation history summaries
+      if (data?.aria_conversation_log) {
+        const entries = data.aria_conversation_log
+          .split('\n\n')
+          .map(e => e.trim())
+          .filter(e => e.length > 10)
+          .slice(0, 6); // last 6 sessions
+        if (entries.length) parts.push('RECENT CONVERSATIONS:\n' + entries.join('\n'));
+      }
+
+    } catch(e) {}
+  }
+
+  if (!parts.length) return '';
+
+  // Cap at ~1000 chars
+  const merged = parts.join('\n\n').trim();
+  return merged.length > 1000 ? merged.slice(-1000) : merged;
+}
+
 async function sendChatMessage() {
   const input = document.getElementById('chatInput');
   const text = input.value.trim();
@@ -3180,8 +3266,8 @@ async function sendChatMessage() {
   }
 
   try {
-    // Build full transcript including memory context
-    const memCtx = ariaMemory.getSummary ? ariaMemory.getSummary() : '';
+    // Build system prompt with full persistent memory injected
+    const memCtx = await getAriaMemoryContext();
     const systemWithMem = memCtx
       ? ARIA_CHAT_SYSTEM + `\n\nWHAT YOU KNOW ABOUT THIS USER:\n${memCtx}`
       : ARIA_CHAT_SYSTEM;
@@ -3265,11 +3351,82 @@ async function writeChatToMemory(recentMessages) {
     if (currentUserId) {
       const { data } = await db.from('user_profiles').select('aria_chat_memory').eq('id', currentUserId).single();
       const existing = data?.aria_chat_memory || '';
-      const updated  = (existing + '\n' + summary).trim().slice(-3000); // cap at 3000 chars
+      const updated  = (existing + '\n' + summary).trim().slice(-3000);
       await db.from('user_profiles').update({ aria_chat_memory: updated }).eq('id', currentUserId);
     }
   } catch(e) {}
 }
+
+// ── CONVERSATION SUMMARY ──────────────────────────────
+// Writes a human-readable summary of this session to user_profiles.
+// Called on session end (navigate away from chat or page unload).
+// This is what lets her say "how did that interview go?" next time.
+
+let _sessionSummarised = false; // prevent double-writing per session
+
+async function writeConversationSummary() {
+  if (_sessionSummarised) return;
+  if (!currentUserId) return;
+  if (!chatHistory || chatHistory.length < 4) return; // too short to be worth summarising
+
+  _sessionSummarised = true;
+
+  try {
+    const transcript = chatHistory
+      .filter(m => m.role === 'user' || m.role === 'assistant')
+      .map(m => (m.role === 'user' ? 'USER' : 'ARIA') + ': ' + m.content)
+      .join('\n');
+
+    const summary = await fetchReply(
+      `You summarise a conversation between a user and Aria (an AI). Write 2-3 sentences max.
+Cover: what the user was dealing with, the emotional tone, what got resolved (if anything), and anything left open.
+Write in past tense. Be specific — names, situations. No filler.
+Format: "[date placeholder] — [summary]"
+Example: "User was anxious about a job interview at Google. Aria helped them prep their answers. Outcome unknown — they hadn't heard back yet."`,
+      transcript
+    );
+
+    if (!summary || summary.length < 10) return;
+
+    // Prepend date
+    const dateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const entry = `${dateStr} — ${summary.replace(/^\[date placeholder\]\s*—?\s*/i, '').trim()}`;
+
+    // Pull existing log, prepend new entry, cap at ~2500 chars (~12-15 sessions)
+    const { data } = await db.from('user_profiles')
+      .select('aria_conversation_log')
+      .eq('id', currentUserId)
+      .single();
+
+    const existing = data?.aria_conversation_log || '';
+    const updated  = (entry + '\n\n' + existing).trim().slice(0, 2500);
+
+    await db.from('user_profiles')
+      .update({ aria_conversation_log: updated })
+      .eq('id', currentUserId);
+
+  } catch(e) {}
+}
+
+// Trigger summary when user navigates away from chat screen
+function _onLeaveChatScreen() {
+  if (chatHistory && chatHistory.length >= 4) {
+    writeConversationSummary();
+  }
+}
+
+// ── SESSION END HOOKS ─────────────────────────────────
+// Write conversation summary when user leaves the app entirely
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    _onLeaveChatScreen();
+  }
+});
+
+window.addEventListener('pagehide', () => {
+  _onLeaveChatScreen();
+});
 
 let lastShownEmotion = 'neutral';
 function maybeMoodShift(emotion) {
@@ -3760,8 +3917,8 @@ function humanizeMemoryEntry(cat, key, value) {
 }
 
 function renderMemoryScreen() {
-  const body     = document.getElementById('memoryBody');
-  const statusEl = document.getElementById('memoryStatus');
+  const body      = document.getElementById('memoryBody');
+  const statusEl  = document.getElementById('memoryStatus');
   const sqlNotice = document.getElementById('memorySqlNotice');
 
   if (!currentUserId) {
@@ -3773,109 +3930,146 @@ function renderMemoryScreen() {
 
   sqlNotice.style.display = 'none';
   statusEl.textContent = '● loading…';
-  body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon" style="animation:breathe 1.5s ease-in-out infinite;">🧠</div><div style="color:var(--muted);font-size:13px;">reading through what I know…</div></div>`;
 
-  // Load fresh from Supabase then render
+  // Show step-by-step progress bar so user sees it working
+  body.innerHTML = `
+    <div class="memory-loading-wrap" id="memoryLoadWrap">
+      <div class="memory-loading-label" id="memoryLoadLabel">connecting to memory…</div>
+      <div class="memory-progress-track">
+        <div class="memory-progress-fill" id="memoryProgressFill" style="width:0%"></div>
+      </div>
+      <div class="memory-loading-pct" id="memoryLoadPct">0%</div>
+    </div>`;
+
   _renderMemoryAfterLoad();
 }
 
+function _memoryProgress(pct, label) {
+  const fill  = document.getElementById('memoryProgressFill');
+  const lbl   = document.getElementById('memoryLoadLabel');
+  const pctEl = document.getElementById('memoryLoadPct');
+  if (fill)  fill.style.width  = pct + '%';
+  if (lbl)   lbl.textContent   = label;
+  if (pctEl) pctEl.textContent = pct + '%';
+}
+
 async function _renderMemoryAfterLoad() {
-  const body     = document.getElementById('memoryBody');
-  const statusEl = document.getElementById('memoryStatus');
+  const body      = document.getElementById('memoryBody');
+  const statusEl  = document.getElementById('memoryStatus');
   const sqlNotice = document.getElementById('memorySqlNotice');
   if (!body) return;
 
-  // Reload ariaMemory from DB fresh
-  await ariaMemory.load();
-
-  if (!ariaMemory.isTableAvailable()) {
-    statusEl.textContent = '● setup needed';
-    sqlNotice.style.display = 'block';
-    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">⚠️</div><div>Run the SQL above in your Supabase editor and I'll have a place to store everything I pick up about you.</div></div>`;
-    return;
-  }
-
-  // Also pull aria_chat_memory from user_profiles — this is the richest source
-  let chatMemoryLines = [];
   try {
-    const { data } = await db.from('user_profiles')
-      .select('aria_chat_memory')
+    // Step 1 — load aria_memory table
+    _memoryProgress(15, 'loading memory store…');
+    await ariaMemory.load();
+
+    if (!ariaMemory.isTableAvailable()) {
+      statusEl.textContent = '● setup needed';
+      sqlNotice.style.display = 'block';
+      body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">⚠️</div><div>Run the SQL above in your Supabase editor and I'll have a place to store everything I pick up about you.</div></div>`;
+      return;
+    }
+
+    // Step 2 — pull user_profiles data
+    _memoryProgress(40, 'reading what I know about you…');
+    let chatMemoryLines = [];
+    let conversationLog = [];
+
+    const { data, error } = await db.from('user_profiles')
+      .select('aria_chat_memory, aria_conversation_log')
       .eq('id', currentUserId)
       .single();
+
+    if (error) console.warn('memory profile fetch error:', error);
+
     if (data?.aria_chat_memory) {
       chatMemoryLines = data.aria_chat_memory
         .split('\n')
         .map(l => l.replace(/^[-–•]\s*/, '').trim())
         .filter(l => l.length > 4);
     }
-  } catch(e) {}
-
-  const all = ariaMemory.getAll();
-
-  // Collect renderable points
-  const personalFacts = [];
-  const stylePoints   = [];
-  const patternPoints = [];
-
-  // Chat-derived facts first — most important, most readable
-  chatMemoryLines.forEach(line => {
-    personalFacts.push({ label: line, source: 'chat', confidence: 0.8 });
-  });
-
-  // Structured memory store
-  for (const [cat, entries] of Object.entries(all)) {
-    for (const [key, mem] of Object.entries(entries)) {
-      // Skip internal counters — they're noise
-      if (key.startsWith('tone_') && key.endsWith('_count')) continue;
-      if (key.startsWith('platform_') && key.endsWith('_count')) continue;
-      // Skip chat facts already shown via chatMemoryLines
-      if (cat === 'chat') continue;
-
-      const label = humanizeMemoryEntry(cat, key, mem.value);
-      if (!label) continue;
-      const point = { label, source: mem.source, confidence: mem.confidence || 0.7 };
-      if (cat === 'writing_style') stylePoints.push(point);
-      else if (cat === 'patterns' || cat === 'emotional' || cat === 'facts' || cat === 'relationships') patternPoints.push(point);
+    if (data?.aria_conversation_log) {
+      conversationLog = data.aria_conversation_log
+        .split('\n\n')
+        .map(e => e.trim())
+        .filter(e => e.length > 10)
+        .slice(0, 10);
     }
-  }
 
-  const totalPoints = personalFacts.length + stylePoints.length + patternPoints.length;
+    // Step 3 — build structured points
+    _memoryProgress(70, 'organising memory points…');
+    const all           = ariaMemory.getAll();
+    const personalFacts = [];
+    const stylePoints   = [];
+    const patternPoints = [];
 
-  if (!totalPoints) {
-    statusEl.textContent = '● still watching';
-    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🌱</div><div>Nothing filed away yet.<br><br>Chat with me, send a few replies — I'll start building a picture of you.</div></div>`;
-    return;
-  }
+    chatMemoryLines.forEach(line => {
+      personalFacts.push({ label: line, source: 'chat', confidence: 0.8 });
+    });
 
-  statusEl.textContent = `● ${totalPoints} thing${totalPoints === 1 ? '' : 's'} noted`;
+    for (const [cat, entries] of Object.entries(all)) {
+      for (const [key, mem] of Object.entries(entries)) {
+        if (key.startsWith('tone_') && key.endsWith('_count')) continue;
+        if (key.startsWith('platform_') && key.endsWith('_count')) continue;
+        if (cat === 'chat') continue;
+        const label = humanizeMemoryEntry(cat, key, mem.value);
+        if (!label) continue;
+        const point = { label, source: mem.source, confidence: mem.confidence || 0.7 };
+        if (cat === 'writing_style') stylePoints.push(point);
+        else if (['patterns','emotional','facts','relationships'].includes(cat)) patternPoints.push(point);
+      }
+    }
 
-  function renderSection(title, points) {
-    if (!points.length) return '';
-    return `
-      <div class="memory-section">
-        <div class="memory-section-label">
-          <span>${title}</span>
-          <span class="memory-count-badge">${points.length}</span>
-        </div>
-        ${points.map(p => `
-          <div class="memory-card">
-            <div class="memory-card-value">${p.label}</div>
-            <div class="memory-card-meta">
-              <span class="memory-card-source ${p.source}">${p.source}</span>
-              <div class="memory-confidence-bar">
-                <div class="memory-confidence-fill" style="width:${Math.round(p.confidence * 100)}%"></div>
-              </div>
-              <span style="font-size:10px;color:var(--muted)">${Math.round(p.confidence * 100)}%</span>
-            </div>
+    // Step 4 — render
+    _memoryProgress(95, 'almost done…');
+    await new Promise(r => setTimeout(r, 300)); // brief pause so user sees 95%
+
+    const totalPoints = personalFacts.length + stylePoints.length + patternPoints.length + conversationLog.length;
+
+    if (!totalPoints) {
+      statusEl.textContent = '● still watching';
+      body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🌱</div><div>Nothing filed away yet.<br><br>Chat with me, send a few replies — I'll start building a picture of you.</div></div>`;
+      return;
+    }
+
+    statusEl.textContent = `● ${totalPoints} thing${totalPoints === 1 ? '' : 's'} noted`;
+
+    function renderSection(title, points) {
+      if (!points.length) return '';
+      return `
+        <div class="memory-section">
+          <div class="memory-section-label">
+            <span>${title}</span>
+            <span class="memory-count-badge">${points.length}</span>
           </div>
-        `).join('')}
-      </div>`;
-  }
+          ${points.map(p => typeof p === 'string'
+            ? `<div class="memory-card"><div class="memory-card-value" style="font-size:12px;line-height:1.6;color:var(--muted);">${p}</div></div>`
+            : `<div class="memory-card">
+                <div class="memory-card-value">${p.label}</div>
+                <div class="memory-card-meta">
+                  <span class="memory-card-source ${p.source}">${p.source}</span>
+                  <div class="memory-confidence-bar">
+                    <div class="memory-confidence-fill" style="width:${Math.round(p.confidence * 100)}%"></div>
+                  </div>
+                  <span style="font-size:10px;color:var(--muted)">${Math.round(p.confidence * 100)}%</span>
+                </div>
+              </div>`
+          ).join('')}
+        </div>`;
+    }
 
-  body.innerHTML =
-    renderSection('🧠 WHAT I KNOW ABOUT YOU', personalFacts) +
-    renderSection('✍️ HOW YOU WRITE', stylePoints) +
-    renderSection('📊 HOW YOU OPERATE', patternPoints);
+    body.innerHTML =
+      renderSection('🧠 WHAT I KNOW ABOUT YOU', personalFacts) +
+      renderSection('📖 OUR CONVERSATION HISTORY', conversationLog) +
+      renderSection('✍️ HOW YOU WRITE', stylePoints) +
+      renderSection('📊 HOW YOU OPERATE', patternPoints);
+
+  } catch(e) {
+    console.error('memory render error:', e);
+    statusEl.textContent = '● error';
+    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">⚠️</div><div style="color:var(--muted);font-size:13px;">something went wrong loading memory.<br><br>error: ${e?.message || 'unknown'}<br><br>tap "re-learn from my history" to try again.</div></div>`;
+  }
 }
 
 async function forceMemoryLearn() {
