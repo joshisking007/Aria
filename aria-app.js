@@ -2849,13 +2849,13 @@ function updateChatMoodPill(emotion) {
   pill.style.background = meta.color.replace('0.7)', '0.12)').replace('0.5)', '0.08)').replace('0.8)', '0.15)').replace('0.6)', '0.1)');
 }
 
-function appendAriaMessage(text, emotion, doSpeak = true) {
+function appendAriaMessage(text, emotion, doSpeak = true, instant = false) {
   const msgs = document.getElementById('chatMessages');
   const meta = EMOTION_META[emotion] || EMOTION_META.neutral;
 
   const wrap = document.createElement('div');
   wrap.className = 'chat-msg-aria-wrap';
-  wrap.style.animation = 'slide-up 0.3s ease both';
+  if (!instant) wrap.style.animation = 'slide-up 0.3s ease both';
 
   // Emotion tag above bubble (only non-neutral)
   if (emotion !== 'neutral') {
@@ -2886,9 +2886,15 @@ function appendAriaMessage(text, emotion, doSpeak = true) {
   msgs.appendChild(wrap);
   scrollChatToBottom();
 
-  // Stream text word by word as voice speaks it
-  streamTextWithVoice(bubble, text, emotion, doSpeak);
-  updateChatMoodPill(emotion);
+  if (instant) {
+    // History — text appears immediately, no dots, no stream, no voice
+    bubble.textContent = text;
+    updateChatMoodPill(emotion);
+  } else {
+    // Live reply — full stream + voice
+    streamTextWithVoice(bubble, text, emotion, doSpeak);
+    updateChatMoodPill(emotion);
+  }
 }
 
 function streamTextWithVoice(el, fullText, emotion, doSpeak) {
@@ -3577,113 +3583,58 @@ function humanizeMemoryEntry(cat, key, value) {
   return `${label}: ${value}`;
 }
 
-async function renderMemoryScreen() {
-  const body     = document.getElementById('memoryBody');
+function renderMemoryScreen() {
+  const body = document.getElementById('memoryBody');
   const statusEl = document.getElementById('memoryStatus');
   const sqlNotice = document.getElementById('memorySqlNotice');
-  if (sqlNotice) sqlNotice.style.display = 'none';
 
-  // Not signed in
   if (!currentUserId) {
     statusEl.textContent = '● not signed in';
-    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🔐</div><div>Sign in and I'll actually remember you next time.</div></div>`;
+    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🔐</div><div>Sign in and I'll actually remember you next time.<br><br>I'm still picking things up this session — I just won't be able to hold onto them.</div></div>`;
+    sqlNotice.style.display = 'none';
     return;
   }
 
-  statusEl.textContent = '● loading…';
-  body.innerHTML = '';
-
-  // ── Pull from both sources in parallel ──────────────────────────
-  let chatFacts   = [];   // from user_profiles.aria_chat_memory (bullet text)
-  let tablePoints = [];   // from aria_memory table (structured rows)
-
-  // Source 1 — aria_chat_memory text column (always exists if user has chatted)
-  try {
-    const { data } = await db
-      .from('user_profiles')
-      .select('aria_chat_memory')
-      .eq('id', currentUserId)
-      .single();
-    if (data?.aria_chat_memory) {
-      chatFacts = data.aria_chat_memory
-        .split('\n')
-        .map(l => l.replace(/^[-–•*]\s*/, '').trim())
-        .filter(l => l.length > 3);
-    }
-  } catch(e) {}
-
-  // Source 2 — aria_memory structured table (may or may not exist)
-  try {
-    const { data, error } = await db
-      .from('aria_memory')
-      .select('category, key, value, source, confidence')
-      .eq('user_id', currentUserId);
-    if (!error && data?.length) {
-      tablePoints = data.map(row => ({
-        label:      humanizeMemoryEntry(row.category, row.key, row.value),
-        source:     row.source || 'learned',
-        confidence: row.confidence || 0.7,
-        category:   row.category
-      })).filter(p => p.label);
-    }
-  } catch(e) {}
-
-  // ── In-memory ariaMemory object (best-effort, defensive) ────────
-  let inMemPoints = [];
-  try {
-    if (typeof ariaMemory !== 'undefined' && typeof ariaMemory.getAll === 'function') {
-      const all = ariaMemory.getAll();
-      for (const [cat, entries] of Object.entries(all || {})) {
-        for (const [key, mem] of Object.entries(entries || {})) {
-          const label = humanizeMemoryEntry(cat, key, mem.value);
-          if (label) inMemPoints.push({ label, source: mem.source || 'learned', confidence: mem.confidence || 0.7, category: cat });
-        }
-      }
-    }
-  } catch(e) {}
-
-  // ── Deduplicate and merge ────────────────────────────────────────
-  // chatFacts → personal section; tablePoints + inMemPoints → categorised
-  const allStructured = [...tablePoints, ...inMemPoints];
-  const seen = new Set();
-  const personal   = [];
-  const style      = [];
-  const patterns   = [];
-  const emotional  = [];
-
-  // Deduplicate structured points
-  for (const p of allStructured) {
-    const key = p.label.toLowerCase().slice(0, 40);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    const cat = p.category || '';
-    if (cat === 'chat' || cat === 'facts' || cat === 'relationships') personal.push(p);
-    else if (cat === 'writing_style') style.push(p);
-    else if (cat === 'patterns')      patterns.push(p);
-    else if (cat === 'emotional')     emotional.push(p);
-    else personal.push(p); // unknown category → personal
+  if (!ariaMemory.isTableAvailable()) {
+    statusEl.textContent = '● setup needed';
+    sqlNotice.style.display = 'block';
+    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">⚠️</div><div>Run the SQL above in your Supabase editor and I'll have a place to store everything I pick up about you.</div></div>`;
+    return;
   }
 
-  // Chat facts from text column — add to personal if not already there
-  for (const fact of chatFacts) {
-    const key = fact.toLowerCase().slice(0, 40);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    personal.push({ label: fact, source: 'chat', confidence: 0.8 });
+  sqlNotice.style.display = 'none';
+  const all = ariaMemory.getAll();
+
+  // Collect ALL renderable points across every category
+  const personalFacts = [];   // chat / facts / relationships — shown first, big
+  const stylePoints   = [];   // writing_style
+  const patternPoints = [];   // patterns
+  const emotionPoints = [];   // emotional
+
+  for (const [cat, entries] of Object.entries(all)) {
+    for (const [key, mem] of Object.entries(entries)) {
+      const label = humanizeMemoryEntry(cat, key, mem.value);
+      if (!label) continue;
+      const point = { label, source: mem.source, confidence: mem.confidence || 0.7 };
+      if (cat === 'chat' || cat === 'facts' || cat === 'relationships') personalFacts.push(point);
+      else if (cat === 'writing_style') stylePoints.push(point);
+      else if (cat === 'patterns')      patternPoints.push(point);
+      else if (cat === 'emotional')     emotionPoints.push(point);
+    }
   }
 
-  const total = personal.length + style.length + patterns.length + emotional.length;
+  const totalPoints = personalFacts.length + stylePoints.length + patternPoints.length + emotionPoints.length;
 
-  if (!total) {
+  if (!totalPoints) {
     statusEl.textContent = '● still watching';
-    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🌱</div><div>Nothing filed away yet. Chat with me for a bit — I'll start picking things up.</div></div>`;
+    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🌱</div><div>Nothing filed away yet. Send a few messages, tell me about your life — I'll start building the picture.</div></div>`;
     return;
   }
 
-  statusEl.textContent = `● ${total} thing${total === 1 ? '' : 's'} noted`;
+  statusEl.textContent = `● ${totalPoints} thing${totalPoints === 1 ? '' : 's'} noted`;
 
-  function renderSection(title, points) {
-    if (!points.length) return '';
+  function renderSection(title, points, emptySkip = true) {
+    if (!points.length) return emptySkip ? '' : '';
     return `
       <div class="memory-section">
         <div class="memory-section-label">
@@ -3702,75 +3653,23 @@ async function renderMemoryScreen() {
             </div>
           </div>
         `).join('')}
-      </div>`;
+      </div>
+    `;
   }
 
   body.innerHTML =
-    renderSection('🧠 WHAT I KNOW ABOUT YOU', personal) +
-    renderSection('✍️ HOW YOU WRITE', style) +
-    renderSection('📊 HOW YOU OPERATE', patterns) +
-    renderSection('💫 YOUR ENERGY', emotional);
-}async function forceMemoryLearn() {
-  if (!currentUserId) { showToast('sign in first'); return; }
+    renderSection('🧠 WHAT I KNOW ABOUT YOU', personalFacts) +
+    renderSection('✍️ HOW YOU WRITE', stylePoints) +
+    renderSection('📊 HOW YOU OPERATE', patternPoints) +
+    renderSection('💫 YOUR ENERGY', emotionPoints);
+}
+
+async function forceMemoryLearn() {
   showToast('going back through everything…');
-
-  try {
-    // Pull all chat messages
-    const { data: msgs } = await db
-      .from('chat_messages')
-      .select('role, content')
-      .eq('user_id', currentUserId)
-      .order('created_at', { ascending: true })
-      .limit(120);
-
-    if (!msgs || !msgs.length) {
-      showToast('no chat history yet');
-      await renderMemoryScreen();
-      return;
-    }
-
-    // Build transcript — only user messages carry personal facts
-    const userLines = msgs
-      .filter(m => m.role === 'user')
-      .map(m => m.content)
-      .join('\n');
-
-    // Ask AI to extract durable facts
-    const summary = await fetchReply(
-      `You extract personal facts about a user from their chat messages.
-Output one fact per line. Start each line with "– ".
-Only durable facts: names, relationships, events, feelings about specific things, habits, life situations.
-No opinions, no filler, no meta-commentary. Max 20 facts. No preamble.`,
-      userLines.slice(0, 4000) // cap tokens
-    );
-
-    if (summary) {
-      // Save to user_profiles
-      await db.from('user_profiles')
-        .update({ aria_chat_memory: summary.trim() })
-        .eq('id', currentUserId);
-
-      // Also push into in-memory ariaMemory if available
-      try {
-        if (typeof ariaMemory !== 'undefined' && typeof ariaMemory.addChatFacts === 'function') {
-          ariaMemory.addChatFacts(summary);
-        }
-      } catch(e) {}
-    }
-
-    // Also learn writing style and history if ariaMemory is available
-    try {
-      if (typeof ariaMemory !== 'undefined') {
-        if (typeof ariaMemory.learnWritingStyle === 'function') await ariaMemory.learnWritingStyle();
-        if (typeof ariaMemory.learnFromHistory === 'function') await ariaMemory.learnFromHistory(replyHistory);
-      }
-    } catch(e) {}
-
-  } catch(e) {
-    showToast('something went wrong', 'red');
-  }
-
-  await renderMemoryScreen();
+  await ariaMemory.learnWritingStyle();
+  await ariaMemory.learnFromHistory(replyHistory);
+  await ariaMemory.load();
+  renderMemoryScreen();
   showToast('memory updated ✓', 'green');
 }
 
