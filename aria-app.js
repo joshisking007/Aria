@@ -3224,9 +3224,9 @@ async function sendChatMessage() {
         emotion_tag: emotion !== 'neutral' ? emotion : null
       }).then(() => {}).catch(() => {});
 
-      // Write chat context into my memory every 4 messages
-      if (chatHistory.length % 4 === 0) {
-        writeChatToMemory(chatHistory.slice(-6));
+      // Write chat context into memory every 2 messages
+      if (chatHistory.length % 2 === 0) {
+        writeChatToMemory(chatHistory.slice(-8));
       }
     }
 
@@ -3250,29 +3250,39 @@ async function sendChatMessage() {
 }
 
 async function writeChatToMemory(recentMessages) {
-  // Summarise recent chat into ariaMemory store
+  // Extract meaningful things about the user and persist them
   try {
     const transcript = recentMessages.map(m =>
       (m.role === 'user' ? 'USER' : 'ARIA') + ': ' + m.content
     ).join('\n');
 
-    const summary = await fetchReply(
-      'You extract key facts about the user from a conversation snippet. Output 1-3 short bullet points of durable facts (not opinions). Start each with "–". No preamble.',
-      transcript
-    );
+    const extractionPrompt = `You are extracting meaningful, durable insights about the USER from this chat snippet. Focus ONLY on things the user has revealed — not Aria's responses.
 
-    if (summary && typeof ariaMemory.addChatFacts === 'function') {
-      ariaMemory.addChatFacts(summary);
-    }
+Extract things like:
+- Personal facts (age, job, school, location, living situation)
+- People in their life (friends, family, partners, enemies) and how they feel about them
+- Life events or situations they've mentioned (breakups, drama, achievements, struggles)
+- How they think and view the world (their opinions, values, worldview, philosophy)
+- Their emotional patterns (what stresses them, what they care about, how they handle things)
+- Their personality (how they communicate, what they're like, recurring themes)
+- Anything they've said that reveals who they are
 
-    // Also upsert to Supabase user_profiles as aria_chat_memory
-    if (currentUserId) {
-      const { data } = await db.from('user_profiles').select('aria_chat_memory').eq('id', currentUserId).single();
-      const existing = data?.aria_chat_memory || '';
-      const updated  = (existing + '\n' + summary).trim().slice(-3000); // cap at 3000 chars
-      await db.from('user_profiles').update({ aria_chat_memory: updated }).eq('id', currentUserId);
+Rules:
+- Only include things actually said by the USER, not inferred by Aria
+- Each point must be a complete, self-contained sentence about the user
+- Be specific — "has a complicated relationship with their mom" beats "has family issues"
+- Skip small talk and throwaway comments
+- If nothing meaningful was said, output only: NOTHING
+- Output 1-5 points. Start each with "–". No preamble, no labels.`;
+
+    const summary = await fetchReply(extractionPrompt, transcript);
+
+    if (!summary || summary.trim() === 'NOTHING') return;
+
+    if (typeof ariaMemory.addChatFacts === 'function') {
+      await ariaMemory.addChatFacts(summary);
     }
-  } catch(e) {}
+  } catch(e) { console.warn('writeChatToMemory error', e); }
 }
 
 let lastShownEmotion = 'neutral';

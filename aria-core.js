@@ -637,25 +637,39 @@ const ariaMemory = (() => {
   // ── Whether table is known to exist ────────────────────────────
   function isTableAvailable() { return tableExists; }
 
-  function addChatFacts(factsText) {
+  async function addChatFacts(factsText) {
     // Store chat-derived facts in the 'chat' category
+    // Use a short hash of the fact text as the key so duplicates naturally overwrite
     const lines = factsText.split('\n').map(l => l.replace(/^–\s*/, '').trim()).filter(Boolean);
-    lines.forEach((fact, i) => {
-      remember('chat', `fact_${Date.now()}_${i}`, fact, 0.8, 'chat');
-    });
+    for (const fact of lines) {
+      if (!fact || fact === 'NOTHING') continue;
+      // Simple stable key: first 40 non-space chars of the fact, lowercased
+      const key = 'fact_' + fact.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 40);
+      await remember('chat', key, fact, 0.8, 'chat');
+    }
   }
 
   function getSummary() {
-    // Returns a compact string of all known facts for injecting into system prompt
+    // Returns a compact string of known facts for injecting into system prompt
+    // Prioritise chat facts (things the user actually said) over inferred patterns
     const all = getAll();
     if (!all || !Object.keys(all).length) return '';
-    const lines = [];
+    const chatLines = [];
+    const otherLines = [];
     for (const [cat, facts] of Object.entries(all)) {
       for (const [key, entry] of Object.entries(facts)) {
-        if (entry?.value) lines.push(`${cat}: ${entry.value}`);
+        if (!entry?.value) continue;
+        // Skip low-value counter entries
+        if (key.endsWith('_count') || key.startsWith('tone_') || key.startsWith('platform_')) continue;
+        if (cat === 'chat' || cat === 'facts' || cat === 'relationships') {
+          chatLines.push(entry.value);
+        } else {
+          otherLines.push(`${cat}: ${entry.value}`);
+        }
       }
     }
-    return lines.slice(0, 20).join('\n'); // cap at 20 facts
+    // Chat facts first, cap at 30 total
+    return [...chatLines, ...otherLines].slice(0, 30).join('\n');
   }
 
   return { load, remember, get, getCategory, buildContext, learnFromGeneration, learnWritingStyle, learnFromHistory, getAll, isTableAvailable, addChatFacts, getSummary };
@@ -1166,6 +1180,13 @@ async function loadFromSupabase() {
     ariaMemory.learnWritingStyle();
     ariaMemory.learnFromHistory(replyHistory);
     await contactMemory.load();
+
+    // Seed any chat facts previously saved to user_profiles.aria_chat_memory
+    // (legacy fallback blob — gets absorbed into aria_memory table entries)
+    if (p?.aria_chat_memory) {
+      await ariaMemory.addChatFacts(p.aria_chat_memory);
+    }
+
     runDriftEngine();
   } catch(e) {
     console.warn('Supabase load error — falling back to localStorage', e);
