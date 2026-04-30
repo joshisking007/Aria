@@ -108,7 +108,11 @@
     </div>
   </div>
 
-  <div id="memoryBody"></div>
+  <div id="memoryBody" class="memory-body-scroll"></div>
+  <div id="memorySqlNotice" style="display:none;margin:0 20px 12px;padding:14px;background:var(--card2);border:1px solid var(--border);border-radius:12px;font-size:12px;color:var(--muted);line-height:1.6;">
+    Run this in your Supabase SQL editor to enable memory storage:<br><br>
+    <code style="font-size:11px;color:var(--rose);">CREATE TABLE IF NOT EXISTS aria_memory (id uuid DEFAULT gen_random_uuid() PRIMARY KEY, user_id uuid REFERENCES auth.users NOT NULL, category text, key text, value text, confidence float, source text, updated_at timestamptz, UNIQUE(user_id, category, key));</code>
+  </div>
   <button class="memory-learn-btn" onclick="forceMemoryLearn()">re-learn from my history</button>
 </div>
 

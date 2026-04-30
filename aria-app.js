@@ -3919,19 +3919,15 @@ function humanizeMemoryEntry(cat, key, value) {
 function renderMemoryScreen() {
   const body      = document.getElementById('memoryBody');
   const statusEl  = document.getElementById('memoryStatus');
-  const sqlNotice = document.getElementById('memorySqlNotice');
 
   if (!currentUserId) {
     statusEl.textContent = '● not signed in';
     body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🔐</div><div>Sign in and I'll actually remember you next time.<br><br>I'm still picking things up this session — I just won't be able to hold onto them.</div></div>`;
-    sqlNotice.style.display = 'none';
     return;
   }
 
-  sqlNotice.style.display = 'none';
   statusEl.textContent = '● loading…';
 
-  // Show step-by-step progress bar so user sees it working
   body.innerHTML = `
     <div class="memory-loading-wrap" id="memoryLoadWrap">
       <div class="memory-loading-label" id="memoryLoadLabel">connecting to memory…</div>
@@ -3956,7 +3952,6 @@ function _memoryProgress(pct, label) {
 async function _renderMemoryAfterLoad() {
   const body      = document.getElementById('memoryBody');
   const statusEl  = document.getElementById('memoryStatus');
-  const sqlNotice = document.getElementById('memorySqlNotice');
   if (!body) return;
 
   try {
@@ -3966,8 +3961,9 @@ async function _renderMemoryAfterLoad() {
 
     if (!ariaMemory.isTableAvailable()) {
       statusEl.textContent = '● setup needed';
-      sqlNotice.style.display = 'block';
-      body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">⚠️</div><div>Run the SQL above in your Supabase editor and I'll have a place to store everything I pick up about you.</div></div>`;
+      const notice = document.getElementById('memorySqlNotice');
+      if (notice) notice.style.display = 'block';
+      body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">⚠️</div><div>Run the SQL above to enable memory storage.</div></div>`;
       return;
     }
 

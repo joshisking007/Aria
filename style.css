@@ -266,8 +266,15 @@ body::after {
   border-radius: var(--radius-lg); padding: 20px;
   display: flex; align-items: center; gap: 16px;
 }
+.memory-body-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 0 8px;
+  min-height: 80px;
+}
 .memory-orb {
-  width: 58px; height: 58px; border-radius: 50%;
+  width: 64px; height: 72px;
+  border-radius: 14px;
   background: transparent;
   box-shadow: 0 0 24px rgba(249,115,22,0.35);
   flex-shrink: 0;
@@ -2591,7 +2598,11 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 .lg-completion-stat-num { font-size: 20px; font-weight: 700; color: var(--text); }
 .lg-completion-stat-label { font-size: 9px; color: var(--muted); letter-spacing: 1px; margin-top: 2px; }
 
-/* ── MEMORY SCREEN: loading progress ── */
+#memoryScreen {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 .memory-loading-wrap {
   padding: 40px 24px 32px;
   display: flex;
