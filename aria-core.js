@@ -455,6 +455,8 @@ window.addEventListener('load', () => {
   initAuth(); // loads from Supabase; falls back to localStorage if not authed
   checkOnboarding();
   setTimeout(loadHomeInsight, 2000);
+  // Check for sexual content lock on every app load
+  setTimeout(() => { if (typeof AWARENESS !== 'undefined') AWARENESS.checkLockOnLoad(); }, 300);
 
   // Restore ElevenLabs settings
   const savedKey  = localStorage.getItem('aria_el_key') || '';
@@ -916,17 +918,11 @@ function showAriaAck(msg) {
   const imgEl = document.getElementById('insightOrbImg');
   if (!banner || !textEl || !imgEl) return;
   const prev = { src: imgEl.src, text: textEl.textContent };
-  // Use central expression setter (defined in aria-app.js) so transition fires.
-  // 'soft' = hopeful/gentle image — fits an acknowledgement moment.
-  if (typeof setAriaExpression === 'function') {
-    setAriaExpression(imgEl, 'soft');
-  } else {
-    imgEl.src = 'https://i.imgur.com/ji329r1.png'; // hopeful fallback
-  }
+  imgEl.src = 'https://i.imgur.com/aku1uwo.png';
   textEl.textContent = msg;
   banner.classList.add('visible');
   setTimeout(() => {
-    if (prev.src) imgEl.src = prev.src;
+    imgEl.src = prev.src;
     textEl.textContent = prev.text;
   }, 5000);
 }
@@ -1156,6 +1152,20 @@ async function loadFromSupabase() {
       streakDays         = p.streak_days         || 0;
       ariaRelationshipXP = p.aria_relationship_xp || 0;
       loadLongGamesFromData(p.long_games);
+
+      // ── Restore lock state from Supabase into localStorage ──────────
+      if (p.sexual_strikes > 0) {
+        localStorage.setItem('aria_sexual_strikes', String(p.sexual_strikes));
+      }
+      if (p.sexual_lock_until) {
+        const unlockAt = new Date(p.sexual_lock_until).getTime();
+        if (unlockAt > Date.now()) {
+          localStorage.setItem('aria_sexual_lock', JSON.stringify({
+            lockedAt: unlockAt - 30 * 60 * 1000,
+            unlockAt
+          }));
+        }
+      }
     }
 
     if (contactsRes.data && contactsRes.data.length) {

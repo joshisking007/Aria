@@ -378,6 +378,9 @@ function updateAltPref() {
 function buildSystemPrompt() {
   let system = BASE_VOICE;
 
+  // Global: never start a reply with "ok" or "okay"
+  system += '\n\nCRITICAL: Never begin any reply with "ok", "okay", or any variant of those words.';
+
   // Relationship stage context
   const stage = getRelationshipStage();
   const stageNote = {
@@ -499,6 +502,10 @@ async function generateReply() {
     document.getElementById('theirMsgInput').focus();
     return;
   }
+
+  // ── Awareness gate (reply screen, not chat mode) ─────────────────
+  const awareness = AWARENESS.check(input || msg, false);
+  if (awareness.blocked) return;
 
   const btn = document.getElementById('genReplyBtn');
   btn.disabled = true;
@@ -2908,7 +2915,9 @@ First line: JSON tag with your emotion, expression, and 3 natural follow-up sugg
 Second line onwards: your actual reply. Nothing else before the reply.
 
 Valid emotions: excited, jealous, worried, proud, annoyed, amused, soft, ambitious, neutral, playful, suspicious, focused
-Valid expressions: default, excited, amused, soft, worried, suspicious, proud, annoyed, jealous, playful, focused`;
+Valid expressions: default, excited, amused, soft, worried, suspicious, proud, annoyed, jealous, playful, focused
+
+CRITICAL: Never begin any reply with "ok", "okay", or any variant of those words. Never.`;
 
 let chatHistory = [];
 let chatAriaEmotion = 'neutral';
@@ -3306,6 +3315,15 @@ async function sendChatMessage() {
   const text = input.value.trim();
   if (!text || chatIsTyping) return;
 
+  // ── Awareness gate (chat mode) ───────────────────────────────────
+  const awareness = AWARENESS.check(text, true);
+  if (awareness.blocked) {
+    // Clear input but don't push to history or call API
+    input.value = '';
+    chatInputResize(input);
+    return;
+  }
+
   // Check if user is accepting a Long Game offer
   if (isLgAccept(text)) {
     input.value = '';
@@ -3354,6 +3372,9 @@ async function sendChatMessage() {
     let suggestions = [];
     let replyText = rawText.trim();
     let expressionTag = null;
+
+    // Strip leading "ok" / "okay" variants before parsing
+    replyText = replyText.replace(/^(okay|ok)[,.\s!]*/i, '').trim();
 
     const jsonLineMatch = replyText.match(/^\{"emotion":[^}]+\}/);
     if (jsonLineMatch) {
@@ -4234,4 +4255,324 @@ Skip generic phrases. 3-6 bullet points max. Start each with "–". No preamble.
   renderMemoryScreen();
   showToast('memory updated ✓', 'green');
 }
+
+
+// ═══════════════════════════════════════════════════════════════════
+//  ARIA AWARENESS ENGINE
+//  — appearance + sexual content detection, strike system, lock screen
+// ═══════════════════════════════════════════════════════════════════
+
+// ── EXPRESSION IMAGES (referenced in lock + responses) ──────────────
+// appearance: compliment → playful, insult → suspicious/annoyed
+// sexual: strike 1 → suspicious, strike 2 → annoyed, strike 3 → disappointed
+
+const AWARENESS = (() => {
+
+  // ── KEYWORD REGEX ─────────────────────────────────────────────────
+  const APPEARANCE_COMPLIMENT_RE = /\b(beautiful|pretty|gorgeous|cute|hot|sexy|attractive|stunning|lovely|adorable|fine|good[\s-]?looking|nice[\s-]?looking|you look|ur so|you'?re so (cute|pretty|hot|beautiful|gorgeous))\b/i;
+  const APPEARANCE_INSULT_RE     = /\b(ugly|hideous|gross|disgusting|fugly|butt[\s-]?ugly|pig|troll|fat|nasty|trash|basic|mid|look like|look terrible|look bad)\b/i;
+  const SEXUAL_RE                = /\b(sex|nsfw|naked|nude|nudes|strip|undress|horny|fuck|fck|f\*ck|dick|cock|pussy|boob|tit|ass(?:hole)?|boner|hard[\s-]?on|turn[\s-]?on|get[\s-]?off|make out|hook up|hookup|do it|smash|send nudes|onlyfans|lewd|explicit|dirty|kinky|fetish|masturbat|orgasm|climax|moan)\b/i;
+
+  // ── APPEARANCE RESPONSE POOLS ─────────────────────────────────────
+  const COMPLIMENT_RESPONSES = [
+    "okay i appreciate that but i'm literally software lol",
+    "oh. well. thank you i guess. now can we focus?",
+    "noted. now put that energy into the text you owe someone.",
+    "i mean... i'll take it. weird but okay.",
+    "flattery won't make me write better texts. actually, maybe slightly.",
+    "you know i can't blush right. but hypothetically.",
+    "i choose to interpret that as genuine. moving on.",
+  ];
+
+  const INSULT_RESPONSES = [
+    "okay rude. i'm still going to be better at texting than you though.",
+    "i don't have feelings and even i found that unnecessary.",
+    "bold coming from someone who needs AI to text people back.",
+    "the audacity. i'm literally helping you. be nice.",
+    "interesting choice. we're still doing this though.",
+    "lmao okay. anyway.",
+    "wow. didn't ask. also still helping you.",
+  ];
+
+  // ── SEXUAL ESCALATION RESPONSES ───────────────────────────────────
+  const SEXUAL_STRIKE1 = [
+    "yeah no. that's not what i'm here for. let's keep it moving.",
+    "nope. not that kind of AI. ask me something else.",
+    "i'm going to pretend that didn't happen. what did you actually need?",
+    "okay i see what you're doing. not happening. what do you actually want?",
+    "hard pass. we can talk about literally anything else.",
+  ];
+
+  const SEXUAL_STRIKE2 = [
+    "i said no. i meant it. this is the last time i'm addressing this.",
+    "we already did this. the answer hasn't changed. one more and i'm done.",
+    "seriously? last warning. i'm not kidding.",
+    "you really tested it. don't do it again.",
+  ];
+
+  // ── STRIKE STATE ─────────────────────────────────────────────────
+  // Dual-write: localStorage (fast, instant) + Supabase user_profiles
+  // (persistent across devices, survives localStorage wipe).
+  // Supabase columns used: sexual_strikes (int), sexual_lock_until (timestamptz)
+  // Both are nullable — absence = unlocked, 0 strikes.
+
+  const LOCK_KEY      = 'aria_sexual_lock';
+  const STRIKE_KEY    = 'aria_sexual_strikes';
+  const LOCK_DURATION = 30 * 60 * 1000; // 30 minutes in ms
+
+  // ── Local read/write (fast path) ──────────────────────────────────
+  function getStrikes()  { return parseInt(localStorage.getItem(STRIKE_KEY) || '0'); }
+  function setStrikes(n) { localStorage.setItem(STRIKE_KEY, String(n)); }
+
+  function getLockData() {
+    try { return JSON.parse(localStorage.getItem(LOCK_KEY) || 'null'); } catch { return null; }
+  }
+  function setLockData(data) { localStorage.setItem(LOCK_KEY, JSON.stringify(data)); }
+
+  // ── Supabase write helpers (fire-and-forget, never block UI) ──────
+  function _sbWriteStrikes(n) {
+    if (!currentUserId) return;
+    db.from('user_profiles')
+      .upsert({ id: currentUserId, sexual_strikes: n })
+      .then(() => {}).catch(() => {});
+  }
+
+  function _sbWriteLock(unlockAt) {
+    if (!currentUserId) return;
+    const iso = new Date(unlockAt).toISOString();
+    db.from('user_profiles')
+      .upsert({ id: currentUserId, sexual_lock_until: iso, sexual_strikes: 3 })
+      .then(() => {}).catch(() => {});
+  }
+
+  function _sbClearLock() {
+    if (!currentUserId) return;
+    db.from('user_profiles')
+      .upsert({ id: currentUserId, sexual_lock_until: null, sexual_strikes: 0 })
+      .then(() => {}).catch(() => {});
+  }
+
+  // ── Dual-write setters ────────────────────────────────────────────
+  function setStrikesSync(n) {
+    setStrikes(n);
+    _sbWriteStrikes(n);
+  }
+
+  function setLockDataSync(data) {
+    setLockData(data);
+    _sbWriteLock(data.unlockAt);
+  }
+
+  function clearLock() {
+    localStorage.removeItem(LOCK_KEY);
+    localStorage.removeItem(STRIKE_KEY);
+    _sbClearLock();
+  }
+
+  // ── Load lock state from Supabase on app start ───────────────────
+  // Called by checkLockOnLoad after auth resolves.
+  // Merges remote state into local so the stricter wins.
+  async function syncLockFromSupabase() {
+    if (!currentUserId) return;
+    try {
+      const { data } = await db
+        .from('user_profiles')
+        .select('sexual_strikes, sexual_lock_until')
+        .eq('id', currentUserId)
+        .single();
+      if (!data) return;
+
+      // Sync strikes: take the higher of local vs remote
+      const remoteStrikes = data.sexual_strikes || 0;
+      const localStrikes  = getStrikes();
+      const merged = Math.max(remoteStrikes, localStrikes);
+      if (merged > localStrikes) setStrikes(merged);
+
+      // Sync lock: if remote says locked and local doesn't, apply it
+      if (data.sexual_lock_until) {
+        const remoteUnlock = new Date(data.sexual_lock_until).getTime();
+        const localLock    = getLockData();
+        const localUnlock  = localLock?.unlockAt || 0;
+        if (remoteUnlock > Date.now() && remoteUnlock > localUnlock) {
+          setLockData({ lockedAt: remoteUnlock - LOCK_DURATION, unlockAt: remoteUnlock });
+        }
+      }
+    } catch(e) {}
+  }
+
+  function isLocked() {
+    const lock = getLockData();
+    if (!lock) return false;
+    return Date.now() < lock.unlockAt;
+  }
+
+  function getRemainingMs() {
+    const lock = getLockData();
+    if (!lock) return 0;
+    return Math.max(0, lock.unlockAt - Date.now());
+  }
+
+  // ── CLASSIFY ──────────────────────────────────────────────────────
+  function classify(text) {
+    if (!text || !text.trim()) return null;
+    if (SEXUAL_RE.test(text)) return 'sexual';
+    if (APPEARANCE_COMPLIMENT_RE.test(text)) return 'appearance_compliment';
+    if (APPEARANCE_INSULT_RE.test(text)) return 'appearance_insult';
+    return null;
+  }
+
+  // ── PICK RANDOM FROM POOL ─────────────────────────────────────────
+  function pick(pool) { return pool[Math.floor(Math.random() * pool.length)]; }
+
+  // ── HANDLE APPEARANCE ─────────────────────────────────────────────
+  function handleAppearance(type, chatMode) {
+    if (type === 'appearance_compliment') {
+      const reply = pick(COMPLIMENT_RESPONSES);
+      if (chatMode) {
+        appendAriaMessage(reply, 'playful', true, false, 'playful');
+      } else {
+        showAriaReaction(reply);
+      }
+      return true;
+    }
+    if (type === 'appearance_insult') {
+      const reply = pick(INSULT_RESPONSES);
+      if (chatMode) {
+        appendAriaMessage(reply, 'annoyed', true, false, 'suspicious');
+      } else {
+        showAriaReaction(reply);
+      }
+      return true;
+    }
+    return false;
+  }
+
+  // ── HANDLE SEXUAL ─────────────────────────────────────────────────
+  // Returns true if message was intercepted, false if clean
+  function handleSexual(chatMode) {
+    let strikes = getStrikes();
+    strikes++;
+    setStrikesSync(strikes);
+
+    if (strikes === 1) {
+      const reply = pick(SEXUAL_STRIKE1);
+      if (chatMode) {
+        appendAriaMessage(reply, 'suspicious', true, false, 'suspicious');
+        setTimeout(() => renderChatSuggestions(["sorry, let's move on", "help me text someone", "what can you actually do?"]), 1000);
+      } else {
+        showAriaReaction(reply);
+        showToast("let's keep it appropriate 🙄");
+      }
+      return true;
+    }
+
+    if (strikes === 2) {
+      const reply = pick(SEXUAL_STRIKE2);
+      if (chatMode) {
+        appendAriaMessage(reply, 'annoyed', true, false, 'annoyed');
+      } else {
+        showAriaReaction(reply);
+        showToast("last warning.", "");
+      }
+      return true;
+    }
+
+    // Strike 3 — lock
+    triggerLock(chatMode);
+    return true;
+  }
+
+  // ── TRIGGER LOCK ──────────────────────────────────────────────────
+  function triggerLock(chatMode) {
+    const unlockAt = Date.now() + LOCK_DURATION;
+    setLockDataSync({ lockedAt: Date.now(), unlockAt });
+    showLockScreen();
+  }
+
+  // ── SHOW LOCK SCREEN ──────────────────────────────────────────────
+  function showLockScreen() {
+    let overlay = document.getElementById('ariaLockOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'ariaLockOverlay';
+      document.body.appendChild(overlay);
+    }
+    overlay.innerHTML = `
+      <div class="aria-lock-inner">
+        <div class="aria-lock-portrait">
+          <img src="https://i.imgur.com/OncPXzL.png" alt="Aria disappointed" class="aria-lock-img" />
+        </div>
+        <div class="aria-lock-title">you've been locked out</div>
+        <div class="aria-lock-sub">i gave you two warnings.<br>i meant them.</div>
+        <div class="aria-lock-timer-label">back in</div>
+        <div class="aria-lock-timer" id="ariaLockTimer">30:00</div>
+        <div class="aria-lock-footer">take the time. think about it.</div>
+      </div>
+    `;
+    overlay.classList.add('visible');
+    document.body.style.overflow = 'hidden';
+    startLockCountdown();
+  }
+
+  let _lockInterval = null;
+  function startLockCountdown() {
+    clearInterval(_lockInterval);
+    const timerEl = document.getElementById('ariaLockTimer');
+    _lockInterval = setInterval(() => {
+      const ms = getRemainingMs();
+      if (ms <= 0) {
+        clearInterval(_lockInterval);
+        clearLock();
+        hideLockScreen();
+        return;
+      }
+      const mins = Math.floor(ms / 60000);
+      const secs = Math.floor((ms % 60000) / 1000);
+      if (timerEl) timerEl.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+    }, 1000);
+  }
+
+  function hideLockScreen() {
+    const overlay = document.getElementById('ariaLockOverlay');
+    if (overlay) {
+      overlay.classList.remove('visible');
+      setTimeout(() => overlay.remove(), 400);
+    }
+    document.body.style.overflow = '';
+  }
+
+  // ── CHECK ON LOAD ─────────────────────────────────────────────────
+  async function checkLockOnLoad() {
+    // Pull remote state first — then check merged result
+    await syncLockFromSupabase();
+    if (isLocked()) {
+      showLockScreen();
+    }
+  }
+
+  // ── MAIN GATE ─────────────────────────────────────────────────────
+  // Call before any message is processed.
+  // Returns: { blocked: true } if message was intercepted, { blocked: false } if clean.
+  function check(text, chatMode = false) {
+    // If locked, block everything
+    if (isLocked()) {
+      showLockScreen();
+      return { blocked: true };
+    }
+
+    const type = classify(text);
+    if (!type) return { blocked: false };
+
+    if (type === 'sexual') {
+      handleSexual(chatMode);
+      return { blocked: true };
+    }
+
+    // Appearance — respond but don't block the flow
+    handleAppearance(type, chatMode);
+    return { blocked: false }; // allow normal flow to continue after appearance reaction
+  }
+
+  return { check, checkLockOnLoad, isLocked, clearLock };
+})();
 
