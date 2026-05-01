@@ -457,7 +457,7 @@ window.addEventListener('load', () => {
     setTimeout(() => {
       loader.classList.add('fade-out');
       setTimeout(() => { loader.style.display = 'none'; }, 580);
-    }, 1500);
+    }, 2900);
   }
   // ─────────────────────────────────────────────────────────
   setTimeout(typeIntro, 500);
@@ -1054,6 +1054,13 @@ async function gateSubmit() {
   if (labelEl) labelEl.textContent = orig; else btn.textContent = orig;
 
   if (error) {
+    if (error.message.includes('Invalid login')) errEl.textContent = 'wrong email or password';
+    else if (error.message.includes('already registered')) errEl.textContent = 'account already exists — sign in instead';
+    else errEl.textContent = error.message;
+    return;
+  }
+
+  // success — session triggers onAuthStateChange which calls dismissAuthGate
   if (gateMode === 'signup') {
     errEl.style.color = 'var(--green)';
     errEl.textContent = 'account created ✓ signing you in…';
