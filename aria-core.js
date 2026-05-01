@@ -451,16 +451,15 @@ function typeIntro() {
 }
 
 window.addEventListener('load', () => {
-  // ── DISMISS LOADER ─────────────────────────────────────────
+  // ── Dismiss loader after animations complete ──────────────
   const loader = document.getElementById('ariaLoader');
   if (loader) {
-    // Min display 1.3s so the bar animation completes, then fade
     setTimeout(() => {
       loader.classList.add('fade-out');
-      setTimeout(() => { loader.style.display = 'none'; }, 520);
-    }, 1300);
+      setTimeout(() => { loader.style.display = 'none'; }, 580);
+    }, 1500);
   }
-  // ──────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────
   setTimeout(typeIntro, 500);
   initAuth(); // loads from Supabase; falls back to localStorage if not authed
   checkOnboarding();
@@ -861,24 +860,20 @@ Write an updated relationship narrative in 2-4 sentences. First person from Aria
 // ── AUTH ────────────────────────────────────────────────────────────
 
 async function initAuth() {
-  // Always register the listener first — covers sign-in, sign-out, token refresh, magic links
+  // Always register auth state listener FIRST so we never miss a sign-in event
   db.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session?.user) {
-      const isNew = !currentUserId;
+      if (currentUserId === session.user.id) return; // already handled
       currentUserId = session.user.id;
       dismissAuthGate();
-      if (isNew) {
-        await loadFromSupabase();
-        await ariaMemory.load();
-      }
+      await loadFromSupabase();
+      await ariaMemory.load();
       updateAuthMenuState();
     } else if (event === 'SIGNED_OUT') {
-      currentUserId = null;
-      updateAuthMenuState();
+      // handled by confirmLogout
     }
   });
 
-  // Then check for an existing session on load
   const { data: { session } } = await db.auth.getSession();
   if (session?.user) {
     currentUserId = session.user.id;
@@ -999,20 +994,14 @@ async function confirmLogout() {
   contacts = [];
   replySentCount = 0;
   streakDays = 0;
-  try {
-    document.getElementById('statReplies').textContent = '0';
-    document.getElementById('statContacts').textContent = '0';
-    document.getElementById('statStreak').textContent = '🔥0';
-  } catch(_) {}
-  // Clear saved data so next user starts fresh
-  try { localStorage.removeItem('aria_data'); } catch(_) {}
-  // Show the auth gate
+  document.getElementById('statReplies').textContent = '0';
+  document.getElementById('statContacts').textContent = '0';
+  document.getElementById('statStreak').textContent = '0';
+  // Show the auth gate immediately
   const gate = document.getElementById('authGate');
-  if (gate) {
-    gate.style.opacity = '1';
-    gate.style.display = 'flex';
-    gate.classList.remove('hiding');
-  }
+  gate.style.opacity = '1';
+  gate.style.display = 'flex';
+  gate.classList.remove('hiding');
   showScreen('introScreen');
 }
 
@@ -1021,12 +1010,13 @@ let gateMode = 'signin';
 function gateTab(mode) {
   gateMode = mode;
   const isSignin = mode === 'signin';
-  document.getElementById('gateTabSignin').style.background = isSignin ? 'var(--rose-dim)' : 'transparent';
-  document.getElementById('gateTabSignin').style.color = isSignin ? 'var(--rose)' : 'var(--muted)';
-  document.getElementById('gateTabSignup').style.background = isSignin ? 'transparent' : 'var(--rose-dim)';
-  document.getElementById('gateTabSignup').style.color = isSignin ? 'var(--muted)' : 'var(--rose)';
+  const tabSignin = document.getElementById('gateTabSignin');
+  const tabSignup = document.getElementById('gateTabSignup');
+  tabSignin.classList.toggle('gate-tab--active', isSignin);
+  tabSignup.classList.toggle('gate-tab--active', !isSignin);
   document.getElementById('gateConfirmWrap').style.display = isSignin ? 'none' : '';
-  document.getElementById('gateBtn').textContent = isSignin ? 'sign in →' : 'create account →';
+  const labelEl = document.getElementById('gateBtnLabel');
+  if (labelEl) labelEl.textContent = isSignin ? 'sign in' : 'create account';
   document.getElementById('gatePassword').placeholder = isSignin ? 'password' : 'password (min 6 chars)';
   document.getElementById('gatePassword').autocomplete = isSignin ? 'current-password' : 'new-password';
   document.getElementById('gateError').textContent = '';
@@ -1047,9 +1037,11 @@ async function gateSubmit() {
   }
 
   const btn = document.getElementById('gateBtn');
-  const orig = btn.textContent;
+  const labelEl = document.getElementById('gateBtnLabel');
+  const orig = labelEl ? labelEl.textContent : btn.textContent;
   btn.disabled = true;
-  btn.textContent = gateMode === 'signin' ? 'signing in…' : 'creating account…';
+  if (labelEl) labelEl.textContent = gateMode === 'signin' ? 'signing in…' : 'creating account…';
+  else btn.textContent = gateMode === 'signin' ? 'signing in…' : 'creating account…';
 
   let error;
   if (gateMode === 'signin') {
@@ -1059,27 +1051,12 @@ async function gateSubmit() {
   }
 
   btn.disabled = false;
-  btn.textContent = orig;
+  if (labelEl) labelEl.textContent = orig; else btn.textContent = orig;
 
   if (error) {
-    if (error.message.includes('Invalid login')) errEl.textContent = 'wrong email or password';
-    else if (error.message.includes('already registered')) errEl.textContent = 'account already exists — sign in instead';
-    else errEl.textContent = error.message;
-    return;
-  }
-
-  // Explicit success path — don't rely solely on the listener
-  const { data: { session: newSession } } = await db.auth.getSession();
-  if (newSession?.user) {
-    currentUserId = newSession.user.id;
-    dismissAuthGate();
-    await loadFromSupabase();
-    await ariaMemory.load();
-    updateAuthMenuState();
-  } else if (gateMode === 'signup') {
-    // Email confirmation may be required
+  if (gateMode === 'signup') {
     errEl.style.color = 'var(--green)';
-    errEl.textContent = 'account created ✓ check your email to confirm';
+    errEl.textContent = 'account created ✓ signing you in…';
   }
 }
 

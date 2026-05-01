@@ -101,28 +101,36 @@
      AUTH GATE (full-screen lock)
 ════════════════════════════════════════════════ -->
 <div id="authGate">
-  <div id="gateDefault" style="display:flex;flex-direction:column;align-items:center;width:100%;">
-    <div class="gate-orb-wrap" style="align-self:center;">
-      <div style="width:80px;height:80px;border-radius:50%;overflow:hidden;box-shadow:0 0 60px rgba(244,114,182,0.5),0 0 120px rgba(244,114,182,0.18);animation:breathe 3.5s ease-in-out infinite;flex-shrink:0;"><img src="https://i.imgur.com/NeQqqKG.png" style="width:160%;height:160%;object-fit:cover;object-position:center 15%;margin-left:-30%;margin-top:-5%;" /></div>
-      <div class="gate-ring"></div>
-      <div class="gate-ring-2"></div>
+  <div id="gateDefault" class="gate-inner">
+
+    <!-- Hero portrait — no circle crop, natural aspect -->
+    <div class="gate-hero">
+      <img src="https://i.imgur.com/NeQqqKG.png" class="gate-portrait" alt="Aria"/>
+      <div class="gate-portrait-glow"></div>
     </div>
-    <div class="gate-title">Aria</div>
-    <div class="gate-tagline">AUTOMATED · REPLY · INTELLIGENCE · ASSISTANT.</div>
-    <div class="pl-brand"><img src="https://i.imgur.com/3IXfEl4.jpeg" class="pl-logo" alt="Paradigm Leveling"/>by Paradigm Leveling</div>
-    <div class="gate-sub">your AI texting co-pilot.<br>sign in to unlock memory.</div>
+
+    <!-- Identity block -->
+    <div class="gate-identity">
+      <div class="gate-title">Aria</div>
+      <div class="gate-tagline">AUTOMATED · REPLY · INTELLIGENCE · ASSISTANT</div>
+      <div class="gate-pl-brand">
+        <img src="https://i.imgur.com/3IXfEl4.jpeg" class="gate-pl-logo" alt="Paradigm Leveling"/>
+        <span>by Paradigm Leveling</span>
+      </div>
+    </div>
+
+    <!-- Sub copy -->
+    <div class="gate-sub">your AI texting co-pilot — sign in to unlock memory.</div>
     <div class="gate-memory-badge"><span>🧠</span> memory engine enabled</div>
 
-    <!-- tab switcher -->
-    <div style="display:flex;gap:0;max-width:340px;width:100%;margin-bottom:20px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:3px;">
-      <button id="gateTabSignin" onclick="gateTab('signin')"
-        style="flex:1;padding:9px;border:none;border-radius:10px;background:var(--rose-dim);color:var(--rose);font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:all 0.2s;">sign in</button>
-      <button id="gateTabSignup" onclick="gateTab('signup')"
-        style="flex:1;padding:9px;border:none;border-radius:10px;background:transparent;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;">create account</button>
+    <!-- Tab switcher -->
+    <div class="gate-tabs">
+      <button id="gateTabSignin" class="gate-tab gate-tab--active" onclick="gateTab('signin')">sign in</button>
+      <button id="gateTabSignup" class="gate-tab" onclick="gateTab('signup')">create account</button>
     </div>
 
     <div class="gate-field">
-      <input class="gate-input" id="gateEmail" type="email" placeholder="email" autocomplete="email"
+      <input class="gate-input" id="gateEmail" type="email" placeholder="email address" autocomplete="email"
         onkeydown="if(event.key==='Enter')document.getElementById('gatePassword').focus()"/>
     </div>
     <div class="gate-field">
@@ -134,9 +142,12 @@
         onkeydown="if(event.key==='Enter')gateSubmit()"/>
     </div>
 
-    <div id="gateError" style="font-size:12px;color:#f87171;max-width:340px;width:100%;margin-bottom:8px;min-height:18px;text-align:center;"></div>
+    <div id="gateError" class="gate-error-msg"></div>
 
-    <button class="gate-btn" id="gateBtn" onclick="gateSubmit()">sign in →</button>
+    <button class="gate-btn" id="gateBtn" onclick="gateSubmit()">
+      <span id="gateBtnLabel">sign in</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
     <button class="gate-skip" onclick="gateSkip()">continue without account</button>
   </div>
 </div>
@@ -146,7 +157,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="memoryScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <div class="aria-mini"></div>
     <div class="top-bar-info">
       <div class="top-bar-name">My Memory</div>
@@ -177,13 +188,26 @@
 <div class="screen active" id="introScreen">
   <div class="intro-scroll">
 
+    <div class="aria-avatar-wrap">
 
-      <div class="sound-bars" id="mainSoundBars">
-        <div class="sound-bar"></div><div class="sound-bar"></div><div class="sound-bar"></div><div class="sound-bar"></div><div class="sound-bar"></div>
+      <!-- Portrait — shown naturally, no circle crop -->
+      <div class="aria-portrait-container">
+        <div class="sound-bars" id="mainSoundBars">
+          <div class="sound-bar"></div><div class="sound-bar"></div><div class="sound-bar"></div><div class="sound-bar"></div><div class="sound-bar"></div>
+        </div>
+        <img src="https://i.imgur.com/NeQqqKG.png" class="aria-portrait-img" alt="Aria"/>
+        <div class="aria-portrait-glow"></div>
       </div>
+
+      <!-- Name + tagline tight together -->
       <div class="aria-name">Aria</div>
       <div class="aria-full-name">AUTOMATED · REPLY · INTELLIGENCE · ASSISTANT</div>
-      <div class="pl-brand pl-brand--intro"><img src="https://i.imgur.com/3IXfEl4.jpeg" class="pl-logo" alt="Paradigm Leveling"/>by Paradigm Leveling</div>
+
+      <!-- Brand — right under tagline, no large gap -->
+      <div class="pl-brand pl-brand--intro">
+        <img src="https://i.imgur.com/3IXfEl4.jpeg" class="pl-logo" alt="Paradigm Leveling"/>
+        <span>by Paradigm Leveling</span>
+      </div>
 
     </div>
 
@@ -238,7 +262,7 @@
           <div>someone messaged me</div>
           <div class="option-sub">i'll write back in your voice</div>
         </div>
-        <span class="option-arrow">›</span>
+        <span class="option-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
       </button>
       <button class="option-btn" onclick="goToContacts('start')">
         <span class="option-icon">
@@ -248,7 +272,7 @@
           <div>start a conversation</div>
           <div class="option-sub">i'll say something so you don't have to</div>
         </div>
-        <span class="option-arrow">›</span>
+        <span class="option-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
       </button>
       <button class="option-btn" onclick="showScreen('queueScreen')">
         <span class="option-icon">
@@ -258,7 +282,7 @@
           <div>check who needs a reply</div>
           <div class="option-sub">swipeable queue — who's been left on read</div>
         </div>
-        <span class="option-arrow">›</span>
+        <span class="option-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
       </button>
       <button class="option-btn" onclick="showScreen('presendScreen')" style="border-color:rgba(244,114,182,0.18);background:rgba(244,114,182,0.04);">
         <span class="option-icon" style="background:var(--rose-dim);border-color:var(--rose-border);color:var(--rose);">
@@ -268,7 +292,7 @@
           <div>check before you send</div>
           <div class="option-sub" style="color:var(--rose);opacity:0.75;">I read your draft — flag what could backfire</div>
         </div>
-        <span class="option-arrow" style="color:var(--rose);">›</span>
+        <span class="option-arrow" style="color:var(--rose);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
       </button>
       <button class="option-btn" onclick="showScreen('historyScreen')">
         <span class="option-icon">
@@ -278,7 +302,7 @@
           <div>view reply history</div>
           <div class="option-sub">what i've drafted before</div>
         </div>
-        <span class="option-arrow">›</span>
+        <span class="option-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
       </button>
       <button class="option-btn" onclick="showScreen('longGameScreen')" style="border-color:rgba(167,139,250,0.2);background:rgba(167,139,250,0.03);">
         <span class="option-icon" style="background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.25);color:#a78bfa;">
@@ -288,7 +312,7 @@
           <div>the long game</div>
           <div class="option-sub" style="color:rgba(167,139,250,0.8);">map out a multi-step conversation plan</div>
         </div>
-        <span class="option-arrow" style="color:#a78bfa;">›</span>
+        <span class="option-arrow" style="color:#a78bfa;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
       </button>
     </div>
 
@@ -300,7 +324,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="contactScreen">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
 
     <div class="top-bar-info">
       <div class="top-bar-name">Aria</div>
@@ -334,7 +358,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="replyScreen">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('contactScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('contactScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
 
     <div class="top-bar-info">
       <div class="top-bar-name" id="replyTopName">Aria</div>
@@ -500,7 +524,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="historyScreen">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
 
     <div class="top-bar-info">
       <div class="top-bar-name">Reply History</div>
@@ -517,7 +541,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="profileScreen">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <div class="top-bar-info">
       <div class="top-bar-name">Your Voice Profile</div>
       <div class="top-bar-status">● personalised</div>
@@ -697,7 +721,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="moodScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <div class="top-bar-info">
       <div class="top-bar-name">Today's Vibe</div>
       <div class="top-bar-status">● sets tone for all replies</div>
@@ -749,7 +773,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="presendScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <div class="aria-mini" style="background:radial-gradient(circle at 35% 35%,#f9a8d4,#ec4899);box-shadow:0 0 16px rgba(244,114,182,0.35);flex-shrink:0;border-radius:50%;"></div>
     <div class="top-bar-info">
       <div class="top-bar-name">Pre-Send Check</div>
@@ -854,7 +878,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="glowupScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <img src="" class="aria-mini" style="object-fit:cover;object-position:center top;border-radius:50%;" id="glowupAriaImg"/>
     <div class="top-bar-info">
       <div class="top-bar-name">Message Glow-Up</div>
@@ -907,7 +931,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="redflagScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <img src="" class="aria-mini" style="object-fit:cover;object-position:center top;border-radius:50%;"/>
     <div class="top-bar-info">
       <div class="top-bar-name">Red Flag Detector</div>
@@ -948,7 +972,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="vibeScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <img src="" class="aria-mini" style="object-fit:cover;object-position:center top;border-radius:50%;"/>
     <div class="top-bar-info">
       <div class="top-bar-name">Vibe Report</div>
@@ -1051,7 +1075,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="contactProfileScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" id="contactProfileBackBtn" onclick="showScreen('contactScreen')">←</button>
+    <button class="back-btn" id="contactProfileBackBtn" onclick="showScreen('contactScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <div class="top-bar-info">
       <div class="top-bar-name" id="cpName">Contact</div>
       <div class="top-bar-status" id="cpRel">● contact</div>
@@ -1086,7 +1110,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="queueScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
      <div class="top-bar-info">
       <div class="top-bar-name">Reply Queue</div>
       <div class="top-bar-status">● swipe to act</div>
@@ -1112,7 +1136,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="longGameScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <div class="top-bar-info">
       <div class="top-bar-name">The Long Game</div>
       <div class="top-bar-status">● multi-step plans</div>
@@ -1129,7 +1153,7 @@
 <!-- Long Game: Arc Preview screen (shown after generation, before committing) -->
 <div class="screen" id="lgArcPreviewScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('longGameScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('longGameScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <div class="top-bar-info">
       <div class="top-bar-name">your game plan</div>
       <div class="top-bar-status" id="lgPreviewStatus">● review before starting</div>
@@ -1141,7 +1165,7 @@
 <!-- Long Game: Detail screen (overlays longGameScreen) -->
 <div class="screen" id="lgDetailScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('longGameScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('longGameScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <div class="top-bar-info">
       <div class="top-bar-name" id="lgDetailName">Game Plan</div>
       <div class="top-bar-status" id="lgDetailStatus">● in progress</div>
@@ -1541,7 +1565,11 @@
     <button class="modal-close" onclick="closeModal('authModal')">×</button>
 
     <div id="authDefault">
-      <div class="auth-orb-wrap"><div class="auth-orb" style="overflow:hidden;"><img src="https://i.imgur.com/NeQqqKG.png" style="width:160%;height:160%;object-fit:cover;object-position:center 15%;margin-left:-30%;margin-top:-5%;" /></div></div>
+      <div class="auth-orb-wrap">
+        <div class="auth-portrait-wrap">
+          <img src="https://i.imgur.com/NeQqqKG.png" class="auth-portrait-img" alt="Aria"/>
+        </div>
+      </div>
       <div class="modal-title" style="text-align:center;">welcome to Aria</div>
       <div class="pl-brand pl-brand--modal"><img src="https://i.imgur.com/3IXfEl4.jpeg" class="pl-logo" alt="Paradigm Leveling"/>by Paradigm Leveling</div>
       <div class="modal-sub" style="text-align:center;">sign in to save contacts, history & settings.</div>
@@ -1563,7 +1591,7 @@
             onkeydown="if(event.key==='Enter')handleAuthSubmit('signin')"/>
         </div>
         <div id="authSigninError" style="font-size:12px;color:#f87171;margin-bottom:8px;min-height:16px;"></div>
-        <button class="auth-btn" id="authSubmitBtn" onclick="handleAuthSubmit('signin')">Sign in →</button>
+        <button class="auth-btn" id="authSubmitBtn" onclick="handleAuthSubmit('signin')">Sign in <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
       </div>
 
       <div id="authSignupFields" style="display:none;">
@@ -1583,7 +1611,7 @@
             onkeydown="if(event.key==='Enter')handleAuthSubmit('signup')"/>
         </div>
         <div id="authSignupError" style="font-size:12px;color:#f87171;margin-bottom:8px;min-height:16px;"></div>
-        <button class="auth-btn" id="authSignupBtn" onclick="handleAuthSubmit('signup')">Create account →</button>
+        <button class="auth-btn" id="authSignupBtn" onclick="handleAuthSubmit('signup')">Create account <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
       </div>
 
       <div class="auth-divider">or</div>
@@ -1595,7 +1623,7 @@
         <div class="auth-sent-icon" style="background:var(--green-dim);border:1px solid rgba(52,211,153,0.25);font-size:28px;">✓</div>
         <div class="auth-sent-title">you're in</div>
         <div class="auth-sent-sub">welcome to Aria.</div>
-        <button class="auth-btn" onclick="closeModal('authModal')" style="margin-top:0;">let's go →</button>
+        <button class="auth-btn" onclick="closeModal('authModal')" style="margin-top:0;">let's go <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
       </div>
     </div>
   </div>
