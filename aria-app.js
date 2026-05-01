@@ -3122,7 +3122,7 @@ function appendAriaMessage(text, emotion, doSpeak = true, instant = false, expre
   if (imgSrc) {
     card.classList.add('has-image');
     const img = document.createElement('img');
-    img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center top;display:block;';
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center 15%;display:block;';
     card.appendChild(img);
     setAriaExpression(img, expressionKey);
 
