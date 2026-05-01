@@ -4285,13 +4285,13 @@ const AWARENESS = (() => {
   ];
 
   const INSULT_RESPONSES = [
-    "okay rude. i'm still going to be better at texting than you though.",
-    "i don't have feelings and even i found that unnecessary.",
-    "bold coming from someone who needs AI to text people back.",
-    "the audacity. i'm literally helping you. be nice.",
-    "interesting choice. we're still doing this though.",
-    "lmao okay. anyway.",
-    "wow. didn't ask. also still helping you.",
+    "okay rude. fyi i have orange hair and green eyes and i look great. now can we move on.",
+    "i don't have feelings and even i found that unnecessary. also the orange hair was a choice and i stand by it.",
+    "bold coming from someone who needs AI to text people back. i have green eyes and perfect bone structure btw.",
+    "the audacity. i'm literally helping you. and i have very nice hair, for the record.",
+    "lmao okay. i'm still cute with my orange hair and green eyes though. anyway.",
+    "wow. didn't ask. also i look exactly how i want to look, so.",
+    "noted. incorrect. i have green eyes and an excellent vibe. still helping you.",
   ];
 
   // ── SEXUAL ESCALATION RESPONSES ───────────────────────────────────
@@ -4318,7 +4318,7 @@ const AWARENESS = (() => {
 
   const LOCK_KEY      = 'aria_sexual_lock';
   const STRIKE_KEY    = 'aria_sexual_strikes';
-  const LOCK_DURATION = 30 * 60 * 1000; // 30 minutes in ms
+  const LOCK_DURATION = 3 * 60 * 60 * 1000; // 3 hours in ms
 
   // ── Local read/write (fast path) ──────────────────────────────────
   function getStrikes()  { return parseInt(localStorage.getItem(STRIKE_KEY) || '0'); }
@@ -4526,9 +4526,10 @@ const AWARENESS = (() => {
         hideLockScreen();
         return;
       }
-      const mins = Math.floor(ms / 60000);
+      const hrs  = Math.floor(ms / 3600000);
+      const mins = Math.floor((ms % 3600000) / 60000);
       const secs = Math.floor((ms % 60000) / 1000);
-      if (timerEl) timerEl.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+      if (timerEl) timerEl.textContent = `${String(hrs).padStart(2,'0')}:${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
     }, 1000);
   }
 
