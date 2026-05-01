@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paradigm Leveling</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@700;800;900&family=Barlow+Condensed:wght@300;400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: #000000;
+  }
+
+  .logo-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding: 40px 60px;
+  }
+
+  /* ── Chevron icon ── */
+  .chevrons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: -6px;
+    margin-bottom: 28px;
+    position: relative;
+  }
+
+  .chevron {
+    width: 68px;
+    height: 80px;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  /* Each chevron is two angled bars forming a ">" */
+  .chevron svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    filter: drop-shadow(0 4px 16px rgba(0,0,0,0.25));
+  }
+
+  /* ── Word mark ── */
+  .wordmark {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  .paradigm {
+    font-family: 'Barlow', 'Arial Black', sans-serif;
+    font-weight: 800;
+    font-size: 72px;
+    letter-spacing: 0.04em;
+    color: #ffffff;
+    line-height: 1;
+    text-shadow: 0 2px 24px rgba(0,0,0,0.3);
+  }
+
+  .divider {
+    width: 100%;
+    height: 2px;
+    margin: 10px 0 10px;
+    background: linear-gradient(90deg, #2563b8 0%, #48c99a 100%);
+    border-radius: 2px;
+  }
+
+  .leveling {
+    font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+    font-weight: 300;
+    font-size: 28px;
+    letter-spacing: 0.45em;
+    color: #9ca3af;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* ── Animation ── */
+  .chevron:nth-child(1) { animation: fadeSlide 0.6s 0.1s both ease-out; }
+  .chevron:nth-child(2) { animation: fadeSlide 0.6s 0.25s both ease-out; }
+  .chevron:nth-child(3) { animation: fadeSlide 0.6s 0.4s both ease-out; }
+  .chevron:nth-child(4) { animation: fadeSlide 0.6s 0.55s both ease-out; }
+  .paradigm            { animation: fadeUp 0.7s 0.5s both ease-out; }
+  .divider             { animation: expandWidth 0.6s 0.85s both ease-out; }
+  .leveling            { animation: fadeUp 0.6s 0.9s both ease-out; }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateX(-18px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes expandWidth {
+    from { transform: scaleX(0); transform-origin: left; }
+    to   { transform: scaleX(1); transform-origin: left; }
+  }
+</style>
+</head>
+<body>
+<div class="logo-wrap">
+
+  <!-- Four chevrons: first is blue, remaining are teal/mint gradient -->
+  <div class="chevrons">
+
+    <!-- Chevron 1 – deep blue -->
+    <div class="chevron">
+      <svg viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g1" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#3b82f6"/>
+            <stop offset="100%" stop-color="#1d4ed8"/>
+          </linearGradient>
+        </defs>
+        <path d="M8 4 L52 40 L8 76" stroke="url(#g1)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </div>
+
+    <!-- Chevron 2 – blue→teal -->
+    <div class="chevron">
+      <svg viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g2" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#38bdf8"/>
+            <stop offset="100%" stop-color="#34d399"/>
+          </linearGradient>
+        </defs>
+        <path d="M8 4 L52 40 L8 76" stroke="url(#g2)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </div>
+
+    <!-- Chevron 3 – teal -->
+    <div class="chevron">
+      <svg viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g3" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#4ade80"/>
+            <stop offset="100%" stop-color="#34d399"/>
+          </linearGradient>
+        </defs>
+        <path d="M8 4 L52 40 L8 76" stroke="url(#g3)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </div>
+
+    <!-- Chevron 4 – lighter mint -->
+    <div class="chevron">
+      <svg viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g4" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#6ee7b7"/>
+            <stop offset="100%" stop-color="#a7f3d0"/>
+          </linearGradient>
+        </defs>
+        <path d="M8 4 L52 40 L8 76" stroke="url(#g4)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+    </div>
+
+  </div>
+
+  <div class="wordmark">
+    <span class="paradigm">PARADIGM</span>
+    <div class="divider"></div>
+    <span class="leveling">L E V E L I N G</span>
+  </div>
+
+</div>
+</body>
+</html>
