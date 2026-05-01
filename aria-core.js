@@ -916,11 +916,17 @@ function showAriaAck(msg) {
   const imgEl = document.getElementById('insightOrbImg');
   if (!banner || !textEl || !imgEl) return;
   const prev = { src: imgEl.src, text: textEl.textContent };
-  imgEl.src = 'https://i.imgur.com/aku1uwo.png';
+  // Use central expression setter (defined in aria-app.js) so transition fires.
+  // 'soft' = hopeful/gentle image — fits an acknowledgement moment.
+  if (typeof setAriaExpression === 'function') {
+    setAriaExpression(imgEl, 'soft');
+  } else {
+    imgEl.src = 'https://i.imgur.com/ji329r1.png'; // hopeful fallback
+  }
   textEl.textContent = msg;
   banner.classList.add('visible');
   setTimeout(() => {
-    imgEl.src = prev.src;
+    if (prev.src) imgEl.src = prev.src;
     textEl.textContent = prev.text;
   }, 5000);
 }

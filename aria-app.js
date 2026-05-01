@@ -2598,12 +2598,11 @@ function showDriftInBanner(contact, drift) {
   const imgEl  = document.getElementById('insightOrbImg');
   if (!banner || !textEl || !imgEl) return;
 
-  // Pick photo based on drift level
-  const photo = drift.level === 'lost'   ? 'https://i.imgur.com/OncPXzL.png'  // disappointed
-              : drift.level === 'fading' ? 'https://i.imgur.com/aku1uwo.png'  // cunning/noticing
-              :                            'https://i.imgur.com/ZENuLRe.png'; // urgent
-
-  imgEl.src = photo;
+  // Pick photo based on drift level using the central expression map
+  const driftKey = drift.level === 'lost'   ? 'drift_lost'
+                 : drift.level === 'fading' ? 'drift_fading'
+                 :                            'drift_urgent';
+  setAriaExpression(imgEl, driftKey);
   // Personalise with contact name
   const line = drift.preview.replace('them', contact.name).replace('you two', `you and ${contact.name}`);
   textEl.textContent = line;
@@ -2783,7 +2782,9 @@ function loadHomeInsight() {
   const card = pool[Math.floor(Math.random() * pool.length)];
   const line = card.lines[Math.floor(Math.random() * card.lines.length)];
 
-  imgEl.src = card.img;
+  // Set image via central helper so transition fires
+  if (imgEl.src !== card.img) imgEl.src = card.img;
+  ariaExprTransition(imgEl);
   textEl.textContent = line;
   banner.classList.add('visible');
 }
@@ -2914,23 +2915,83 @@ let chatAriaEmotion = 'neutral';
 let chatIsTyping = false;
 let chatStreamInterval = null;
 
+// ── ARIA EXPRESSION IMAGE MAP ─────────────────────────────────────
+// Each key maps an expression name to a hosted image URL.
+// null = use gradient orb placeholder (no layout shift).
+// To add/change an image, update the URL here only — everything else
+// (chat orb, home banner, drift alerts) reads from this single source.
+const ARIA_EXPRESSION_IMGS = {
+  excited:    'https://i.imgur.com/PeWdd8a.png',  // excited
+  jealous:    'https://i.imgur.com/PeWdd8a.png',  // shared with excited (high energy)
+  amused:     'https://i.imgur.com/ziWiVuL.png',  // amused (dedicated)
+  playful:    'https://i.imgur.com/68qFlMp.png',  // being silly
+  suspicious: 'https://i.imgur.com/aku1uwo.png',  // cunning
+  proud:      'https://i.imgur.com/ji329r1.png',  // hopeful
+  soft:       'https://i.imgur.com/ji329r1.png',  // hopeful / gentle (shared)
+  worried:    'https://i.imgur.com/OncPXzL.png',  // disappointed (shared)
+  annoyed:    'https://i.imgur.com/OncPXzL.png',  // disappointed (shared)
+  focused:    'https://i.imgur.com/ZENuLRe.png',  // urgency
+  ambitious:  'https://i.imgur.com/ZENuLRe.png',  // urgency (shared)
+  // Drift-specific (referenced directly in showDriftInBanner)
+  drift_lost:   'https://i.imgur.com/OncPXzL.png',
+  drift_fading: 'https://i.imgur.com/aku1uwo.png',
+  drift_urgent: 'https://i.imgur.com/ZENuLRe.png',
+  // No image for: default, neutral → gradient orb placeholder
+  default:    null,
+  neutral:    null,
+};
+
 const EMOTION_META = {
   // emotion → { emoji, label, color, expression, img }
-  // img: null = gradient placeholder. Set to './images/aria/[expression].png' when ready.
-  // expression can differ from emotion key — e.g. amused emotion with soft expression.
-  excited:    { emoji: '✨', label: 'excited',       color: 'rgba(251,191,36,0.7)',   expression: 'excited',    img: null },
-  jealous:    { emoji: '👀', label: 'a little jealous', color: 'rgba(244,114,182,0.7)', expression: 'jealous',  img: null },
-  worried:    { emoji: '🫧', label: 'worried',        color: 'rgba(96,165,250,0.7)',   expression: 'worried',   img: null },
-  proud:      { emoji: '🌟', label: 'proud of you',   color: 'rgba(52,211,153,0.7)',   expression: 'proud',     img: null },
-  annoyed:    { emoji: '😑', label: 'lowkey annoyed', color: 'rgba(251,146,60,0.6)',   expression: 'annoyed',   img: null },
-  amused:     { emoji: '😌', label: 'amused',         color: 'rgba(167,139,250,0.7)',  expression: 'amused',    img: null },
-  soft:       { emoji: '🕊️', label: 'being gentle',  color: 'rgba(96,165,250,0.5)',   expression: 'soft',      img: null },
-  ambitious:  { emoji: '🔥', label: 'pushing you',   color: 'rgba(251,191,36,0.8)',   expression: 'focused',   img: null },
-  neutral:    { emoji: '●',  label: 'here for you',  color: 'rgba(244,114,182,0.5)',  expression: 'default',   img: null },
-  playful:    { emoji: '😏', label: 'feeling playful', color: 'rgba(244,114,182,0.7)', expression: 'playful',  img: null },
-  suspicious: { emoji: '🤨', label: 'not buying it', color: 'rgba(251,146,60,0.7)',   expression: 'suspicious', img: null },
-  focused:    { emoji: '🎯', label: 'focused',        color: 'rgba(167,139,250,0.6)',  expression: 'focused',   img: null },
+  // img is resolved from ARIA_EXPRESSION_IMGS at runtime.
+  excited:    { emoji: '✨', label: 'excited',          color: 'rgba(251,191,36,0.7)',   expression: 'excited'    },
+  jealous:    { emoji: '👀', label: 'a little jealous', color: 'rgba(244,114,182,0.7)', expression: 'jealous'    },
+  worried:    { emoji: '🫧', label: 'worried',           color: 'rgba(96,165,250,0.7)',  expression: 'worried'    },
+  proud:      { emoji: '🌟', label: 'proud of you',      color: 'rgba(52,211,153,0.7)',  expression: 'proud'      },
+  annoyed:    { emoji: '😑', label: 'lowkey annoyed',   color: 'rgba(251,146,60,0.6)',  expression: 'annoyed'    },
+  amused:     { emoji: '😌', label: 'amused',            color: 'rgba(167,139,250,0.7)', expression: 'amused'     },
+  soft:       { emoji: '🕊️', label: 'being gentle',    color: 'rgba(96,165,250,0.5)',  expression: 'soft'       },
+  ambitious:  { emoji: '🔥', label: 'pushing you',      color: 'rgba(251,191,36,0.8)',  expression: 'ambitious'  },
+  neutral:    { emoji: '●',  label: 'here for you',     color: 'rgba(244,114,182,0.5)', expression: 'neutral'    },
+  playful:    { emoji: '😏', label: 'feeling playful',  color: 'rgba(244,114,182,0.7)', expression: 'playful'    },
+  suspicious: { emoji: '🤨', label: 'not buying it',    color: 'rgba(251,146,60,0.7)',  expression: 'suspicious' },
+  focused:    { emoji: '🎯', label: 'focused',           color: 'rgba(167,139,250,0.6)', expression: 'focused'    },
 };
+
+// ── ARIA EXPRESSION TRANSITION ENGINE ────────────────────────────
+// Applies a randomised transition (style + timing) to an image element
+// when Aria's expression changes. Used everywhere an expression img renders.
+const ARIA_TRANSITIONS = ['aria-expr-fade', 'aria-expr-pop', 'aria-expr-slide'];
+
+function ariaExprTransition(imgEl) {
+  // Remove any existing transition classes
+  ARIA_TRANSITIONS.forEach(c => imgEl.classList.remove(c));
+  // Pick random style + random delay 0–300ms
+  const cls = ARIA_TRANSITIONS[Math.floor(Math.random() * ARIA_TRANSITIONS.length)];
+  const delay = Math.floor(Math.random() * 300);
+  imgEl.style.animationDelay = delay + 'ms';
+  // Force reflow so class re-application triggers animation
+  void imgEl.offsetWidth;
+  imgEl.classList.add(cls);
+}
+
+// ── CENTRAL EXPRESSION SETTER ─────────────────────────────────────
+// setAriaExpression(imgEl, expressionKey)
+// Resolves the URL from ARIA_EXPRESSION_IMGS, sets the src, and
+// applies a randomised transition. Pass null imgEl to no-op safely.
+function setAriaExpression(imgEl, expressionKey) {
+  if (!imgEl) return;
+  const src = ARIA_EXPRESSION_IMGS[expressionKey] || null;
+  if (!src) return; // no image for this expression — leave orb as gradient
+  if (imgEl.src !== src) imgEl.src = src;
+  imgEl.alt = expressionKey;
+  ariaExprTransition(imgEl);
+}
+
+// Helper: resolve img URL for an expression key (used in appendAriaMessage)
+function ariaImgForExpression(expressionKey) {
+  return ARIA_EXPRESSION_IMGS[expressionKey] || null;
+}
 
 function initChat() {
   chatHistory = [];
@@ -3048,13 +3109,7 @@ function appendAriaMessage(text, emotion, doSpeak = true, instant = false, expre
 
   // expression can be overridden by AI response or falls back to emotion's default
   const expressionKey = expressionOverride || meta.expression || 'default';
-  const imgSrc = (() => {
-    // Look for an img on the matching expression across all entries, fall back to meta.img
-    for (const m of Object.values(EMOTION_META)) {
-      if (m.expression === expressionKey && m.img) return m.img;
-    }
-    return meta.img || null;
-  })();
+  const imgSrc = ariaImgForExpression(expressionKey);
 
   const wrap = document.createElement('div');
   wrap.className = 'chat-msg-aria-wrap';
@@ -3078,10 +3133,10 @@ function appendAriaMessage(text, emotion, doSpeak = true, instant = false, expre
     // Image mode — upgrade orb to show expression face
     orb.classList.add('has-expression');
     const img = document.createElement('img');
-    img.src = imgSrc;
-    img.alt = expressionKey;
     img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:50%;';
     orb.appendChild(img);
+    // Use central setter so randomised transition fires
+    setAriaExpression(img, expressionKey);
   }
   // else: gradient placeholder — no layout shift
 
