@@ -205,9 +205,8 @@ body::after {
 .gate-ring { position:absolute;inset:-8px;border-radius:50%;border:1px solid rgba(249,115,22,0.22);animation:ring-pulse 3.5s ease-in-out infinite; }
 .gate-ring-2 { position:absolute;inset:-18px;border-radius:50%;border:1px solid rgba(249,115,22,0.1);animation:ring-pulse 3.5s ease-in-out infinite 0.5s; }
 
-.gate-title { font-family: 'Instrument Serif', serif; font-size: 38px; letter-spacing: 3px; margin-bottom: 4px; text-align: center; }
-.gate-tagline { font-size: 9px; letter-spacing: 2px; color: var(--muted); text-align: center; text-transform: uppercase; margin-bottom: 6px; }
-.gate-sub { font-size: 13px; color: var(--muted); text-align: center; line-height: 1.7; margin-bottom: 16px; max-width: 280px; }
+.gate-title { font-family: 'Instrument Serif', serif; font-size: 38px; letter-spacing: 3px; margin-bottom: 6px; text-align: center; }
+.gate-sub { font-size: 13px; color: var(--muted); text-align: center; line-height: 1.7; margin-bottom: 32px; max-width: 280px; }
 
 .gate-memory-badge {
   display: inline-flex; align-items: center; gap: 6px;
@@ -2856,32 +2855,176 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 }
 
 /* ─── PARADIGM LEVELING BRANDING ──────────────────────────── */
-/* ─── PARADIGM LEVELING BYLINE ─────────────────────────── */
-.pl-byline {
-  font-size: 10px;
-  letter-spacing: 1.5px;
+.pl-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
   color: var(--muted);
-  text-align: center;
-  text-transform: uppercase;
   margin-bottom: 18px;
-  opacity: 0.65;
   user-select: none;
 }
-.pl-byline-name {
-  color: var(--rose);
-  font-weight: 600;
-  opacity: 0.9;
-  letter-spacing: 1px;
+.pl-logo {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  opacity: 0.7;
+  flex-shrink: 0;
 }
-.pl-byline--intro {
-  margin-top: 4px;
+.pl-brand--intro {
+  margin-top: 6px;
   margin-bottom: 0;
-  font-size: 9px;
-  opacity: 0.5;
+  justify-content: center;
+  opacity: 0.6;
 }
-.pl-byline--modal {
-  margin-top: -2px;
-  margin-bottom: 12px;
-  font-size: 10px;
+.pl-brand--modal {
+  justify-content: center;
+  margin-bottom: 4px;
+  margin-top: -6px;
+  font-size: 10.5px;
 }
 
+
+/* ─── LOADING SCREEN ───────────────────────────────────────── */
+#ariaLoader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+#ariaLoader.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.loader-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.loader-orb-wrap {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.loader-orb {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 0 60px rgba(249,115,22,0.55), 0 0 120px rgba(249,115,22,0.2);
+  animation: breathe 2.8s ease-in-out infinite;
+  flex-shrink: 0;
+}
+.loader-orb-img {
+  width: 160%;
+  height: 160%;
+  object-fit: cover;
+  object-position: center 15%;
+  margin-left: -30%;
+  margin-top: -5%;
+}
+.loader-ring {
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(249,115,22,0.3);
+  animation: ring-pulse 2.8s ease-in-out infinite;
+}
+.loader-ring-2 {
+  position: absolute;
+  inset: -22px;
+  border-radius: 50%;
+  border: 1px solid rgba(249,115,22,0.12);
+  animation: ring-pulse 2.8s ease-in-out infinite 0.4s;
+}
+.loader-name {
+  font-family: 'Instrument Serif', serif;
+  font-size: 36px;
+  color: var(--text);
+  letter-spacing: 3px;
+  margin-bottom: 6px;
+}
+.loader-bar-wrap {
+  width: 120px;
+  height: 2px;
+  background: rgba(249,115,22,0.12);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.loader-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #f97316, #fb923c);
+  border-radius: 2px;
+  animation: loader-fill 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes loader-fill {
+  0%   { width: 0%; opacity: 1; }
+  75%  { width: 85%; opacity: 1; }
+  90%  { width: 95%; opacity: 1; }
+  100% { width: 100%; opacity: 0.6; }
+}
+.loader-by {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0.5;
+}
+.loader-by span {
+  color: var(--rose);
+  font-weight: 600;
+}
+
+/* ─── ARROW / BUTTON ICON FIXES ────────────────────────────── */
+.back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.back-btn svg,
+.chat-back-btn svg {
+  display: block;
+  flex-shrink: 0;
+}
+.option-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.option-arrow svg {
+  display: block;
+}
+/* Inline SVG in button text — align vertically */
+.gate-btn svg,
+.gen-reply-btn svg,
+.copy-btn svg,
+.regen-btn svg,
+.presend-run-btn svg,
+.presend-copy-fixed svg,
+.onboard-next-btn svg,
+.lg-setup-btn svg,
+.queue-action-btn svg,
+.auth-btn svg,
+.action-btn-sm svg,
+.btn-primary svg {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 4px;
+  flex-shrink: 0;
+}

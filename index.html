@@ -6,7 +6,7 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<title>Aria — by Paradigm Leveling</title>
+<title>Aria · Paradigm Leveling</title>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -38,6 +38,25 @@
 </head>
 <body>
 
+<!-- ═══════════════════════════════════════════════
+     LOADING SCREEN
+════════════════════════════════════════════════ -->
+<div id="ariaLoader">
+  <div class="loader-inner">
+    <div class="loader-orb-wrap">
+      <div class="loader-orb">
+        <img src="https://i.imgur.com/NeQqqKG.png" class="loader-orb-img" />
+      </div>
+      <div class="loader-ring"></div>
+      <div class="loader-ring-2"></div>
+    </div>
+    <div class="loader-name">Aria</div>
+    <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+    <div class="loader-by">by <span>Paradigm Leveling</span></div>
+  </div>
+</div>
+
+
 <!-- Ambient layers -->
 <div class="ambient ambient-1"></div>
 <div class="ambient ambient-2"></div>
@@ -54,8 +73,8 @@
       <div class="gate-ring-2"></div>
     </div>
     <div class="gate-title">Aria</div>
-    <div class="gate-tagline">AUTOMATED · REPLY · INTELLIGENCE · ASSISTANT</div>
-    <div class="pl-byline">by <span class="pl-byline-name">Paradigm Leveling</span></div>
+    <div class="gate-tagline">AUTOMATED · REPLY · INTELLIGENCE · ASSISTANT.</div>
+    <div class="pl-brand"><img src="https://i.imgur.com/3IXfEl4.jpeg" class="pl-logo" alt="Paradigm Leveling"/>by Paradigm Leveling</div>
     <div class="gate-sub">your AI texting co-pilot.<br>sign in to unlock memory.</div>
     <div class="gate-memory-badge"><span>🧠</span> memory engine enabled</div>
 
@@ -82,7 +101,7 @@
 
     <div id="gateError" style="font-size:12px;color:#f87171;max-width:340px;width:100%;margin-bottom:8px;min-height:18px;text-align:center;"></div>
 
-    <button class="gate-btn" id="gateBtn" onclick="gateSubmit()">sign in →</button>
+    <button class="gate-btn" id="gateBtn" onclick="gateSubmit()">sign in <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <button class="gate-skip" onclick="gateSkip()">continue without account</button>
   </div>
 </div>
@@ -92,7 +111,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="memoryScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="aria-mini"></div>
     <div class="top-bar-info">
       <div class="top-bar-name">My Memory</div>
@@ -129,7 +148,7 @@
       </div>
       <div class="aria-name">Aria</div>
       <div class="aria-full-name">AUTOMATED · REPLY · INTELLIGENCE · ASSISTANT</div>
-      <div class="pl-byline pl-byline--intro">by <span class="pl-byline-name">Paradigm Leveling</span></div>
+      <div class="pl-brand pl-brand--intro"><img src="https://i.imgur.com/3IXfEl4.jpeg" class="pl-logo" alt="Paradigm Leveling"/>by Paradigm Leveling</div>
 
     </div>
 
@@ -184,7 +203,7 @@
           <div>someone messaged me</div>
           <div class="option-sub">i'll write back in your voice</div>
         </div>
-        <span class="option-arrow">›</span>
+        <span class="option-arrow"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       </button>
       <button class="option-btn" onclick="goToContacts('start')">
         <span class="option-icon">
@@ -194,7 +213,7 @@
           <div>start a conversation</div>
           <div class="option-sub">i'll say something so you don't have to</div>
         </div>
-        <span class="option-arrow">›</span>
+        <span class="option-arrow"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       </button>
       <button class="option-btn" onclick="showScreen('queueScreen')">
         <span class="option-icon">
@@ -204,7 +223,7 @@
           <div>check who needs a reply</div>
           <div class="option-sub">swipeable queue — who's been left on read</div>
         </div>
-        <span class="option-arrow">›</span>
+        <span class="option-arrow"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       </button>
       <button class="option-btn" onclick="showScreen('presendScreen')" style="border-color:rgba(244,114,182,0.18);background:rgba(244,114,182,0.04);">
         <span class="option-icon" style="background:var(--rose-dim);border-color:var(--rose-border);color:var(--rose);">
@@ -214,7 +233,7 @@
           <div>check before you send</div>
           <div class="option-sub" style="color:var(--rose);opacity:0.75;">I read your draft — flag what could backfire</div>
         </div>
-        <span class="option-arrow" style="color:var(--rose);">›</span>
+        <span class="option-arrow" style="color:var(--rose);"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       </button>
       <button class="option-btn" onclick="showScreen('historyScreen')">
         <span class="option-icon">
@@ -224,7 +243,7 @@
           <div>view reply history</div>
           <div class="option-sub">what i've drafted before</div>
         </div>
-        <span class="option-arrow">›</span>
+        <span class="option-arrow"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       </button>
       <button class="option-btn" onclick="showScreen('longGameScreen')" style="border-color:rgba(167,139,250,0.2);background:rgba(167,139,250,0.03);">
         <span class="option-icon" style="background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.25);color:#a78bfa;">
@@ -234,7 +253,7 @@
           <div>the long game</div>
           <div class="option-sub" style="color:rgba(167,139,250,0.8);">map out a multi-step conversation plan</div>
         </div>
-        <span class="option-arrow" style="color:#a78bfa;">›</span>
+        <span class="option-arrow" style="color:#a78bfa;"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       </button>
     </div>
 
@@ -246,7 +265,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="contactScreen">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 
     <div class="top-bar-info">
       <div class="top-bar-name">Aria</div>
@@ -280,7 +299,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="replyScreen">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('contactScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('contactScreen')"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 
     <div class="top-bar-info">
       <div class="top-bar-name" id="replyTopName">Aria</div>
@@ -360,7 +379,7 @@
     </div>
 
     <button class="ask-aria-btn" onclick="openClarifyModal()">ask me to clarify first</button>
-    <button class="gen-reply-btn" id="genReplyBtn" onclick="generateReply()">let me respond →</button>
+    <button class="gen-reply-btn" id="genReplyBtn" onclick="generateReply()">let me respond <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
 
   <!-- Thinking -->
@@ -400,8 +419,8 @@
 
     <!-- Action buttons row 1 -->
     <div class="action-row">
-      <button class="regen-btn" onclick="generateReply()">↺ retry</button>
-      <button class="copy-btn" id="mainCopyBtn" onclick="copyReply()">copy & send →</button>
+      <button class="regen-btn" onclick="generateReply()"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 7.5A5.5 5.5 0 1 1 7.5 2H10M10 2L12.5 4.5M10 2L12.5-.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> retry</button>
+      <button class="copy-btn" id="mainCopyBtn" onclick="copyReply()">copy & send <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
     <div style="padding:0 20px;margin-bottom:10px;">
       <button class="action-btn-sm" style="width:100%;padding:12px;border-color:var(--rose-border);color:var(--rose);" onclick="continueConvo()">
@@ -446,7 +465,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="historyScreen">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 
     <div class="top-bar-info">
       <div class="top-bar-name">Reply History</div>
@@ -463,7 +482,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="profileScreen">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="top-bar-info">
       <div class="top-bar-name">Your Voice Profile</div>
       <div class="top-bar-status">● personalised</div>
@@ -643,7 +662,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="moodScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="top-bar-info">
       <div class="top-bar-name">Today's Vibe</div>
       <div class="top-bar-status">● sets tone for all replies</div>
@@ -695,7 +714,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="presendScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="aria-mini" style="background:radial-gradient(circle at 35% 35%,#f9a8d4,#ec4899);box-shadow:0 0 16px rgba(244,114,182,0.35);flex-shrink:0;border-radius:50%;"></div>
     <div class="top-bar-info">
       <div class="top-bar-name">Pre-Send Check</div>
@@ -744,7 +763,7 @@
   </div>
 
   <!-- Run button -->
-  <button class="presend-run-btn" id="psRunBtn" onclick="runPresend()">🛑 let me check it →</button>
+  <button class="presend-run-btn" id="psRunBtn" onclick="runPresend()">🛑 let me check it <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 
   <!-- Thinking -->
   <div class="aria-thinking" id="psThinking" style="display:none;">
@@ -781,15 +800,15 @@
       <div class="presend-rewrite-toggle" id="psRewriteTabs"></div>
       <div id="psRewriteItems"></div>
       <div class="presend-action-row">
-        <button class="presend-retry-btn" onclick="runPresend()">↺ retry</button>
-        <button class="presend-copy-fixed" id="psCopyRewriteBtn" onclick="copyPresendRewrite()">copy rewrite →</button>
+        <button class="presend-retry-btn" onclick="runPresend()"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 7.5A5.5 5.5 0 1 1 7.5 2H10M10 2L12.5 4.5M10 2L12.5-.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> retry</button>
+        <button class="presend-copy-fixed" id="psCopyRewriteBtn" onclick="copyPresendRewrite()">copy rewrite <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
     </div>
 
     <!-- Copy original (check mode) -->
     <div class="presend-action-row" id="psActionOriginal" style="display:none;">
-      <button class="presend-retry-btn" onclick="runPresend()">↺ check again</button>
-      <button class="presend-copy-fixed" onclick="copyPresendOriginal()">send it anyway →</button>
+      <button class="presend-retry-btn" onclick="runPresend()"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 7.5A5.5 5.5 0 1 1 7.5 2H10M10 2L12.5 4.5M10 2L12.5-.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> check again</button>
+      <button class="presend-copy-fixed" onclick="copyPresendOriginal()">send it anyway <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
   </div>
 
@@ -800,7 +819,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="glowupScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <img src="" class="aria-mini" style="object-fit:cover;object-position:center top;border-radius:50%;" id="glowupAriaImg"/>
     <div class="top-bar-info">
       <div class="top-bar-name">Message Glow-Up</div>
@@ -813,7 +832,7 @@
     <textarea class="convo-input" id="glowupInput" rows="4" placeholder="paste your rough draft here... doesn't matter how bad it sounds"></textarea>
     <div class="paste-label" style="margin-top:10px;">WHAT VIBE ARE YOU GOING FOR? (optional)</div>
     <textarea class="convo-input" id="glowupGoal" rows="2" placeholder='e.g. "sounds less desperate" or "more chill" or "funnier"'></textarea>
-    <button class="gen-reply-btn" id="glowupBtn" onclick="runGlowup()">✨ glow it up →</button>
+    <button class="gen-reply-btn" id="glowupBtn" onclick="runGlowup()">✨ glow it up <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
 
   <div class="aria-thinking" id="glowupThinking" style="display:none;">
@@ -838,8 +857,8 @@
   </div>
 
   <div class="glowup-copy-row" id="glowupCopyRow" style="display:none;">
-    <button class="regen-btn" style="flex:1;" onclick="runGlowup()">↺ retry</button>
-    <button class="copy-btn" style="flex:2;" id="glowupCopyBtn" onclick="copyGlowup()">copy it →</button>
+    <button class="regen-btn" style="flex:1;" onclick="runGlowup()"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13 7.5A5.5 5.5 0 1 1 7.5 2H10M10 2L12.5 4.5M10 2L12.5-.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> retry</button>
+    <button class="copy-btn" style="flex:2;" id="glowupCopyBtn" onclick="copyGlowup()">copy it <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
 
   <div class="glowup-variants" id="glowupVariants">
@@ -853,7 +872,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="redflagScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <img src="" class="aria-mini" style="object-fit:cover;object-position:center top;border-radius:50%;"/>
     <div class="top-bar-info">
       <div class="top-bar-name">Red Flag Detector</div>
@@ -866,7 +885,7 @@
     <textarea class="convo-input" id="redflagInput" rows="5" placeholder="paste what they said... I'll analyse the vibe, energy, and any sus patterns"></textarea>
     <div class="paste-label" style="margin-top:10px;">WHO IS THIS? (optional)</div>
     <input class="convo-input" id="redflagWho" style="resize:none;height:auto;padding:12px 16px;" placeholder='e.g. "someone i just started talking to" or "my ex"'/>
-    <button class="gen-reply-btn" id="redflagBtn" onclick="runRedflag()" style="margin-top:10px;">🚩 scan for red flags →</button>
+    <button class="gen-reply-btn" id="redflagBtn" onclick="runRedflag()" style="margin-top:10px;">🚩 scan for red flags <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
 
   <div class="aria-thinking" id="redflagThinking" style="display:none;">
@@ -894,7 +913,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="vibeScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <img src="" class="aria-mini" style="object-fit:cover;object-position:center top;border-radius:50%;"/>
     <div class="top-bar-info">
       <div class="top-bar-name">Vibe Report</div>
@@ -947,7 +966,7 @@
       <div class="onboard-title">hey, i'm Aria 👋</div>
       <div class="onboard-sub">i write your texts for you — in your voice, not mine. first, what should i call you?</div>
       <input class="onboard-input" id="obNameInput" placeholder="your name..." maxlength="30" />
-      <button class="onboard-next-btn" onclick="obNext(1)">next →</button>
+      <button class="onboard-next-btn" onclick="obNext(1)">next <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <div class="onboard-skip" onclick="obSkipAll()">skip setup</div>
     </div>
 
@@ -977,7 +996,7 @@
           <div class="onboard-style-desc">proper grammar, professional, clear</div>
         </div>
       </div>
-      <button class="onboard-next-btn" onclick="obNext(2)">looks right →</button>
+      <button class="onboard-next-btn" onclick="obNext(2)">looks right <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
 
     <!-- Step 3: First contact -->
@@ -997,12 +1016,12 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="contactProfileScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" id="contactProfileBackBtn" onclick="showScreen('contactScreen')">←</button>
+    <button class="back-btn" id="contactProfileBackBtn" onclick="showScreen('contactScreen')"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="top-bar-info">
       <div class="top-bar-name" id="cpName">Contact</div>
       <div class="top-bar-status" id="cpRel">● contact</div>
     </div>
-    <button class="back-btn" id="cpReplyBtn" onclick="replyFromProfile()" style="font-size:12px;color:var(--rose);">reply →</button>
+    <button class="back-btn" id="cpReplyBtn" onclick="replyFromProfile()" style="font-size:12px;color:var(--rose);">reply <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
   <div class="contact-profile-header">
     <div class="contact-profile-avatar" id="cpAvatar"></div>
@@ -1032,7 +1051,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="queueScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
      <div class="top-bar-info">
       <div class="top-bar-name">Reply Queue</div>
       <div class="top-bar-status">● swipe to act</div>
@@ -1044,12 +1063,12 @@
   </div>
   <div class="queue-swipe-hint">
     <span class="queue-swipe-label">← snooze</span>
-    <span class="queue-swipe-label">reply →</span>
+    <span class="queue-swipe-label">reply <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
   </div>
   <div class="queue-stack" id="queueStack"></div>
   <div class="queue-swipe-actions" id="queueActions">
     <button class="queue-action-btn queue-action-snooze" onclick="queueSnooze()">😴 snooze</button>
-    <button class="queue-action-btn queue-action-reply" onclick="queueReply()">reply now →</button>
+    <button class="queue-action-btn queue-action-reply" onclick="queueReply()">reply now <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
 </div>
 
@@ -1058,7 +1077,7 @@
 ════════════════════════════════════════════════ -->
 <div class="screen" id="longGameScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('introScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('introScreen')"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="top-bar-info">
       <div class="top-bar-name">The Long Game</div>
       <div class="top-bar-status">● multi-step plans</div>
@@ -1075,7 +1094,7 @@
 <!-- Long Game: Arc Preview screen (shown after generation, before committing) -->
 <div class="screen" id="lgArcPreviewScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('longGameScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('longGameScreen')"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="top-bar-info">
       <div class="top-bar-name">your game plan</div>
       <div class="top-bar-status" id="lgPreviewStatus">● review before starting</div>
@@ -1087,7 +1106,7 @@
 <!-- Long Game: Detail screen (overlays longGameScreen) -->
 <div class="screen" id="lgDetailScreen" style="display:none;">
   <div class="top-bar">
-    <button class="back-btn" onclick="showScreen('longGameScreen')">←</button>
+    <button class="back-btn" onclick="showScreen('longGameScreen')"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <div class="top-bar-info">
       <div class="top-bar-name" id="lgDetailName">Game Plan</div>
       <div class="top-bar-status" id="lgDetailStatus">● in progress</div>
@@ -1116,7 +1135,7 @@
       <div class="lg-setup-label">WHAT DO YOU WANT TO HAPPEN? (optional — I'll figure it out if you're not sure)</div>
       <textarea class="lg-setup-textarea" id="lgSetupGoal" placeholder="e.g. i want us to be okay again. or: i want to ask them out. or: i'm not sure yet." rows="2"></textarea>
       <div id="lgSetupError" style="font-size:12px;color:#f87171;margin-top:8px;min-height:16px;"></div>
-      <button class="lg-setup-btn" onclick="submitLongGameSetup()">let me build the plan →</button>
+      <button class="lg-setup-btn" onclick="submitLongGameSetup()">let me build the plan <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
   </div>
 </div>
@@ -1267,7 +1286,7 @@
     </div>
     <div style="font-family:'Instrument Serif',serif;font-size:22px;color:var(--text);margin-bottom:8px;">leaving already?</div>
     <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:28px;font-style:italic;">i'll keep everything safe while you're gone.</div>
-    <button onclick="confirmLogout()" style="width:100%;padding:14px;background:linear-gradient(135deg,#ec4899,#f43f5e);border:none;border-radius:14px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;margin-bottom:10px;">yes, log me out</button>
+    <button onclick="confirmLogout()" style="width:100%;padding:14px;background:linear-gradient(135deg,#ec4899,#f43f5e);border:none;border-radius:14px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;margin-bottom:10px;">yes, log me out <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <button onclick="closeModal('logoutModal')" style="width:100%;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:14px;color:var(--muted);font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;">nevermind</button>
   </div>
 </div>
@@ -1394,7 +1413,7 @@
       </div>
     </div>
 
-    <button class="btn-primary" onclick="closeModal('toneModal');generateReply()">apply & regenerate</button>
+    <button class="btn-primary" onclick="closeModal('toneModal');generateReply()">apply & regenerate <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
 </div>
 
@@ -1439,7 +1458,7 @@
         <option value="48">2+ days</option>
       </select>
     </div>
-    <button class="btn-primary" onclick="addContact()">add contact →</button>
+    <button class="btn-primary" onclick="addContact()">add contact <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
 </div>
 
@@ -1464,7 +1483,7 @@
         <input class="clarify-q-input" id="clarifyQ3" placeholder="e.g. don't mention the party, don't apologise again..."/>
       </div>
     </div>
-    <button class="btn-primary" onclick="applyClarify()">got it, generate reply →</button>
+    <button class="btn-primary" onclick="applyClarify()">got it, generate reply <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
 </div>
 
@@ -1489,7 +1508,7 @@
     <div id="authDefault">
       <div class="auth-orb-wrap"><div class="auth-orb" style="overflow:hidden;"><img src="https://i.imgur.com/NeQqqKG.png" style="width:160%;height:160%;object-fit:cover;object-position:center 15%;margin-left:-30%;margin-top:-5%;" /></div></div>
       <div class="modal-title" style="text-align:center;">welcome to Aria</div>
-      <div class="pl-byline pl-byline--modal">by <span class="pl-byline-name">Paradigm Leveling</span></div>
+      <div class="pl-brand pl-brand--modal"><img src="https://i.imgur.com/3IXfEl4.jpeg" class="pl-logo" alt="Paradigm Leveling"/>by Paradigm Leveling</div>
       <div class="modal-sub" style="text-align:center;">sign in to save contacts, history & settings.</div>
 
       <div class="auth-tabs">
@@ -1509,7 +1528,7 @@
             onkeydown="if(event.key==='Enter')handleAuthSubmit('signin')"/>
         </div>
         <div id="authSigninError" style="font-size:12px;color:#f87171;margin-bottom:8px;min-height:16px;"></div>
-        <button class="auth-btn" id="authSubmitBtn" onclick="handleAuthSubmit('signin')">Sign in →</button>
+        <button class="auth-btn" id="authSubmitBtn" onclick="handleAuthSubmit('signin')">Sign in <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
 
       <div id="authSignupFields" style="display:none;">
@@ -1529,7 +1548,7 @@
             onkeydown="if(event.key==='Enter')handleAuthSubmit('signup')"/>
         </div>
         <div id="authSignupError" style="font-size:12px;color:#f87171;margin-bottom:8px;min-height:16px;"></div>
-        <button class="auth-btn" id="authSignupBtn" onclick="handleAuthSubmit('signup')">Create account →</button>
+        <button class="auth-btn" id="authSignupBtn" onclick="handleAuthSubmit('signup')">Create account <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
 
       <div class="auth-divider">or</div>
@@ -1541,7 +1560,7 @@
         <div class="auth-sent-icon" style="background:var(--green-dim);border:1px solid rgba(52,211,153,0.25);font-size:28px;">✓</div>
         <div class="auth-sent-title">you're in</div>
         <div class="auth-sent-sub">welcome to Aria.</div>
-        <button class="auth-btn" onclick="closeModal('authModal')" style="margin-top:0;">let's go →</button>
+        <button class="auth-btn" onclick="closeModal('authModal')" style="margin-top:0;">let's go <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
     </div>
   </div>

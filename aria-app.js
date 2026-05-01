@@ -301,7 +301,7 @@ function selectContact(id) {
   document.getElementById('pasteArea').style.display = 'block';
   document.getElementById('theirMsgInput').value = '';
   document.getElementById('genReplyBtn').disabled = false;
-  document.getElementById('genReplyBtn').textContent = 'ask me to reply →';
+  document.getElementById('genReplyBtn').textContent = 'ask me to reply <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   document.getElementById('floatCopy').classList.remove('visible');
   currentReplies = [];
   // Reset context panel
@@ -635,7 +635,7 @@ Read the entire arc. Notice the tone shift, what's been building, what the other
   document.getElementById('ariaThinking').style.display = 'none';
   document.getElementById('replyAriaOrb').classList.remove('thinking');
   btn.disabled = false;
-  btn.textContent = 'ask me to reply →';
+  btn.textContent = 'ask me to reply <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 
 function showAriaReaction(text) {
@@ -709,7 +709,7 @@ function renderReplies(lines) {
   animateVibesBar(score);
 
   document.getElementById('replySection').style.display = 'block';
-  document.getElementById('mainCopyBtn').textContent = 'copy & send →';
+  document.getElementById('mainCopyBtn').textContent = 'copy & send <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   document.getElementById('mainCopyBtn').classList.remove('copied');
   document.getElementById('floatCopy').classList.add('visible');
 
@@ -778,7 +778,7 @@ function copyReply() {
     btn.classList.add('copied');
     showToast('copied! go paste it 🚀', 'green');
     setTimeout(() => {
-      btn.textContent = 'copy & send →';
+      btn.textContent = 'copy & send <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
       btn.classList.remove('copied');
     }, 3000);
   }).catch(() => {
@@ -1164,7 +1164,7 @@ async function runGlowup() {
   } catch(e) { showToast('something went wrong'); }
 
   document.getElementById('glowupThinking').style.display = 'none';
-  btn.disabled = false; btn.textContent = '✨ glow it up →';
+  btn.disabled = false; btn.textContent = '✨ glow it up <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 
 function selectGlowupVariant(i) {
@@ -1182,7 +1182,7 @@ function copyGlowup() {
     btn.textContent = '✓ copied';
     btn.classList.add('copied');
     showToast('copied! go paste it 🚀', 'green');
-    setTimeout(() => { btn.textContent = 'copy it →'; btn.classList.remove('copied'); }, 3000);
+    setTimeout(() => { btn.textContent = 'copy it <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'; btn.classList.remove('copied'); }, 3000);
   });
 }
 
@@ -1207,7 +1207,7 @@ async function runRedflag() {
   } catch(e) { showToast('something went wrong'); }
 
   document.getElementById('redflagThinking').style.display = 'none';
-  btn.disabled = false; btn.textContent = '🚩 scan for red flags →';
+  btn.disabled = false; btn.textContent = '🚩 scan for red flags <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 
 function renderRedflagResult(data) {
@@ -1536,7 +1536,7 @@ function openAddMemoryNote(contactId) {
       <textarea id="memNoteInput" rows="3" placeholder="e.g. we had a falling out in march. things have been weird since." style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;resize:none;outline:none;line-height:1.6;"></textarea>
       <div style="display:flex;gap:8px;margin-top:12px;">
         <button onclick="document.getElementById('memNoteModal').remove()" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-md);padding:13px;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">cancel</button>
-        <button onclick="saveMemoryNote(${contactId})" style="flex:2;background:linear-gradient(135deg,#be185d,#db2777,#f472b6);border:none;border-radius:var(--radius-md);padding:13px;color:#fff;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;">save to my memory →</button>
+        <button onclick="saveMemoryNote(${contactId})" style="flex:2;background:linear-gradient(135deg,#be185d,#db2777,#f472b6);border:none;border-radius:var(--radius-md);padding:13px;color:#fff;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;">save to my memory <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
     </div>
   `;
@@ -1756,7 +1756,7 @@ function showArcPreview(pendingGame) {
       </div>`).join('')}
     <div style="padding:20px 20px 40px;display:flex;flex-direction:column;gap:10px;">
       <button onclick="commitLongGame()" style="width:100%;padding:15px;background:linear-gradient(135deg,#6d28d9,#7c3aed,#8b5cf6);border:none;border-radius:14px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;letter-spacing:0.2px;">
-        let's run it →
+        let's run it <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
       <button onclick="openLongGameSetup()" style="width:100%;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:14px;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">
         start over with different details
@@ -2313,7 +2313,7 @@ function renderLgCompletionCard(game) {
     </div>
     <button onclick="showScreen('longGameScreen')"
       style="width:100%;margin-top:16px;padding:13px;background:var(--card2);border:1px solid var(--border);border-radius:12px;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">
-      ← back to all plans
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> back to all plans
     </button>`;
 
   wrap.prepend(card);
@@ -3682,9 +3682,9 @@ function setPresendMode(mode, el) {
   el.classList.add('active');
   // Update button label
   const btn = document.getElementById('psRunBtn');
-  if (mode === 'check') btn.textContent = '🛑 let me check it →';
-  else if (mode === 'fix') btn.textContent = '✏️ check & rewrite it →';
-  else btn.textContent = '🔥 be brutal →';
+  if (mode === 'check') btn.textContent = '🛑 let me check it <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  else if (mode === 'fix') btn.textContent = '✏️ check & rewrite it <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  else btn.textContent = '🔥 be brutal <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 
 // Live word count
@@ -3857,7 +3857,7 @@ function copyPresendRewrite() {
   navigator.clipboard.writeText(item.text).then(() => {
     const btn = document.getElementById('psCopyRewriteBtn');
     btn.textContent = '✓ copied';
-    setTimeout(() => { btn.textContent = 'copy rewrite →'; }, 2500);
+    setTimeout(() => { btn.textContent = 'copy rewrite <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'; }, 2500);
     showToast('rewrite copied ✓', 'green');
   });
 }

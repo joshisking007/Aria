@@ -451,6 +451,16 @@ function typeIntro() {
 }
 
 window.addEventListener('load', () => {
+  // ── DISMISS LOADER ─────────────────────────────────────────
+  const loader = document.getElementById('ariaLoader');
+  if (loader) {
+    // Min display 1.3s so the bar animation completes, then fade
+    setTimeout(() => {
+      loader.classList.add('fade-out');
+      setTimeout(() => { loader.style.display = 'none'; }, 520);
+    }, 1300);
+  }
+  // ──────────────────────────────────────────────────────────
   setTimeout(typeIntro, 500);
   initAuth(); // loads from Supabase; falls back to localStorage if not authed
   checkOnboarding();
@@ -851,6 +861,24 @@ Write an updated relationship narrative in 2-4 sentences. First person from Aria
 // ── AUTH ────────────────────────────────────────────────────────────
 
 async function initAuth() {
+  // Always register the listener first — covers sign-in, sign-out, token refresh, magic links
+  db.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session?.user) {
+      const isNew = !currentUserId;
+      currentUserId = session.user.id;
+      dismissAuthGate();
+      if (isNew) {
+        await loadFromSupabase();
+        await ariaMemory.load();
+      }
+      updateAuthMenuState();
+    } else if (event === 'SIGNED_OUT') {
+      currentUserId = null;
+      updateAuthMenuState();
+    }
+  });
+
+  // Then check for an existing session on load
   const { data: { session } } = await db.auth.getSession();
   if (session?.user) {
     currentUserId = session.user.id;
@@ -858,17 +886,6 @@ async function initAuth() {
     await loadFromSupabase();
     await ariaMemory.load();
     updateAuthMenuState();
-  } else {
-    // Listen for auth state changes (e.g. magic link return)
-    db.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user && !currentUserId) {
-        currentUserId = session.user.id;
-        dismissAuthGate();
-        await loadFromSupabase();
-        await ariaMemory.load();
-        updateAuthMenuState();
-      }
-    });
   }
 }
 
@@ -982,14 +999,20 @@ async function confirmLogout() {
   contacts = [];
   replySentCount = 0;
   streakDays = 0;
-  document.getElementById('statReplies').textContent = '0';
-  document.getElementById('statContacts').textContent = '0';
-  document.getElementById('statStreak').textContent = '0';
-  // Show the auth gate immediately
+  try {
+    document.getElementById('statReplies').textContent = '0';
+    document.getElementById('statContacts').textContent = '0';
+    document.getElementById('statStreak').textContent = '🔥0';
+  } catch(_) {}
+  // Clear saved data so next user starts fresh
+  try { localStorage.removeItem('aria_data'); } catch(_) {}
+  // Show the auth gate
   const gate = document.getElementById('authGate');
-  gate.style.opacity = '1';
-  gate.style.display = 'flex';
-  gate.classList.remove('hiding');
+  if (gate) {
+    gate.style.opacity = '1';
+    gate.style.display = 'flex';
+    gate.classList.remove('hiding');
+  }
   showScreen('introScreen');
 }
 
@@ -1045,10 +1068,18 @@ async function gateSubmit() {
     return;
   }
 
-  // success — session triggers onAuthStateChange which calls dismissAuthGate
-  if (gateMode === 'signup') {
+  // Explicit success path — don't rely solely on the listener
+  const { data: { session: newSession } } = await db.auth.getSession();
+  if (newSession?.user) {
+    currentUserId = newSession.user.id;
+    dismissAuthGate();
+    await loadFromSupabase();
+    await ariaMemory.load();
+    updateAuthMenuState();
+  } else if (gateMode === 'signup') {
+    // Email confirmation may be required
     errEl.style.color = 'var(--green)';
-    errEl.textContent = 'account created ✓ signing you in…';
+    errEl.textContent = 'account created ✓ check your email to confirm';
   }
 }
 
