@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@800&family=Barlow+Condensed:wght@300&display=swap');
+
 /* ─── RESET & ROOT ─────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
@@ -2976,8 +2978,9 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 
 /* ═══════════════════════════════════════════════════════════
    PARADIGM LEVELING — LOADING SCREEN
+   All animations use only transform + opacity (compositor-only,
+   zero repaint, zero layout — eliminates all jank)
 ═══════════════════════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@800&family=Barlow+Condensed:wght@300&display=swap');
 
 #ariaLoader {
   position: fixed;
@@ -2987,7 +2990,12 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.55s ease, visibility 0.55s ease;
+  /* Use cubic-bezier for buttery fade-out */
+  transition: opacity 0.65s cubic-bezier(0.4, 0, 0.2, 1),
+              visibility 0.65s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Force GPU layer so fade-out is compositor-only */
+  will-change: opacity;
+  transform: translateZ(0);
 }
 #ariaLoader.fade-out {
   opacity: 0;
@@ -3001,6 +3009,8 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   align-items: center;
   gap: 0;
   padding: 40px 60px;
+  /* Promote the whole loader subtree onto GPU */
+  transform: translateZ(0);
 }
 
 /* ── Chevrons ── */
@@ -3008,7 +3018,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 28px;
+  margin-bottom: 32px;
   position: relative;
   overflow: visible;
 }
@@ -3017,47 +3027,71 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   height: 72px;
   position: relative;
   flex-shrink: 0;
+  will-change: transform, opacity;
 }
 .pl-chevron svg {
   width: 100%;
   height: 100%;
   overflow: visible;
-  filter: drop-shadow(0 4px 18px rgba(0,0,0,0.3));
+  /* Drop shadow via filter — composited on GPU */
+  filter: drop-shadow(0 0 20px rgba(59,130,246,0.4));
 }
 
-/* Chevron slide-in animations */
-.pl-ch1 { animation: plFadeSlide 0.55s 0.05s both ease-out; }
-.pl-ch2 { animation: plFadeSlide 0.55s 0.2s  both ease-out; }
-.pl-ch3 { animation: plFadeSlide 0.55s 0.35s both ease-out; }
-.pl-ch4 { animation: plFadeSlide 0.55s 0.5s  both ease-out; }
+/* Staggered chevron entrance — pure transform+opacity, no layout */
+.pl-ch1 { animation: plChevron 0.7s 0.0s both cubic-bezier(0.22, 1, 0.36, 1); }
+.pl-ch2 { animation: plChevron 0.7s 0.12s both cubic-bezier(0.22, 1, 0.36, 1); }
+.pl-ch3 { animation: plChevron 0.7s 0.24s both cubic-bezier(0.22, 1, 0.36, 1); }
+.pl-ch4 { animation: plChevron 0.7s 0.36s both cubic-bezier(0.22, 1, 0.36, 1); }
 
-@keyframes plFadeSlide {
-  from { opacity: 0; transform: translateX(-16px); }
-  to   { opacity: 1; transform: translateX(0); }
+@keyframes plChevron {
+  from {
+    opacity: 0;
+    transform: translateX(-24px) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
 }
 
-/* ── Glimmer sweep ── */
+/* Subtle idle breathe after entrance — composited */
+.pl-ch1 { animation: plChevron 0.7s 0.0s  cubic-bezier(0.22,1,0.36,1) both,
+                      plChevronIdle 3s 1.2s ease-in-out infinite; }
+.pl-ch2 { animation: plChevron 0.7s 0.12s cubic-bezier(0.22,1,0.36,1) both,
+                      plChevronIdle 3s 1.35s ease-in-out infinite; }
+.pl-ch3 { animation: plChevron 0.7s 0.24s cubic-bezier(0.22,1,0.36,1) both,
+                      plChevronIdle 3s 1.5s ease-in-out infinite; }
+.pl-ch4 { animation: plChevron 0.7s 0.36s cubic-bezier(0.22,1,0.36,1) both,
+                      plChevronIdle 3s 1.65s ease-in-out infinite; }
+
+@keyframes plChevronIdle {
+  0%, 100% { transform: translateX(0) scale(1);    opacity: 1; }
+  50%       { transform: translateX(3px) scale(1.04); opacity: 0.85; }
+}
+
+/* ── Glimmer sweep — full GPU, no paint ── */
 .pl-glimmer {
   position: absolute;
   top: -10px;
-  left: -30px;
-  width: 60px;
+  left: -40px;
+  width: 50px;
   height: calc(100% + 20px);
   background: linear-gradient(
     105deg,
     transparent 20%,
-    rgba(255,255,255,0.55) 50%,
+    rgba(255,255,255,0.6) 50%,
     transparent 80%
   );
-  border-radius: 4px;
   pointer-events: none;
-  animation: plGlimmer 1.8s 0.9s both ease-in-out;
-  opacity: 0;
+  will-change: transform, opacity;
+  /* Start invisible, sweep after chevrons settle */
+  animation: plGlimmer 1s 1.1s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 @keyframes plGlimmer {
-  0%   { opacity: 0; transform: translateX(0); }
-  10%  { opacity: 1; }
-  100% { opacity: 0; transform: translateX(320px); }
+  from { transform: translateX(0);     opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  to   { transform: translateX(340px); opacity: 0; }
 }
 
 /* ── Wordmark ── */
@@ -3066,6 +3100,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   flex-direction: column;
   align-items: center;
   width: 100%;
+  transform: translateZ(0);
 }
 .pl-paradigm {
   font-family: 'Barlow', 'Arial Black', sans-serif;
@@ -3074,35 +3109,45 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   letter-spacing: 0.04em;
   color: #fff;
   line-height: 1;
-  animation: plFadeUp 0.65s 0.5s both ease-out;
+  will-change: transform, opacity;
+  animation: plFadeUp 0.8s 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .pl-divider {
   width: 100%;
   height: 2px;
-  margin: 10px 0;
+  margin: 12px 0;
   background: linear-gradient(90deg, #2563b8 0%, #48c99a 100%);
   border-radius: 2px;
   position: relative;
   overflow: hidden;
-  animation: plExpandWidth 0.55s 0.85s both ease-out;
+  /* Scale on transform-origin left — compositor only */
+  transform-origin: left center;
+  will-change: transform, opacity;
+  animation: plDividerExpand 0.7s 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-/* Divider shimmer */
+@keyframes plDividerExpand {
+  from { transform: scaleX(0); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
+}
+
+/* Divider shimmer — translateX only, compositor */
 .pl-divider-shine {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255,255,255,0.7) 50%,
+    rgba(255,255,255,0.8) 50%,
     transparent 100%
   );
-  animation: plDividerShine 1.4s 1.1s both ease-in-out;
-  transform: translateX(-100%);
+  will-change: transform, opacity;
+  animation: plDividerShine 1s 1.35s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 @keyframes plDividerShine {
-  from { transform: translateX(-100%); opacity: 0.8; }
+  from { transform: translateX(-100%); opacity: 0.9; }
   to   { transform: translateX(200%);  opacity: 0; }
 }
+
 .pl-leveling {
   font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
   font-weight: 300;
@@ -3110,15 +3155,12 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   letter-spacing: 0.45em;
   color: #9ca3af;
   text-transform: uppercase;
-  margin-top: 2px;
-  animation: plFadeUp 0.55s 0.9s both ease-out;
+  margin-top: 4px;
+  will-change: transform, opacity;
+  animation: plFadeUp 0.7s 1.0s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes plFadeUp {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes plExpandWidth {
-  from { transform: scaleX(0); transform-origin: left; }
-  to   { transform: scaleX(1); transform-origin: left; }
 }
