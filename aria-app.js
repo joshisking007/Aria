@@ -2927,11 +2927,12 @@ const ARIA_EXPRESSION_IMGS = {
   playful:    'https://i.imgur.com/68qFlMp.png',  // being silly
   suspicious: 'https://i.imgur.com/aku1uwo.png',  // cunning
   proud:      'https://i.imgur.com/ji329r1.png',  // hopeful
-  soft:       'https://i.imgur.com/ji329r1.png',  // hopeful / gentle (shared)
+  soft:       'https://i.imgur.com/tSqzjjM.png',  // soft (dedicated image)
   worried:    'https://i.imgur.com/OncPXzL.png',  // disappointed (shared)
-  annoyed:    'https://i.imgur.com/OncPXzL.png',  // disappointed (shared)
+  annoyed:    'https://i.imgur.com/Ur9I3bF_d.png?maxwidth=520&shape=thumb&fidelity=high', // bugged out / not listening
   focused:    'https://i.imgur.com/ZENuLRe.png',  // urgency
   ambitious:  'https://i.imgur.com/ZENuLRe.png',  // urgency (shared)
+  bored:      'https://i.imgur.com/AsLE2hI_d.png?maxwidth=520&shape=thumb&fidelity=high', // bored
   // Drift-specific (referenced directly in showDriftInBanner)
   drift_lost:   'https://i.imgur.com/OncPXzL.png',
   drift_fading: 'https://i.imgur.com/aku1uwo.png',
@@ -3107,7 +3108,6 @@ function appendAriaMessage(text, emotion, doSpeak = true, instant = false, expre
   const msgs = document.getElementById('chatMessages');
   const meta = EMOTION_META[emotion] || EMOTION_META.neutral;
 
-  // expression can be overridden by AI response or falls back to emotion's default
   const expressionKey = expressionOverride || meta.expression || 'default';
   const imgSrc = ariaImgForExpression(expressionKey);
 
@@ -3115,35 +3115,52 @@ function appendAriaMessage(text, emotion, doSpeak = true, instant = false, expre
   wrap.className = 'chat-msg-aria-wrap';
   if (!instant) wrap.style.animation = 'slide-up 0.3s ease both';
 
-  // Emotion bar above bubble (non-neutral only)
-  if (emotion !== 'neutral') {
-    const emoBar = document.createElement('div');
-    emoBar.className = 'chat-emotion-bar';
-    emoBar.textContent = meta.emoji + ' I’m ' + meta.label;
-    wrap.appendChild(emoBar);
+  // ── Expression card (portrait above bubble) ────────────────────────────────────
+  const card = document.createElement('div');
+  card.className = 'chat-expr-card';
+
+  if (imgSrc) {
+    card.classList.add('has-image');
+    const img = document.createElement('img');
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center top;display:block;';
+    card.appendChild(img);
+    setAriaExpression(img, expressionKey);
+
+    if (emotion !== 'neutral') {
+      const badge = document.createElement('div');
+      badge.className = 'chat-expr-badge';
+      badge.textContent = meta.emoji + ' ' + meta.label;
+      card.appendChild(badge);
+    }
+
+    // Update header portrait
+    const headerPortrait = document.getElementById('chatHeaderPortrait');
+    if (headerPortrait) {
+      headerPortrait.style.display = 'block';
+      setAriaExpression(headerPortrait, expressionKey);
+    }
+  } else {
+    wrap.classList.add('no-card');
+    if (emotion !== 'neutral') {
+      const emoBar = document.createElement('div');
+      emoBar.className = 'chat-emotion-bar';
+      emoBar.style.cssText = 'display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);padding:0 4px;animation:fade-in 0.3s ease;';
+      emoBar.textContent = meta.emoji + ' ' + meta.label;
+      wrap.appendChild(emoBar);
+    }
   }
+
+  wrap.appendChild(card);
 
   const row = document.createElement('div');
   row.className = 'chat-msg-aria';
 
   const orb = document.createElement('div');
   orb.className = 'chat-msg-aria-orb';
-
-  if (imgSrc) {
-    // Image mode — upgrade orb to show expression face
-    orb.classList.add('has-expression');
-    const img = document.createElement('img');
-    img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:50%;';
-    orb.appendChild(img);
-    // Use central setter so randomised transition fires
-    setAriaExpression(img, expressionKey);
-  }
-  // else: gradient placeholder — no layout shift
+  row.appendChild(orb);
 
   const bubble = document.createElement('div');
   bubble.className = 'chat-bubble-aria';
-
-  row.appendChild(orb);
   row.appendChild(bubble);
   wrap.appendChild(row);
 
