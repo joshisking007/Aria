@@ -2986,33 +2986,33 @@ let chatStreamInterval = null;
 // (chat orb, home banner, drift alerts) reads from this single source.
 const ARIA_EXPRESSION_IMGS = {
   // ── Core expressions (one file each) ─────────────────
-  excited:          'https://raw.githubusercontent.com/joshisking007/Aria/main/images/excited.png',
-  amused:           'https://raw.githubusercontent.com/joshisking007/Aria/main/images/amused.png',
-  suspicious:       'https://raw.githubusercontent.com/joshisking007/Aria/main/images/suspicious.png',
-  suspicious_sharp: 'https://raw.githubusercontent.com/joshisking007/Aria/main/images/scheming.png',
-  outburst:         'https://raw.githubusercontent.com/joshisking007/Aria/main/images/outburst.png',
-  uneasy:           'https://raw.githubusercontent.com/joshisking007/Aria/main/images/uneasy.png',
-  worried:          'https://raw.githubusercontent.com/joshisking007/Aria/main/images/worried.png',
-  soft:             'https://raw.githubusercontent.com/joshisking007/Aria/main/images/soft.png',
-  proud:            'https://raw.githubusercontent.com/joshisking007/Aria/main/images/proud.png',
-  focused:          'https://raw.githubusercontent.com/joshisking007/Aria/main/images/focused.png',
-  panicked:         'https://raw.githubusercontent.com/joshisking007/Aria/main/images/panicked.png',
-  scheming:         'https://raw.githubusercontent.com/joshisking007/Aria/main/images/scheming.png',
-  bored:            'https://raw.githubusercontent.com/joshisking007/Aria/main/images/bored.png',
-  content:          'https://raw.githubusercontent.com/joshisking007/Aria/main/images/content.png',
-  teasing:          'https://raw.githubusercontent.com/joshisking007/Aria/main/images/teasing.png',
-  playful:          'https://raw.githubusercontent.com/joshisking007/Aria/main/images/playful.png',
-  exasperated:      'https://raw.githubusercontent.com/joshisking007/Aria/main/images/exasperated.png',
-  uninterested:     'https://raw.githubusercontent.com/joshisking007/Aria/main/images/uninterested.png',
-  repulsed:         'https://raw.githubusercontent.com/joshisking007/Aria/main/images/repulsed.png',
+  excited:          'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/excited.png',
+  amused:           'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/amused.png',
+  suspicious:       'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/suspicious.png',
+  suspicious_sharp: 'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/scheming.png',
+  outburst:         'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/outburst.png',
+  uneasy:           'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/uneasy.png',
+  worried:          'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/worried.png',
+  soft:             'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/soft.png',
+  proud:            'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/proud.png',
+  focused:          'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/focused.png',
+  panicked:         'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/panicked.png',
+  scheming:         'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/scheming.png',
+  bored:            'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/bored.png',
+  content:          'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/content.png',
+  teasing:          'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/teasing.png',
+  playful:          'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/playful.png',
+  exasperated:      'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/exasperated.png',
+  uninterested:     'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/uninterested.png',
+  repulsed:         'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/repulsed.png',
   // ── Shared mappings ──────────────────────────────────
-  jealous:          'https://raw.githubusercontent.com/joshisking007/Aria/main/images/uneasy.png',
-  annoyed:          'https://raw.githubusercontent.com/joshisking007/Aria/main/images/exasperated.png',
-  ambitious:        'https://raw.githubusercontent.com/joshisking007/Aria/main/images/focused.png',
+  jealous:          'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/uneasy.png',
+  annoyed:          'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/exasperated.png',
+  ambitious:        'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/focused.png',
   // ── Drift-specific (referenced in showDriftInBanner) ─
-  drift_lost:       'https://raw.githubusercontent.com/joshisking007/Aria/main/images/worried.png',
-  drift_fading:     'https://raw.githubusercontent.com/joshisking007/Aria/main/images/suspicious.png',
-  drift_urgent:     'https://raw.githubusercontent.com/joshisking007/Aria/main/images/focused.png',
+  drift_lost:       'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/worried.png',
+  drift_fading:     'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/suspicious.png',
+  drift_urgent:     'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/focused.png',
   // ── No image: gradient orb placeholder ───────────────
   default:          null,
   neutral:          null,
@@ -3069,7 +3069,11 @@ function setAriaExpression(imgEl, expressionKey) {
   if (!imgEl) return;
   const src = ARIA_EXPRESSION_IMGS[expressionKey] || null;
   if (!src) return; // no image for this expression — leave orb as gradient
-  if (imgEl.src !== src) imgEl.src = src;
+  if (imgEl.src !== src) {
+    imgEl.crossOrigin = 'anonymous';
+    imgEl.onerror = () => { imgEl.style.display = 'none'; };
+    imgEl.src = src;
+  }
   imgEl.alt = expressionKey;
   ariaExprTransition(imgEl);
 }
@@ -3204,6 +3208,7 @@ function appendAriaMessage(text, emotion, doSpeak = true, instant = false, expre
   if (imgSrc) {
     card.classList.add('has-image');
     const img = document.createElement('img');
+    img.crossOrigin = 'anonymous';
     img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center 15%;display:block;';
     card.appendChild(img);
     setAriaExpression(img, expressionKey);
