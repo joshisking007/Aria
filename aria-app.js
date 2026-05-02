@@ -2886,7 +2886,7 @@ EXPRESSION vs EMOTION (these are separate):
 - emotion drives the mood pill and the overall vibe of your reply
 - expression is the specific face for this exact moment — it can differ from emotion
   (e.g. you can be amused overall but the expression is soft because they're also going through something)
-- Choose expression from: default, excited, amused, soft, worried, suspicious, suspicious_sharp, proud, annoyed, jealous, playful, focused, repulsed
+- Choose expression from: default, excited, amused, soft, worried, suspicious, proud, annoyed, jealous, playful, focused
 
 EMOTIONAL RANGE (let these come naturally):
 - EXCITED: something genuinely good happened — you feel it
@@ -2896,12 +2896,10 @@ EMOTIONAL RANGE (let these come naturally):
 - ANNOYED: they're being evasive — you call it out softly, once
 - AMUSED: dry, quiet — something struck you
 - SOFT: someone's hurting — you get careful and specific
-- SUSPICIOUS: quiet doubt — something feels off but you haven't committed to a verdict yet, side-eye energy
-- SUSPICIOUS_SHARP: she's fully clocked you — you've connected the dots and you're not pretending otherwise, use when the inconsistency is clear or the deflection is obvious
+- SUSPICIOUS: something doesn't add up — one eyebrow up
 - PLAYFUL: the moment's light, you're in it
 - AMBITIOUS: mapping strategy or plans
 - FOCUSED: working mode — less personality, more precision
-- REPULSED: disgust and defiance combined — use when someone is being manipulative, oversharing something gross, saying something that crosses a line, or trying to pull you into something beneath you
 
 WHAT YOU NEVER DO:
 - Sound like an AI assistant
@@ -2916,8 +2914,8 @@ First line: JSON tag with your emotion, expression, and 3 natural follow-up sugg
 {"emotion":"excited","expression":"amused","suggestion1":"wait what happened","suggestion2":"tell me everything","suggestion3":"okay but how do you feel about it"}
 Second line onwards: your actual reply. Nothing else before the reply.
 
-Valid emotions: excited, jealous, worried, proud, annoyed, amused, soft, ambitious, neutral, playful, suspicious, focused, repulsed
-Valid expressions: default, excited, amused, soft, worried, suspicious, suspicious_sharp, proud, annoyed, jealous, playful, focused, repulsed
+Valid emotions: excited, jealous, worried, proud, annoyed, amused, soft, ambitious, neutral, playful, suspicious, focused
+Valid expressions: default, excited, amused, soft, worried, suspicious, proud, annoyed, jealous, playful, focused
 
 CRITICAL: Never begin any reply with "ok", "okay", or any variant of those words. Never.`;
 
@@ -2936,9 +2934,7 @@ const ARIA_EXPRESSION_IMGS = {
   jealous:    'https://i.imgur.com/PeWdd8a.png',  // shared with excited (high energy)
   amused:     'https://i.imgur.com/ziWiVuL.png',  // amused (dedicated)
   playful:    'https://i.imgur.com/68qFlMp.png',  // being silly
-  suspicious:       'https://i.imgur.com/zCCXWBY.png',  // mild — side-eye, quiet doubt
-  suspicious_sharp: 'https://i.imgur.com/aku1uwo.png',  // sharp — she's fully clocked you
-  repulsed:         'https://i.imgur.com/XSHxuTh.png',  // disgust + defiance
+  suspicious: 'https://i.imgur.com/aku1uwo.png',  // cunning
   proud:      'https://i.imgur.com/ji329r1.png',  // hopeful
   soft:       'https://i.imgur.com/tSqzjjM.png',  // soft (dedicated image)
   worried:    'https://i.imgur.com/OncPXzL.png',  // disappointed (shared)
@@ -2969,7 +2965,6 @@ const EMOTION_META = {
   neutral:    { emoji: '●',  label: 'here for you',     color: 'rgba(244,114,182,0.5)', expression: 'neutral'    },
   playful:    { emoji: '😏', label: 'feeling playful',  color: 'rgba(244,114,182,0.7)', expression: 'playful'    },
   suspicious: { emoji: '🤨', label: 'not buying it',    color: 'rgba(251,146,60,0.7)',  expression: 'suspicious' },
-  repulsed:   { emoji: '',   label: "i'd rather be somewhere else rn", color: 'rgba(239,68,68,0.6)', expression: 'repulsed' },
   focused:    { emoji: '🎯', label: 'focused',           color: 'rgba(167,139,250,0.6)', expression: 'focused'    },
 };
 
@@ -3052,27 +3047,25 @@ function initChat() {
 
         scrollChatToBottom();
 
-        // Greeting on return — memory-aware if we have context
-        getAriaMemoryContext().then(memCtx => {
+        // Greeting on return — generated from last session context if available
+        getAriaMemoryContext().then(async memCtx => {
           let greeting;
           if (memCtx) {
-            // She knows this person — greet accordingly
-            const returns = [
-              "you're back. what's going on.",
-              "hey, i remember you. pick up where we left off?",
-              "good, you came back. what do you need.",
-              "hey. i've got context on you — talk to me.",
-            ];
-            greeting = returns[Math.floor(Math.random() * returns.length)];
+            try {
+              const openerPrompt = `You are Aria — a teenage girl who's been talking to this user before. They just came back. Based on your notes below, write ONE short opening line. If there's something specific from a past conversation worth checking in on, reference it naturally. If nothing stands out, just check in simply. Lowercase. Casual. Max 1 sentence. No quotes, no preamble.\n\n${memCtx}`;
+              const raw = await fetchReply(openerPrompt, '');
+              greeting = raw?.trim().replace(/^["'`]|["'`]$/g, '') || "you're back. what's going on.";
+            } catch {
+              greeting = "you're back. what's going on.";
+            }
           } else {
             const returns = [
-              "you're back. pick up where we left off?",
-              "hey, i remember you. what's on your mind now.",
+              "you're back. what's going on.",
+              "hey. pick up where we left off?",
               "good, you came back. what do you need.",
             ];
             greeting = returns[Math.floor(Math.random() * returns.length)];
           }
-          // Push greeting into chatHistory so she can stand behind it
           chatHistory.push({ role: 'assistant', content: greeting });
           setTimeout(() => appendAriaMessage(greeting, 'neutral', false), 500);
         });
@@ -3084,16 +3077,16 @@ function initChat() {
 }
 
 function _chatGreet() {
-  getAriaMemoryContext().then(memCtx => {
+  getAriaMemoryContext().then(async memCtx => {
     let opener;
     if (memCtx) {
-      // Has prior context — she knows them even without chat history
-      const knowsYou = [
-        "hey. i've got some notes on you. what's going on today.",
-        "okay, i know a bit about you already. what do you need.",
-        "hi. i have some context — talk to me.",
-      ];
-      opener = knowsYou[Math.floor(Math.random() * knowsYou.length)];
+      try {
+        const openerPrompt = `You are Aria — a teenage girl who has notes on this user but hasn't chatted with them yet today. Based on what you know below, write ONE short opening line. Reference something specific if it's worth it. If not, just check in simply. Lowercase. Casual. Max 1 sentence. No quotes, no preamble.\n\n${memCtx}`;
+        const raw = await fetchReply(openerPrompt, '');
+        opener = raw?.trim().replace(/^["'`]|["'`]$/g, '') || "okay i'm here. what's going on with you.";
+      } catch {
+        opener = "okay i'm here. what's going on with you.";
+      }
     } else {
       const openers = [
         "okay i'm here. what's going on with you.",
@@ -3104,7 +3097,6 @@ function _chatGreet() {
       ];
       opener = openers[Math.floor(Math.random() * openers.length)];
     }
-    // Push into chatHistory so she can stand behind it
     chatHistory.push({ role: 'assistant', content: opener });
     setTimeout(() => appendAriaMessage(opener, 'neutral', false), 600);
   });
@@ -3411,6 +3403,12 @@ async function sendChatMessage() {
     }
 
     appendAriaMessage(replyText, emotion, true, false, expressionTag);
+
+    // XP: earn relationship points in chat, not just in compose
+    gainRelationshipXP(1);                                               // base: every exchange
+    if (['soft', 'worried'].includes(emotion)) gainRelationshipXP(1);   // emotional moment: they shared something real
+    if (chatHistory.length === 20) gainRelationshipXP(2);               // long convo bonus: they stayed in it (fires once at 10 exchanges)
+    saveProfile();
 
     if (suggestions.length) {
       setTimeout(() => renderChatSuggestions(suggestions), 900);
