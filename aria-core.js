@@ -457,7 +457,7 @@ window.addEventListener('load', () => {
     setTimeout(() => {
       loader.classList.add('fade-out');
       setTimeout(() => { loader.style.display = 'none'; }, 580);
-    }, 2900);
+    }, 4350);
   }
   // ─────────────────────────────────────────────────────────
   setTimeout(typeIntro, 500);

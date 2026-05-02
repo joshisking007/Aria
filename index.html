@@ -40,48 +40,71 @@
 </head>
 <body>
 <!-- ═══════════════════════════════════════════════
-     LOADING SCREEN — Paradigm Leveling
+     LOADING SCREEN — Paradigm Leveling (3D fly-in)
 ════════════════════════════════════════════════ -->
 <div id="ariaLoader">
+  <div class="bg-glow"></div>
   <div class="pl-loader-wrap">
 
-    <!-- Chevrons -->
+    <!-- 4 Chevron arrows — 3D fly-in entrance -->
     <div class="pl-chevrons">
+
+      <!-- Arrow 1: deep blue — flies in from top-left -->
       <div class="pl-chevron pl-ch1">
         <svg viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="lg1" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#1d4ed8"/>
-          </linearGradient></defs>
-          <path d="M8 4 L52 40 L8 76" stroke="url(#lg1)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <defs>
+            <linearGradient id="lg1" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#1d4ed8"/>
+            </linearGradient>
+            <filter id="glow1"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <path d="M8 4 L52 40 L8 76" stroke="url(#lg1)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#glow1)"/>
         </svg>
       </div>
+
+      <!-- Arrow 2: blue → teal — flies in from deep behind -->
       <div class="pl-chevron pl-ch2">
         <svg viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="lg2" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#34d399"/>
-          </linearGradient></defs>
-          <path d="M8 4 L52 40 L8 76" stroke="url(#lg2)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <defs>
+            <linearGradient id="lg2" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#34d399"/>
+            </linearGradient>
+            <filter id="glow2"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <path d="M8 4 L52 40 L8 76" stroke="url(#lg2)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#glow2)"/>
         </svg>
       </div>
+
+      <!-- Arrow 3: teal → green — fires in from right -->
       <div class="pl-chevron pl-ch3">
         <svg viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="lg3" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#4ade80"/><stop offset="100%" stop-color="#34d399"/>
-          </linearGradient></defs>
-          <path d="M8 4 L52 40 L8 76" stroke="url(#lg3)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <defs>
+            <linearGradient id="lg3" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#4ade80"/><stop offset="100%" stop-color="#34d399"/>
+            </linearGradient>
+            <filter id="glow3"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <path d="M8 4 L52 40 L8 76" stroke="url(#lg3)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#glow3)"/>
         </svg>
       </div>
+
+      <!-- Arrow 4: light mint — dives in from above -->
       <div class="pl-chevron pl-ch4">
         <svg viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs><linearGradient id="lg4" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#6ee7b7"/><stop offset="100%" stop-color="#a7f3d0"/>
-          </linearGradient></defs>
-          <path d="M8 4 L52 40 L8 76" stroke="url(#lg4)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <defs>
+            <linearGradient id="lg4" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#6ee7b7"/><stop offset="100%" stop-color="#a7f3d0"/>
+            </linearGradient>
+            <filter id="glow4"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <path d="M8 4 L52 40 L8 76" stroke="url(#lg4)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#glow4)"/>
         </svg>
       </div>
-      <!-- Glimmer sweep across chevrons -->
-      <div class="pl-glimmer"></div>
+
     </div>
+
+    <!-- Drop shadow beneath chevron group -->
+    <div class="pl-chevrons-shadow"></div>
 
     <!-- Wordmark -->
     <div class="pl-wordmark">
@@ -116,8 +139,7 @@
       <div class="gate-title">Aria</div>
       <div class="gate-tagline">AUTOMATED · REPLY · INTELLIGENCE · ASSISTANT</div>
       <div class="gate-pl-brand">
-        <img src="https://i.imgur.com/3IXfEl4.jpeg" class="gate-pl-logo" alt="Paradigm Leveling"/>
-        <span>by Paradigm Leveling</span>
+        <span class="gate-pl-text">by Paradigm Leveling</span>
       </div>
     </div>
 
@@ -1573,7 +1595,7 @@
         </div>
       </div>
       <div class="modal-title" style="text-align:center;">welcome to Aria</div>
-      <div class="pl-brand pl-brand--modal"><img src="https://i.imgur.com/3IXfEl4.jpeg" class="pl-logo" alt="Paradigm Leveling"/>by Paradigm Leveling</div>
+      <div class="pl-brand pl-brand--modal"><span class="pl-brand-text">by Paradigm Leveling</span></div>
       <div class="modal-sub" style="text-align:center;">sign in to save contacts, history & settings.</div>
 
       <div class="auth-tabs">
