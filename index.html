@@ -43,80 +43,121 @@
 </head>
 <body>
 <!-- ═══════════════════════════════════════════════
-     LOADING SCREEN — Paradigm Leveling (3D fly-in)
+     LOADING SCREEN — Paradigm Leveling (3D fly-in v2)
+     Sound hook: drop an <audio id="plStingAudio"> here when ready,
+     or call window.playPLSting() from aria-core.js after the loader
+     timeout. The hook is already wired — just add your audio file.
 ════════════════════════════════════════════════ -->
 <div id="ariaLoader">
-  <div class="bg-glow"></div>
-  <div class="pl-loader-wrap">
+  <div class="pl2-bg-glow"></div>
+  <div class="pl2-loader">
 
-    <!-- 4 Chevron arrows — 3D fly-in entrance -->
-    <div class="pl-chevrons">
+    <!-- ── 4 Chevron arrows — original logo colours ── -->
+    <div class="pl2-chevrons">
 
-      <!-- Arrow 1: deep blue — flies in from top-left -->
-      <div class="pl-chevron pl-ch1">
+      <!-- Arrow 1: deep blue — flies in from top-left, spinning on Y -->
+      <div class="pl2-ch pl2-ch-1">
         <svg viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <linearGradient id="lg1" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#1d4ed8"/>
+            <linearGradient id="pl2-lg1" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#3b82f6"/>
+              <stop offset="100%" stop-color="#1d4ed8"/>
             </linearGradient>
-            <filter id="glow1"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="pl2-glow1">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
           </defs>
-          <path d="M8 4 L52 40 L8 76" stroke="url(#lg1)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#glow1)"/>
+          <path d="M8 4 L52 40 L8 76" stroke="url(#pl2-lg1)" stroke-width="13"
+            stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#pl2-glow1)"/>
         </svg>
       </div>
 
-      <!-- Arrow 2: blue → teal — flies in from deep behind -->
-      <div class="pl-chevron pl-ch2">
+      <!-- Arrow 2: blue → teal — flies in from deep behind, tumbling on X -->
+      <div class="pl2-ch pl2-ch-2">
         <svg viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <linearGradient id="lg2" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#34d399"/>
+            <linearGradient id="pl2-lg2" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#38bdf8"/>
+              <stop offset="100%" stop-color="#34d399"/>
             </linearGradient>
-            <filter id="glow2"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="pl2-glow2">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
           </defs>
-          <path d="M8 4 L52 40 L8 76" stroke="url(#lg2)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#glow2)"/>
+          <path d="M8 4 L52 40 L8 76" stroke="url(#pl2-lg2)" stroke-width="13"
+            stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#pl2-glow2)"/>
         </svg>
       </div>
 
-      <!-- Arrow 3: teal → green — fires in from right -->
-      <div class="pl-chevron pl-ch3">
+      <!-- Arrow 3: teal → green — fires in from right, barrel-rolling on Z -->
+      <div class="pl2-ch pl2-ch-3">
         <svg viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <linearGradient id="lg3" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#4ade80"/><stop offset="100%" stop-color="#34d399"/>
+            <linearGradient id="pl2-lg3" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#4ade80"/>
+              <stop offset="100%" stop-color="#34d399"/>
             </linearGradient>
-            <filter id="glow3"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="pl2-glow3">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
           </defs>
-          <path d="M8 4 L52 40 L8 76" stroke="url(#lg3)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#glow3)"/>
+          <path d="M8 4 L52 40 L8 76" stroke="url(#pl2-lg3)" stroke-width="13"
+            stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#pl2-glow3)"/>
         </svg>
       </div>
 
-      <!-- Arrow 4: light mint — dives in from above -->
-      <div class="pl-chevron pl-ch4">
+      <!-- Arrow 4: light mint — dives in from above, spinning on all axes -->
+      <div class="pl2-ch pl2-ch-4">
         <svg viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <linearGradient id="lg4" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#6ee7b7"/><stop offset="100%" stop-color="#a7f3d0"/>
+            <linearGradient id="pl2-lg4" x1="0" y1="0" x2="60" y2="80" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#6ee7b7"/>
+              <stop offset="100%" stop-color="#a7f3d0"/>
             </linearGradient>
-            <filter id="glow4"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="pl2-glow4">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
           </defs>
-          <path d="M8 4 L52 40 L8 76" stroke="url(#lg4)" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#glow4)"/>
+          <path d="M8 4 L52 40 L8 76" stroke="url(#pl2-lg4)" stroke-width="13"
+            stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#pl2-glow4)"/>
         </svg>
       </div>
 
     </div>
 
-    <!-- Drop shadow beneath chevron group -->
-    <div class="pl-chevrons-shadow"></div>
+    <!-- drop shadow under chevrons -->
+    <div class="pl2-chevrons-shadow"></div>
 
-    <!-- Wordmark -->
-    <div class="pl-wordmark">
-      <span class="pl-paradigm">PARADIGM</span>
-      <div class="pl-divider"><div class="pl-divider-shine"></div></div>
-      <span class="pl-leveling">L E V E L I N G</span>
+    <!-- ── Wordmark ── -->
+    <div class="pl2-wordmark">
+      <div class="pl2-paradigm">PARADIGM</div>
+      <div class="pl2-divider"><div class="pl2-divider-shine"></div></div>
+      <div class="pl2-leveling">L E V E L I N G</div>
     </div>
 
   </div>
+
+  <!-- ── Sound hook — EA-Sports-style sting ──────────────────────
+       When your audio file is ready:
+       1. Add:  <audio id="plStingAudio" src="pl-sting.mp3" preload="auto"></audio>
+       2. Uncomment the playPLSting() call below.
+       The 150ms delay fires after the first chevron lands (~0.9s total).
+  ─────────────────────────────────────────────────────────────── -->
+  <script>
+    window.playPLSting = function() {
+      var audio = document.getElementById('plStingAudio');
+      if (audio) {
+        audio.volume = 0.85;
+        audio.play().catch(function(){});
+      }
+    };
+    // Uncomment this line once your audio file is in place:
+    // setTimeout(window.playPLSting, 150);
+  </script>
 </div>
 
 

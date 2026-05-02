@@ -3001,14 +3001,13 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 
 
 /* ═══════════════════════════════════════════════════════════
-   PARADIGM LEVELING — LOADING SCREEN
+   PARADIGM LEVELING — LOADING SCREEN v2
+   Fully scoped under pl2- prefix — zero collision risk.
    All animations use only transform + opacity (compositor-only,
-   zero repaint, zero layout — eliminates all jank)
+   zero repaint, zero layout — eliminates all jank on mobile).
+   Sound hook: window.playPLSting() — see index.html loader block.
 ═══════════════════════════════════════════════════════════ */
 
-/* ══════════════════════════════════════════════
-   LOADER — 3D fly-in chevrons (5-second display)
-══════════════════════════════════════════════ */
 #ariaLoader {
   position: fixed;
   inset: 0;
@@ -3017,7 +3016,6 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   display: flex;
   align-items: center;
   justify-content: center;
-  perspective: 900px;
   transition: opacity 0.65s cubic-bezier(0.4, 0, 0.2, 1),
               visibility 0.65s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: opacity;
@@ -3029,27 +3027,32 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   pointer-events: none;
 }
 
-/* Ambient glow behind everything */
-#ariaLoader .bg-glow {
-  position: absolute;
+/* ── Ambient glow ── */
+.pl2-bg-glow {
+  position: fixed;
   inset: 0;
   pointer-events: none;
+  z-index: 0;
   background:
     radial-gradient(ellipse at 30% 50%, rgba(59,130,246,0.07) 0%, transparent 55%),
     radial-gradient(ellipse at 70% 50%, rgba(52,211,153,0.05) 0%, transparent 55%);
 }
 
-.pl-loader-wrap {
+/* ── Main layout ── */
+.pl2-loader {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0;
-  padding: 40px 60px;
+  position: relative;
+  z-index: 1;
+  /* enable 3-D space for children */
+  perspective: 900px;
   transform-style: preserve-3d;
 }
 
-/* ── Chevron group ── */
-.pl-chevrons {
+/* ── Chevron container ── */
+.pl2-chevrons {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3059,7 +3062,8 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   transform-style: preserve-3d;
 }
 
-.pl-chevron {
+/* ── Each chevron SVG wrapper ── */
+.pl2-ch {
   width: 58px;
   height: 76px;
   flex-shrink: 0;
@@ -3068,14 +3072,14 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   will-change: transform, opacity;
   transform-style: preserve-3d;
 }
-.pl-chevron svg {
+.pl2-ch svg {
   width: 100%;
   height: 100%;
   overflow: visible;
 }
 
 /* ── Per-arrow glow halos ── */
-.pl-chevron::after {
+.pl2-ch::after {
   content: '';
   position: absolute;
   inset: -12px;
@@ -3083,101 +3087,100 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   opacity: 0;
   will-change: opacity;
 }
-.pl-ch1::after { background: radial-gradient(ellipse at center, rgba(59,130,246,0.35) 0%, transparent 70%);  animation: plHaloIn 0.4s 0.85s both; }
-.pl-ch2::after { background: radial-gradient(ellipse at center, rgba(56,189,248,0.30) 0%, transparent 70%);  animation: plHaloIn 0.4s 1.02s both; }
-.pl-ch3::after { background: radial-gradient(ellipse at center, rgba(52,211,153,0.28) 0%, transparent 70%);  animation: plHaloIn 0.4s 1.19s both; }
-.pl-ch4::after { background: radial-gradient(ellipse at center, rgba(110,231,183,0.25) 0%, transparent 70%); animation: plHaloIn 0.4s 1.36s both; }
-@keyframes plHaloIn {
+.pl2-ch-1::after { background: radial-gradient(ellipse at center, rgba(59,130,246,0.35) 0%, transparent 70%);  animation: pl2HaloIn 0.4s 0.85s both; }
+.pl2-ch-2::after { background: radial-gradient(ellipse at center, rgba(56,189,248,0.30) 0%, transparent 70%);  animation: pl2HaloIn 0.4s 1.02s both; }
+.pl2-ch-3::after { background: radial-gradient(ellipse at center, rgba(52,211,153,0.28) 0%, transparent 70%);  animation: pl2HaloIn 0.4s 1.19s both; }
+.pl2-ch-4::after { background: radial-gradient(ellipse at center, rgba(110,231,183,0.25) 0%, transparent 70%); animation: pl2HaloIn 0.4s 1.36s both; }
+@keyframes pl2HaloIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 
-/* ── 3D FLY-IN — each arrow from a different axis/angle ── */
+/* ── 3D FLY-IN — each arrow from a different direction, depth, and angle ── */
 
-/* Arrow 1 — top-left, spinning on Y */
-.pl-ch1 {
+/* Arrow 1 — flies in from top-left, spinning on Y */
+.pl2-ch-1 {
   animation:
-    plFlyIn1 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both,
-    plIdle   3.2s  ease-in-out                     1.5s  infinite;
+    pl2FlyIn1 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both,
+    pl2Idle   3.2s  ease-in-out                     1.5s  infinite;
 }
-@keyframes plFlyIn1 {
+@keyframes pl2FlyIn1 {
   0%   { opacity: 0; transform: translate3d(-120px, -80px, -400px) rotateY(90deg) rotateZ(-25deg) scale(0.4); }
   60%  { opacity: 1; }
   85%  { transform: translate3d(4px, -4px, 0) rotateY(-6deg) rotateZ(2deg) scale(1.04); }
   100% { opacity: 1; transform: translate3d(0,0,0) rotateY(0) rotateZ(0) scale(1); }
 }
 
-/* Arrow 2 — deep behind, tumbling on X */
-.pl-ch2 {
+/* Arrow 2 — flies in from deep behind, slight tumble on X */
+.pl2-ch-2 {
   animation:
-    plFlyIn2 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.32s both,
-    plIdle   3.2s  ease-in-out                     1.65s infinite;
+    pl2FlyIn2 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.32s both,
+    pl2Idle   3.2s  ease-in-out                     1.65s infinite;
 }
-@keyframes plFlyIn2 {
+@keyframes pl2FlyIn2 {
   0%   { opacity: 0; transform: translate3d(0, 120px, -600px) rotateX(-70deg) rotateY(15deg) scale(0.2); }
   60%  { opacity: 1; }
   85%  { transform: translate3d(0, -5px, 0) rotateX(5deg) scale(1.06); }
   100% { opacity: 1; transform: translate3d(0,0,0) rotateX(0) rotateY(0) scale(1); }
 }
 
-/* Arrow 3 — right side, barrel-rolling on Z */
-.pl-ch3 {
+/* Arrow 3 — fires in from right, barrel-rolling on Z */
+.pl2-ch-3 {
   animation:
-    plFlyIn3 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.49s both,
-    plIdle   3.2s  ease-in-out                     1.8s  infinite;
+    pl2FlyIn3 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.49s both,
+    pl2Idle   3.2s  ease-in-out                     1.8s  infinite;
 }
-@keyframes plFlyIn3 {
+@keyframes pl2FlyIn3 {
   0%   { opacity: 0; transform: translate3d(140px, -60px, -300px) rotateZ(180deg) rotateY(-50deg) scale(0.3); }
   60%  { opacity: 1; }
   85%  { transform: translate3d(-3px, 3px, 0) rotateZ(-4deg) rotateY(4deg) scale(1.05); }
   100% { opacity: 1; transform: translate3d(0,0,0) rotateZ(0) rotateY(0) scale(1); }
 }
 
-/* Arrow 4 — above, spinning on all axes */
-.pl-ch4 {
+/* Arrow 4 — dives in from above, spinning on all axes */
+.pl2-ch-4 {
   animation:
-    plFlyIn4 0.8s  cubic-bezier(0.22, 1, 0.36, 1) 0.66s both,
-    plIdle   3.2s  ease-in-out                     1.95s infinite;
+    pl2FlyIn4 0.8s  cubic-bezier(0.22, 1, 0.36, 1) 0.66s both,
+    pl2Idle   3.2s  ease-in-out                     1.95s infinite;
 }
-@keyframes plFlyIn4 {
+@keyframes pl2FlyIn4 {
   0%   { opacity: 0; transform: translate3d(60px, -160px, -500px) rotateX(120deg) rotateZ(-60deg) scale(0.2); }
   50%  { opacity: 0.8; }
   85%  { transform: translate3d(-2px, 5px, 0) rotateX(-5deg) rotateZ(3deg) scale(1.07); }
   100% { opacity: 1; transform: translate3d(0,0,0) rotateX(0) rotateZ(0) scale(1); }
 }
 
-/* Gentle idle breathe once settled */
-@keyframes plIdle {
+/* Subtle idle breathe after all arrows land */
+@keyframes pl2Idle {
   0%,100% { transform: translateX(0) translateY(0) scale(1); }
   50%     { transform: translateX(2px) translateY(-3px) scale(1.03); }
 }
 
-/* Drop shadow beneath chevrons */
-.pl-chevrons-shadow {
-  width: 220px; height: 16px;
+/* ── Drop shadow under chevrons group ── */
+.pl2-chevrons-shadow {
+  width: 220px;
+  height: 16px;
   background: radial-gradient(ellipse, rgba(52,211,153,0.25) 0%, transparent 70%);
   margin-bottom: 4px;
-  animation: plShadowIn 0.6s 1.2s both;
+  animation: pl2ShadowIn 0.6s 1.2s both;
   transform-origin: center;
   will-change: opacity, transform;
 }
-@keyframes plShadowIn {
+@keyframes pl2ShadowIn {
   from { opacity: 0; transform: scaleX(0.4); }
   to   { opacity: 1; transform: scaleX(1); }
 }
 
 /* ── Wordmark ── */
-.pl-wordmark {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
+.pl2-wordmark {
+  text-align: center;
+  position: relative;
   margin-top: 8px;
   transform: translateZ(0);
 }
 
 /* PARADIGM — white → sky-blue → mint gradient */
-.pl-paradigm {
+.pl2-paradigm {
   font-family: 'Barlow', 'Arial Black', sans-serif;
   font-weight: 800;
   font-size: clamp(48px, 12vw, 68px);
@@ -3188,55 +3191,53 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   -webkit-text-fill-color: transparent;
   background-clip: text;
   filter: drop-shadow(0 0 22px rgba(59,130,246,0.45));
+  animation: pl2FadeUp 0.9s 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
   will-change: transform, opacity;
-  animation: plFadeUp 0.9s 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* Divider */
-.pl-divider {
+/* Divider — blue → teal gradient, expands left-to-right with glimmer sweep */
+.pl2-divider {
   width: 100%;
   height: 2px;
+  position: relative;
   margin: 12px 0;
   background: linear-gradient(90deg, transparent, #3b82f6 30%, #34d399 70%, transparent);
   border-radius: 2px;
-  position: relative;
   overflow: hidden;
   transform-origin: left center;
+  animation: pl2DividerExpand 0.7s 1.25s cubic-bezier(0.22, 1, 0.36, 1) both;
   will-change: transform, opacity;
-  animation: plDividerExpand 0.7s 1.25s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-@keyframes plDividerExpand {
+@keyframes pl2DividerExpand {
   from { transform: scaleX(0); opacity: 0; }
   to   { transform: scaleX(1); opacity: 1; }
 }
 
-/* Divider glimmer sweep */
-.pl-divider-shine {
+/* Glimmer sweep on divider */
+.pl2-divider-shine {
   position: absolute;
   inset: 0;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8) 50%, transparent);
+  animation: pl2DividerShine 0.9s 1.6s cubic-bezier(0.4, 0, 0.2, 1) both;
   will-change: transform;
-  animation: plDividerShine 0.9s 1.6s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
-@keyframes plDividerShine {
+@keyframes pl2DividerShine {
   from { transform: translateX(-100%); }
   to   { transform: translateX(200%); }
 }
 
 /* LEVELING */
-.pl-leveling {
+.pl2-leveling {
   font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
   font-weight: 300;
   font-size: clamp(16px, 4.5vw, 26px);
   letter-spacing: 0.45em;
   color: #9ca3af;
-  text-transform: uppercase;
-  margin-top: 4px;
+  animation: pl2FadeUp 0.7s 1.4s cubic-bezier(0.22, 1, 0.36, 1) both;
   will-change: transform, opacity;
-  animation: plFadeUp 0.7s 1.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-@keyframes plFadeUp {
+@keyframes pl2FadeUp {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
