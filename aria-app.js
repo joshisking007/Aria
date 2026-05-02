@@ -1,3 +1,7 @@
+// ── Security: local alias for sanitizer (defined in aria-core.js) ──
+// All user-controlled data rendered into innerHTML must go through s()
+const s = (v) => typeof ariaSecurity !== 'undefined' ? ariaSecurity.sanitize(v) : String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
 // ── STATS ──────────────────────────────────────────────────────────
 
 function updateStats() {
@@ -202,13 +206,13 @@ function renderContacts(list) {
 
     return `
       <div class="contact-card ${driftCardClass} stagger-${Math.min(i+1,5)}" onclick="selectContact(${c.id})" oncontextmenu="openContactProfile(${c.id});return false;" style="animation-delay:${i*0.05}s">
-        <div class="contact-avatar ${statusClass}" data-color="${c.color||''}">${c.initials || c.name[0]}</div>
+        <div class="contact-avatar ${statusClass}" data-color="${s(c.color)||''}">${s(c.initials || c.name[0])}</div>
         <div class="contact-info">
-          <div class="contact-name">${c.name}</div>
-          <div class="contact-preview">${drift && !c.drift_dismissed ? drift.preview : (c.preview || (c.relationship ? '(' + c.relationship + ')' : 'no recent messages'))}</div>
+          <div class="contact-name">${s(c.name)}</div>
+          <div class="contact-preview">${s(drift && !c.drift_dismissed ? drift.preview : (c.preview || (c.relationship ? '(' + c.relationship + ')' : 'no recent messages')))}</div>
         </div>
         <div class="contact-meta">
-          <div class="contact-time">${c.time || ''}</div>
+          <div class="contact-time">${s(c.time || '')}</div>
           ${badgeHtml}
         </div>
       </div>
@@ -891,8 +895,8 @@ function renderHistory() {
         <span class="history-card-name">${entry.contact}</span>
         <span class="history-card-time">${entry.time}</span>
       </div>
-      ${entry.original ? `<div class="history-original">them: ${entry.original.slice(0,80)}${entry.original.length>80?'…':''}</div>` : ''}
-      <div class="history-reply">${entry.reply.slice(0,120)}${entry.reply.length>120?'…':''}</div>
+      ${entry.original ? `<div class="history-original">them: ${s(entry.original.slice(0,80))}${entry.original.length>80?'…':''}</div>` : ''}
+      <div class="history-reply">${s(entry.reply.slice(0,120))}${entry.reply.length>120?'…':''}</div>
       <div class="history-meta">
         <span class="history-tone-tag">${entry.tone}</span>
         <span class="platform-badge ${(entry.platform||'').toLowerCase().replace(/\\s/,'')}" style="font-size:10px;">${entry.platform}</span>
@@ -1253,10 +1257,10 @@ function renderVibeContactGrid() {
   if (!grid) return;
   grid.innerHTML = contacts.map(c => `
     <div class="vibe-contact-chip ${selectedVibeContact?.id === c.id ? 'selected' : ''}" onclick="selectVibeContact(${c.id})">
-      <div class="contact-avatar" data-color="${c.color||''}" style="width:32px;height:32px;font-size:13px;flex-shrink:0;">${c.initials||c.name[0]}</div>
+      <div class="contact-avatar" data-color="${s(c.color)||''}" style="width:32px;height:32px;font-size:13px;flex-shrink:0;">${s(c.initials||c.name[0])}</div>
       <div>
-        <div class="vibe-contact-chip-name">${c.name}</div>
-        <div class="vibe-contact-chip-rel">${c.relationship||'contact'}</div>
+        <div class="vibe-contact-chip-name">${s(c.name)}</div>
+        <div class="vibe-contact-chip-rel">${s(c.relationship||'contact')}</div>
       </div>
     </div>
   `).join('');
@@ -1453,7 +1457,7 @@ function openContactProfile(id) {
   // History with this contact
   const listEl = document.getElementById('cpHistoryList');
   if (!contactReplies.length) {
-    listEl.innerHTML = '<div class="contact-history-empty">no replies saved yet for ' + profileContact.name + '</div>';
+    listEl.innerHTML = '<div class="contact-history-empty">no replies saved yet for ' + s(profileContact.name) + '</div>';
   } else {
     listEl.innerHTML = contactReplies.map(r => `
       <div class="contact-reply-card" onclick="navigator.clipboard.writeText('${r.reply.replace(/'/g,"\\\'")}').then(()=>showToast('copied!','green'))">
@@ -4233,7 +4237,7 @@ async function _renderMemoryAfterLoad() {
   } catch(e) {
     console.error('memory render error:', e);
     statusEl.textContent = '● error';
-    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">⚠️</div><div style="color:var(--muted);font-size:13px;">something went wrong loading memory.<br><br>error: ${e?.message || 'unknown'}<br><br>tap "re-learn from my history" to try again.</div></div>`;
+    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">⚠️</div><div style="color:var(--muted);font-size:13px;">something went wrong loading memory.<br><br>tap "re-learn from my history" to try again.</div></div>`;
   }
 }
 

@@ -1,3 +1,118 @@
+// ══════════════════════════════════════════════════════════════
+//  ARIA SECURITY MODULE
+//  Sanitization · Rate limiting · Prompt guards · Key hygiene
+// ══════════════════════════════════════════════════════════════
+
+const ariaSecurity = (() => {
+
+  // ── HTML sanitizer — strips all tags and dangerous attributes ──
+  function sanitize(input) {
+    if (input === null || input === undefined) return '';
+    const str = String(input);
+    const div = document.createElement('div');
+    div.textContent = str;                  // textContent never parses HTML
+    return div.innerHTML                    // now safely HTML-entity-encoded
+      .replace(/javascript:/gi, '')
+      .replace(/on\w+=/gi, '')
+      .replace(/data:/gi, '');
+  }
+
+  // ── Prompt-injection guard — sanitizes text going into AI prompts ──
+  // Removes common injection patterns while preserving natural text
+  function sanitizeForPrompt(input) {
+    if (!input) return '';
+    return String(input)
+      .slice(0, 1000)                                          // hard length cap
+      .replace(/ignore (all |previous |above |prior )?instructions?/gi, '[removed]')
+      .replace(/system prompt/gi, '[removed]')
+      .replace(/you are now/gi, '[removed]')
+      .replace(/forget everything/gi, '[removed]')
+      .replace(/disregard/gi, '[removed]')
+      .replace(/\[INST\]|\[\/INST\]|<s>|<\/s>/g, '')      // llm control tokens
+      .replace(/###\s*(system|user|assistant)/gi, '')          // role injection
+      .trim();
+  }
+
+  // ── API key storage — sessionStorage only, never localStorage ──
+  // sessionStorage is cleared when the tab closes; localStorage persists forever.
+  function storeApiKey(key, value) {
+    try {
+      sessionStorage.setItem(key, value.trim());
+      // Remove from localStorage if it was previously stored there
+      localStorage.removeItem(key);
+    } catch (_) {}
+  }
+
+  function getApiKey(key) {
+    // Prefer sessionStorage; fall back to localStorage for migration,
+    // then immediately migrate it to sessionStorage and remove from localStorage.
+    const fromSession = sessionStorage.getItem(key);
+    if (fromSession) return fromSession;
+    const fromLocal = localStorage.getItem(key);
+    if (fromLocal) {
+      storeApiKey(key, fromLocal);   // migrate
+      return fromLocal;
+    }
+    return '';
+  }
+
+  // ── Auth brute-force rate limiter ──────────────────────────────
+  const AUTH_MAX_ATTEMPTS = 5;
+  const AUTH_LOCKOUT_MS   = 15 * 60 * 1000; // 15 minutes
+
+  function getAuthState() {
+    try {
+      const raw = sessionStorage.getItem('aria_auth_attempts');
+      return raw ? JSON.parse(raw) : { count: 0, lockedUntil: 0 };
+    } catch (_) { return { count: 0, lockedUntil: 0 }; }
+  }
+
+  function saveAuthState(state) {
+    try { sessionStorage.setItem('aria_auth_attempts', JSON.stringify(state)); } catch (_) {}
+  }
+
+  // Returns null if allowed, or an error string if locked out
+  function checkAuthAllowed() {
+    const state = getAuthState();
+    if (state.lockedUntil && Date.now() < state.lockedUntil) {
+      const mins = Math.ceil((state.lockedUntil - Date.now()) / 60000);
+      return `too many attempts — try again in ${mins} minute${mins !== 1 ? 's' : ''}`;
+    }
+    return null;
+  }
+
+  function recordAuthFailure() {
+    const state = getAuthState();
+    // Reset if lockout has expired
+    if (state.lockedUntil && Date.now() >= state.lockedUntil) {
+      state.count = 0;
+      state.lockedUntil = 0;
+    }
+    state.count += 1;
+    if (state.count >= AUTH_MAX_ATTEMPTS) {
+      state.lockedUntil = Date.now() + AUTH_LOCKOUT_MS;
+    }
+    saveAuthState(state);
+  }
+
+  function recordAuthSuccess() {
+    saveAuthState({ count: 0, lockedUntil: 0 });
+  }
+
+  // ── Safe error logger — strips sensitive fields before logging ──
+  function safeWarn(label, err) {
+    if (typeof err === 'object' && err !== null) {
+      // Only log the message and code, never the full object (may contain tokens/data)
+      const safe = { message: err.message || String(err), code: err.code };
+      console.warn('[Aria]', label, safe);
+    } else {
+      console.warn('[Aria]', label, String(err));
+    }
+  }
+
+  return { sanitize, sanitizeForPrompt, storeApiKey, getApiKey, checkAuthAllowed, recordAuthFailure, recordAuthSuccess, safeWarn };
+})();
+
 
 // ══════════════════════════════════════════════════════════════
 //  ARIA VOICE ENGINE
@@ -223,7 +338,7 @@ function toggleSpeak(toggle) {
 }
 
 function saveELKey(val) {
-  localStorage.setItem('aria_el_key', val.trim());
+  ariaSecurity.storeApiKey('aria_el_key', val);
 }
 
 function updateStability(val) {
@@ -468,7 +583,7 @@ window.addEventListener('load', () => {
   setTimeout(() => { if (typeof AWARENESS !== 'undefined') AWARENESS.checkLockOnLoad(); }, 300);
 
   // Restore ElevenLabs settings
-  const savedKey  = localStorage.getItem('aria_el_key') || '';
+  const savedKey  = ariaSecurity.getApiKey('aria_el_key') || '';
   const savedStab = parseFloat(localStorage.getItem('aria_el_stability')  || '0.45');
   const savedSim  = parseFloat(localStorage.getItem('aria_el_similarity') || '0.75');
   const keyEl  = document.getElementById('elApiKey');
@@ -512,7 +627,7 @@ const ariaMemory = (() => {
         if (!store[row.category]) store[row.category] = {};
         store[row.category][row.key] = { value: row.value, confidence: row.confidence, source: row.source };
       });
-    } catch(e) { console.warn('ariaMemory.load error', e); }
+    } catch(e) { ariaSecurity.safeWarn('ariaMemory.load', e); }
   }
 
   // ── Save a single memory ────────────────────────────────────────
@@ -528,7 +643,7 @@ const ariaMemory = (() => {
       }, { onConflict: 'user_id,category,key' });
     } catch(e) {
       if (e?.code === '42P01') tableExists = false;
-      else console.warn('ariaMemory.remember error', e);
+      else ariaSecurity.safeWarn('ariaMemory.remember', e);
     }
   }
 
@@ -725,7 +840,7 @@ const contactMemory = (() => {
     if (currentUserId && tableExists) {
       try {
         await db.from('contact_memories').upsert(payload, { onConflict: 'user_id,contact_id' });
-      } catch(e) { console.warn('contactMemory save error', e); }
+      } catch(e) { ariaSecurity.safeWarn('contactMemory.save', e); }
     }
     // Always mirror to localStorage as fallback
     try {
@@ -792,27 +907,33 @@ const contactMemory = (() => {
 
   // ── Use Claude to synthesise a narrative from events ────────────
   async function regenerateNarrative(contactId, contactName, relationship, mem) {
-    const apiKey = document.getElementById('apiKeyInput')?.value?.trim() || localStorage.getItem('aria_api_key') || '';
+    const apiKey = document.getElementById('apiKeyInput')?.value?.trim() || ariaSecurity.getApiKey('aria_api_key') || '';
     if (!apiKey) return;
 
     const oldNarrative = mem.narrative || 'No prior narrative — this is the first one.';
     const eventsText = mem.events.join('\\n');
     const sc = mem.signalCounts || {};
 
+    // ── Sanitize all user-derived data before it enters the AI prompt ──
+    const safeContactName  = ariaSecurity.sanitizeForPrompt(contactName);
+    const safeRelationship = ariaSecurity.sanitizeForPrompt(relationship || 'contact');
+    const safeNarrative    = ariaSecurity.sanitizeForPrompt(oldNarrative);
+    const safeEvents       = ariaSecurity.sanitizeForPrompt(eventsText);
+
     const prompt = `You are building a private relationship memory for an AI texting assistant called Aria.
 
-Contact: ${contactName} (${relationship || 'contact'})
-Prior narrative: ${oldNarrative}
+Contact: ${safeContactName} (${safeRelationship})
+Prior narrative: ${safeNarrative}
 
 Recent interactions logged:
-${eventsText}
+${safeEvents}
 
 Signal counts:
 - Times they initiated: ${sc.initiated_count || 0}
 - Times left on read: ${sc.left_on_read_count || 0}
 - Late-night exchanges: ${sc.late_night_count || 0}
 
-Write an updated relationship narrative in 2-4 sentences. First person from Aria's perspective ("You and ${contactName}…"). Be specific and honest — name real patterns, tensions, warmth, or distance. Don't be generic. This is a private internal note, so be candid. Examples of good narrative: "You and Maya have been drifting lately — she's been the one texting first for the last month and your replies have been getting shorter. There's warmth there but something feels unresolved." Output ONLY the narrative paragraph. No labels, no preamble.`;
+Write an updated relationship narrative in 2-4 sentences. First person from Aria's perspective ("You and ${safeContactName}…"). Be specific and honest — name real patterns, tensions, warmth, or distance. Don't be generic. This is a private internal note, so be candid. Examples of good narrative: "You and Maya have been drifting lately — she's been the one texting first for the last month and your replies have been getting shorter. There's warmth there but something feels unresolved." Output ONLY the narrative paragraph. No labels, no preamble.`;
 
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -829,7 +950,7 @@ Write an updated relationship narrative in 2-4 sentences. First person from Aria
         const text = data.content?.[0]?.text?.trim();
         if (text) mem.narrative = text;
       }
-    } catch(e) { console.warn('contactMemory narrative gen error', e); }
+    } catch(e) { ariaSecurity.safeWarn('contactMemory.narrative', e); }
   }
 
   // ── Manually set a narrative fact (from contact profile edit) ────
@@ -1028,6 +1149,10 @@ async function gateSubmit() {
   const errEl    = document.getElementById('gateError');
   errEl.textContent = '';
 
+  // ── Rate limit check ──
+  const lockMsg = ariaSecurity.checkAuthAllowed();
+  if (lockMsg) { errEl.textContent = lockMsg; return; }
+
   if (!email || !email.includes('@')) { errEl.textContent = 'enter a valid email'; return; }
   if (password.length < 6) { errEl.textContent = 'password must be at least 6 characters'; return; }
 
@@ -1054,11 +1179,16 @@ async function gateSubmit() {
   if (labelEl) labelEl.textContent = orig; else btn.textContent = orig;
 
   if (error) {
+    ariaSecurity.recordAuthFailure();
     if (error.message.includes('Invalid login')) errEl.textContent = 'wrong email or password';
     else if (error.message.includes('already registered')) errEl.textContent = 'account already exists — sign in instead';
     else errEl.textContent = error.message;
+    // Show attempt count warning if approaching lockout
+    const state = ariaSecurity.checkAuthAllowed();
+    if (state) errEl.textContent = state;
     return;
   }
+  ariaSecurity.recordAuthSuccess();
 
   // success — session triggers onAuthStateChange which calls dismissAuthGate
   if (gateMode === 'signup') {
@@ -1103,6 +1233,10 @@ async function handleAuthSubmit(mode) {
   const errEl = document.getElementById(errId);
   errEl.textContent = '';
 
+  // ── Rate limit check ──
+  const lockMsg = ariaSecurity.checkAuthAllowed();
+  if (lockMsg) { errEl.textContent = lockMsg; return; }
+
   const email = isSignin
     ? (document.getElementById('authEmail').value || '').trim()
     : (document.getElementById('authEmailSignup').value || '').trim();
@@ -1135,11 +1269,15 @@ async function handleAuthSubmit(mode) {
   btn.textContent = orig;
 
   if (error) {
+    ariaSecurity.recordAuthFailure();
     if (error.message.includes('Invalid login')) errEl.textContent = 'wrong email or password';
     else if (error.message.includes('already registered')) errEl.textContent = 'account exists — sign in instead';
     else errEl.textContent = error.message;
+    const lockCheck = ariaSecurity.checkAuthAllowed();
+    if (lockCheck) errEl.textContent = lockCheck;
     return;
   }
+  ariaSecurity.recordAuthSuccess();
 
   // success
   document.getElementById('authDefault').style.display = 'none';
@@ -1199,7 +1337,7 @@ async function loadFromSupabase() {
     await contactMemory.load();
     runDriftEngine();
   } catch(e) {
-    console.warn('Supabase load error — falling back to localStorage', e);
+    ariaSecurity.safeWarn('supabase.load — falling back to localStorage', e);
     loadFromLocalStorage();
   }
 }
@@ -1253,7 +1391,7 @@ async function saveProfile() {
       energy_level:        energyLevel,
       aria_relationship_xp: ariaRelationshipXP
     });
-  } catch(e) { console.warn('saveProfile error', e); }
+  } catch(e) { ariaSecurity.safeWarn('saveProfile', e); }
 }
 
 // Refresh stats from DB after a trigger may have updated streak / replySentCount

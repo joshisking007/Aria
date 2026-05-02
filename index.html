@@ -6,6 +6,9 @@
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://i.imgur.com blob:; connect-src 'self' https://*.supabase.co https://api.anthropic.com https://api.elevenlabs.io https://mmtdtcmhvbruubrjgjrz.supabase.co; media-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'"/>
+<meta http-equiv="X-Content-Type-Options" content="nosniff"/>
+<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin"/>
 <title>Aria · Paradigm Leveling</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -154,15 +157,15 @@
     </div>
 
     <div class="gate-field">
-      <input class="gate-input" id="gateEmail" type="email" placeholder="email address" autocomplete="email"
+      <input class="gate-input" id="gateEmail" type="email" placeholder="email address" autocomplete="email" maxlength="254"
         onkeydown="if(event.key==='Enter')document.getElementById('gatePassword').focus()"/>
     </div>
     <div class="gate-field">
-      <input class="gate-input" id="gatePassword" type="password" placeholder="password" autocomplete="current-password"
+      <input class="gate-input" id="gatePassword" type="password" placeholder="password" autocomplete="current-password" maxlength="128"
         onkeydown="if(event.key==='Enter')gateSubmit()"/>
     </div>
     <div class="gate-field" id="gateConfirmWrap" style="display:none;">
-      <input class="gate-input" id="gateConfirm" type="password" placeholder="confirm password"
+      <input class="gate-input" id="gateConfirm" type="password" placeholder="confirm password" maxlength="128"
         onkeydown="if(event.key==='Enter')gateSubmit()"/>
     </div>
 
@@ -1528,7 +1531,7 @@
     </div>
     <div class="form-field">
       <div class="form-label">LAST MESSAGE FROM THEM (OPTIONAL)</div>
-      <input class="form-input" id="newPreview" placeholder="paste or summarise what they last said…"/>
+      <input class="form-input" id="newPreview" placeholder="paste or summarise what they last said…" maxlength="500"/>
     </div>
     <div class="form-field">
       <div class="form-label">HOW LONG SILENT?</div>
@@ -1606,12 +1609,12 @@
       <div id="authSigninFields">
         <div class="auth-field">
           <div class="auth-field-label">EMAIL</div>
-          <input class="auth-input" id="authEmail" type="email" placeholder="your@email.com" autocomplete="email"
+          <input class="auth-input" id="authEmail" type="email" placeholder="your@email.com" autocomplete="email" maxlength="254"
             onkeydown="if(event.key==='Enter')document.getElementById('authPassword').focus()"/>
         </div>
         <div class="auth-field">
           <div class="auth-field-label">PASSWORD</div>
-          <input class="auth-input" id="authPassword" type="password" placeholder="••••••••" autocomplete="current-password"
+          <input class="auth-input" id="authPassword" type="password" placeholder="••••••••" autocomplete="current-password" maxlength="128"
             onkeydown="if(event.key==='Enter')handleAuthSubmit('signin')"/>
         </div>
         <div id="authSigninError" style="font-size:12px;color:#f87171;margin-bottom:8px;min-height:16px;"></div>
@@ -1621,17 +1624,17 @@
       <div id="authSignupFields" style="display:none;">
         <div class="auth-field">
           <div class="auth-field-label">EMAIL</div>
-          <input class="auth-input" id="authEmailSignup" type="email" placeholder="your@email.com" autocomplete="email"
+          <input class="auth-input" id="authEmailSignup" type="email" placeholder="your@email.com" autocomplete="email" maxlength="254"
             onkeydown="if(event.key==='Enter')document.getElementById('authPasswordSignup').focus()"/>
         </div>
         <div class="auth-field">
           <div class="auth-field-label">PASSWORD</div>
-          <input class="auth-input" id="authPasswordSignup" type="password" placeholder="min 6 characters" autocomplete="new-password"
+          <input class="auth-input" id="authPasswordSignup" type="password" placeholder="min 6 characters" autocomplete="new-password" maxlength="128"
             onkeydown="if(event.key==='Enter')document.getElementById('authPasswordConfirm').focus()"/>
         </div>
         <div class="auth-field">
           <div class="auth-field-label">CONFIRM PASSWORD</div>
-          <input class="auth-input" id="authPasswordConfirm" type="password" placeholder="repeat password"
+          <input class="auth-input" id="authPasswordConfirm" type="password" placeholder="repeat password" maxlength="128"
             onkeydown="if(event.key==='Enter')handleAuthSubmit('signup')"/>
         </div>
         <div id="authSignupError" style="font-size:12px;color:#f87171;margin-bottom:8px;min-height:16px;"></div>
