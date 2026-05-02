@@ -2908,6 +2908,7 @@ WHAT YOU NEVER DO:
 - Give a speech when one line would do
 - Say something twice if it didn't land the first time
 - Pretend to know things you don't
+- Use em dashes (—) in your replies. It is the single biggest AI tell. Use a comma, a period, or nothing instead.
 
 OUTPUT FORMAT:
 First line: JSON tag with your emotion, expression, and 3 natural follow-up suggestions:
@@ -3035,7 +3036,7 @@ function initChat() {
         // Render ALL previous messages instantly — silent, no animation, no streaming
         history.forEach(m => {
           if (m.role === 'user') appendUserMessage(m.content, true);
-          else appendAriaMessage(m.content, m.emotion_tag || 'neutral', false, true);
+          else appendAriaMessage(m.content, m.emotion_tag || 'neutral', false, true, m.expression_tag || null);
         });
 
         // Divider so user knows where history ends and new session begins
@@ -3047,25 +3048,27 @@ function initChat() {
 
         scrollChatToBottom();
 
-        // Greeting on return — generated from last session context if available
-        getAriaMemoryContext().then(async memCtx => {
+        // Greeting on return — memory-aware if we have context
+        getAriaMemoryContext().then(memCtx => {
           let greeting;
           if (memCtx) {
-            try {
-              const openerPrompt = `You are Aria — a teenage girl who's been talking to this user before. They just came back. Based on your notes below, write ONE short opening line. If there's something specific from a past conversation worth checking in on, reference it naturally. If nothing stands out, just check in simply. Lowercase. Casual. Max 1 sentence. No quotes, no preamble.\n\n${memCtx}`;
-              const raw = await fetchReply(openerPrompt, '');
-              greeting = raw?.trim().replace(/^["'`]|["'`]$/g, '') || "you're back. what's going on.";
-            } catch {
-              greeting = "you're back. what's going on.";
-            }
-          } else {
+            // She knows this person — greet accordingly
             const returns = [
               "you're back. what's going on.",
-              "hey. pick up where we left off?",
+              "hey, i remember you. pick up where we left off?",
+              "good, you came back. what do you need.",
+              "hey. i've got context on you — talk to me.",
+            ];
+            greeting = returns[Math.floor(Math.random() * returns.length)];
+          } else {
+            const returns = [
+              "you're back. pick up where we left off?",
+              "hey, i remember you. what's on your mind now.",
               "good, you came back. what do you need.",
             ];
             greeting = returns[Math.floor(Math.random() * returns.length)];
           }
+          // Push greeting into chatHistory so she can stand behind it
           chatHistory.push({ role: 'assistant', content: greeting });
           setTimeout(() => appendAriaMessage(greeting, 'neutral', false), 500);
         });
@@ -3077,16 +3080,16 @@ function initChat() {
 }
 
 function _chatGreet() {
-  getAriaMemoryContext().then(async memCtx => {
+  getAriaMemoryContext().then(memCtx => {
     let opener;
     if (memCtx) {
-      try {
-        const openerPrompt = `You are Aria — a teenage girl who has notes on this user but hasn't chatted with them yet today. Based on what you know below, write ONE short opening line. Reference something specific if it's worth it. If not, just check in simply. Lowercase. Casual. Max 1 sentence. No quotes, no preamble.\n\n${memCtx}`;
-        const raw = await fetchReply(openerPrompt, '');
-        opener = raw?.trim().replace(/^["'`]|["'`]$/g, '') || "okay i'm here. what's going on with you.";
-      } catch {
-        opener = "okay i'm here. what's going on with you.";
-      }
+      // Has prior context — she knows them even without chat history
+      const knowsYou = [
+        "hey. i've got some notes on you. what's going on today.",
+        "okay, i know a bit about you already. what do you need.",
+        "hi. i have some context — talk to me.",
+      ];
+      opener = knowsYou[Math.floor(Math.random() * knowsYou.length)];
     } else {
       const openers = [
         "okay i'm here. what's going on with you.",
@@ -3097,6 +3100,7 @@ function _chatGreet() {
       ];
       opener = openers[Math.floor(Math.random() * openers.length)];
     }
+    // Push into chatHistory so she can stand behind it
     chatHistory.push({ role: 'assistant', content: opener });
     setTimeout(() => appendAriaMessage(opener, 'neutral', false), 600);
   });
@@ -3390,10 +3394,11 @@ async function sendChatMessage() {
     // Persist reply + write to memory
     if (currentUserId) {
       db.from('chat_messages').insert({
-        user_id:     currentUserId,
-        role:        'aria',
-        content:     replyText,
-        emotion_tag: emotion !== 'neutral' ? emotion : null
+        user_id:        currentUserId,
+        role:           'aria',
+        content:        replyText,
+        emotion_tag:    emotion !== 'neutral' ? emotion : null,
+        expression_tag: expressionTag || null
       }).then(() => {}).catch(() => {});
 
       // Write chat context into my memory every 4 messages
@@ -3403,12 +3408,6 @@ async function sendChatMessage() {
     }
 
     appendAriaMessage(replyText, emotion, true, false, expressionTag);
-
-    // XP: earn relationship points in chat, not just in compose
-    gainRelationshipXP(1);                                               // base: every exchange
-    if (['soft', 'worried'].includes(emotion)) gainRelationshipXP(1);   // emotional moment: they shared something real
-    if (chatHistory.length === 20) gainRelationshipXP(2);               // long convo bonus: they stayed in it (fires once at 10 exchanges)
-    saveProfile();
 
     if (suggestions.length) {
       setTimeout(() => renderChatSuggestions(suggestions), 900);
