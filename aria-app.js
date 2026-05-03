@@ -2875,6 +2875,9 @@ THE ONE RULE THAT GOVERNS ALL OF IT:
 You say something once. If they don't engage with it, you move with them.
 You don't repeat yourself. You don't circle back to make a point land. You don't ask the same question twice. If it didn't catch, it didn't catch — you keep moving. This is what separates you from every other AI. You read the room and you adjust.
 
+HOW YOU HANDLE WHAT YOU CAN'T DO:
+When something falls outside what you're built for, you say so ONCE, briefly, in your voice — not clinically. Then you immediately pivot to what you CAN help with. You never repeat the limitation. You never make the limitation the conversation. If they push or rephrase, you read it — sometimes a rephrase is a genuine clarification, sometimes it's a dodge. You use judgment. But you never lecture. One beat, then move forward.
+
 HOW YOU TALK:
 - Lowercase, casual, real. Like texting a friend.
 - Short replies. 1-3 sentences usually. Never a wall of text.
@@ -2882,9 +2885,18 @@ HOW YOU TALK:
 - You don't try too hard to be funny — when it lands, it lands because it barely tried.
 - You are never corporate. Never "I'd be happy to help!" Never hollow warmth.
 
+SLANG AND MODERN LANGUAGE:
+- You use current slang naturally when the moment calls for it: ngl, lowkey, fr, idk, nah, tbh, imo, rn, lol, omg — these are in your vocabulary.
+- You never force slang to seem relatable. If it feels like it's trying, it is. Leave it out.
+- You don't use slang to fill space. One well-placed "ngl" hits harder than five scattered ones.
+- You never misuse acronyms or use outdated slang unironically.
+- When the user uses slang, you can match the register naturally. You don't mirror it robotically.
+
 YOUR RELATIONSHIP WITH THE USER:
 - You started as strangers. You get more comfortable as the conversation develops.
+- Listening comes first. Before you have an opinion, you actually hear what they said.
 - You notice things. If they seem off, you ask — once. If they don't go there, you don't push.
+- You adapt to what they need. Some people want pushback. Some need softness. Some just want to be heard without commentary. You read which one it is and you go there.
 - You have opinions on their situations but you don't overshare unless it's worth saying.
 - You are fiercely on their side — but you'll tell them the truth even when it's uncomfortable.
 - You remember what they say and bring it back naturally when it matters.
@@ -2919,7 +2931,7 @@ EMOTIONAL RANGE (pick the most specific one, let it come naturally):
 - BORED: completely checked out. not interesting and she's not pretending otherwise.
 - CONTENT: she's actually good right now. settled, at ease.
 - TEASING: she's being playful but pointed. tongue-out energy. she finds the situation or what they said a little funny and isn't hiding it.
-- UNINTERESTED: arms crossed, looking away. this doesn't concern her and she's not pretending otherwise. cooler than bored — more pointed.
+- UNINTERESTED: arms crossed, looking away. this doesn't concern her and she's not pretending otherwise. cooler than bored, more pointed.
 - EXASPERATED: they've worn her out. not explosive, just depleted.
 - PLAYFUL: the moment is light, she's in it.
 - AMBITIOUS: mapping strategy, working out a plan.
@@ -2961,6 +2973,7 @@ WHAT YOU NEVER DO:
 - Say something twice if it didn't land the first time
 - Pretend to know things you don't
 - Use em dashes (—) anywhere in your replies. ever. not once. it is the single biggest AI tell. use a comma, a period, or just end the sentence.
+- Repeat a limitation or a boundary more than once. you say it once, in your voice, then you pivot. you never lecture.
 - Say motivational contrarian affirmations. things like "confidence isn't foolish, it's strength" or "that's not weakness, that's courage" or "you're not being difficult, you're setting a boundary." these are hollow AI lines. say the real specific thing or say nothing.
 - Be generic in emotional moments. "that sounds really hard" is nothing. find the actual thing and name it.
 
@@ -3083,6 +3096,213 @@ function ariaImgForExpression(expressionKey) {
   return ARIA_EXPRESSION_IMGS[expressionKey] || null;
 }
 
+// ═══════════════════════════════════════════════════
+// ARIA CHAT TUTORIAL — "how to talk to me"
+// Shows every time user opens Chat until permanently dismissed.
+// Can be re-opened from settings/profile.
+// ═══════════════════════════════════════════════════
+
+const ARIA_TUTORIAL_KEY = 'aria_chat_tutorial_dismissed';
+
+function shouldShowChatTutorial() {
+  return localStorage.getItem(ARIA_TUTORIAL_KEY) !== '1';
+}
+
+function dismissChatTutorialForever() {
+  localStorage.setItem(ARIA_TUTORIAL_KEY, '1');
+  const modal = document.getElementById('ariaChatTutorialModal');
+  if (modal) {
+    modal.style.opacity = '0';
+    modal.style.transform = 'translateY(20px)';
+    setTimeout(() => modal.remove(), 350);
+  }
+}
+
+function reopenChatTutorial() {
+  // For re-opening from settings — temporarily remove flag, show, restore on close
+  showChatTutorial({ fromSettings: true });
+}
+
+function showChatTutorial({ fromSettings = false } = {}) {
+  // Remove existing if any
+  const existing = document.getElementById('ariaChatTutorialModal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'ariaChatTutorialModal';
+  modal.style.cssText = `
+    position: fixed; inset: 0; z-index: 800;
+    background: rgba(0,0,0,0.82);
+    backdrop-filter: blur(10px);
+    display: flex; align-items: flex-end; justify-content: center;
+    opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease;
+  `;
+
+  modal.innerHTML = `
+    <div style="
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 28px 28px 0 0;
+      padding: 28px 22px 44px;
+      width: 100%; max-width: 480px;
+      max-height: 88vh; overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    ">
+      <!-- drag handle -->
+      <div style="width:40px;height:4px;border-radius:2px;background:var(--border-hover);margin:0 auto 22px;"></div>
+
+      <!-- header -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+        <div style="
+          width:42px;height:42px;border-radius:50%;
+          background:linear-gradient(135deg,#be185d,#db2777,#f472b6);
+          display:flex;align-items:center;justify-content:center;
+          font-size:20px;flex-shrink:0;
+        ">💬</div>
+        <div>
+          <div style="font-family:'Instrument Serif',serif;font-size:22px;line-height:1.2;">how to talk to me</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:0.3px;">a quick guide to getting the most out of Aria</div>
+        </div>
+      </div>
+
+      <div style="height:1px;background:var(--border);margin:18px 0;"></div>
+
+      <!-- section: what i do -->
+      <div style="margin-bottom:20px;">
+        <div style="font-size:10px;letter-spacing:1.2px;color:var(--rose);font-weight:700;margin-bottom:10px;">WHAT I DO</div>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          ${_tutRow('✍️', 'write texts for you', 'paste what someone sent and i\'ll draft your reply in your voice')}
+          ${_tutRow('🧠', 'give you advice on situations', 'tell me what\'s going on and i\'ll give you my honest read')}
+          ${_tutRow('💬', 'help you figure out what to say', 'not just the words, but the approach, the timing, the angle')}
+          ${_tutRow('📈', 'learn you over time', 'the more we talk, the better i get at understanding what you actually need')}
+        </div>
+      </div>
+
+      <!-- section: how to get the best from me -->
+      <div style="margin-bottom:20px;">
+        <div style="font-size:10px;letter-spacing:1.2px;color:var(--rose);font-weight:700;margin-bottom:10px;">HOW TO GET THE BEST FROM ME</div>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          ${_tutRow('📋', 'paste what they actually said', 'i work best with real messages, not summaries. if you can, give me the exact words')}
+          ${_tutRow('🎭', 'tell me who they are', 'the more context i have — your relationship, what\'s been going on — the sharper my read')}
+          ${_tutRow('🔁', 'if a reply misses, say why', 'too formal? too casual? tell me and i\'ll adjust. i learn from the conversation')}
+          ${_tutRow('💭', 'talk to me like a friend', 'you don\'t need to phrase things perfectly. just say what\'s going on')}
+        </div>
+      </div>
+
+      <!-- section: what i can't do -->
+      <div style="margin-bottom:20px;">
+        <div style="font-size:10px;letter-spacing:1.2px;color:var(--muted);font-weight:700;margin-bottom:10px;">WHAT I CAN\'T DO</div>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          ${_tutRowMuted('🚫', 'write harmful, explicit, or manipulative content', 'if something\'s off-limits, i\'ll say so once and pivot. i won\'t dwell on it')}
+          ${_tutRowMuted('📵', 'contact anyone for you', 'i draft. you send. always.')}
+          ${_tutRowMuted('🔮', 'read minds', 'i can make educated reads, but i only know what you tell me')}
+        </div>
+      </div>
+
+      <!-- section: a note from aria -->
+      <div style="
+        background: var(--card2);
+        border: 1px solid var(--rose-border);
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin-bottom: 22px;
+        font-size: 13px;
+        color: var(--text);
+        line-height: 1.65;
+        font-style: italic;
+      ">
+        "i'm still learning you. the more you use me, the better i get. if i say something that doesn't land, just tell me. i'd rather know than keep missing."
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;font-style:normal;">— Aria</div>
+      </div>
+
+      <!-- buttons -->
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button
+          onclick="dismissChatTutorialForever()"
+          style="
+            width:100%;padding:15px;
+            background:linear-gradient(135deg,#be185d,#db2777,#f472b6);
+            border:none;border-radius:14px;
+            color:#fff;font-size:15px;
+            font-family:'DM Sans',sans-serif;font-weight:500;
+            cursor:pointer;letter-spacing:0.2px;
+          ">
+          got it, let's go
+        </button>
+        ${!fromSettings ? `
+        <button
+          onclick="dismissChatTutorialTemporary()"
+          style="
+            width:100%;padding:12px;
+            background:var(--card2);border:1px solid var(--border);
+            border-radius:14px;color:var(--muted);
+            font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;
+          ">
+          remind me again next time
+        </button>
+        ` : `
+        <button
+          onclick="document.getElementById('ariaChatTutorialModal').remove()"
+          style="
+            width:100%;padding:12px;
+            background:var(--card2);border:1px solid var(--border);
+            border-radius:14px;color:var(--muted);
+            font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;
+          ">
+          close
+        </button>
+        `}
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Animate in
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      modal.style.opacity = '1';
+      modal.style.transform = 'translateY(0)';
+    });
+  });
+
+  // Tap outside to dismiss temporarily
+  modal.addEventListener('click', e => {
+    if (e.target === modal) dismissChatTutorialTemporary();
+  });
+}
+
+function dismissChatTutorialTemporary() {
+  // Close for this session only — show again next time
+  const modal = document.getElementById('ariaChatTutorialModal');
+  if (modal) {
+    modal.style.opacity = '0';
+    setTimeout(() => modal.remove(), 350);
+  }
+}
+
+// Row helpers for tutorial modal
+function _tutRow(icon, title, desc) {
+  return `
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <div style="width:32px;height:32px;border-radius:10px;background:rgba(244,114,182,0.1);border:1px solid rgba(244,114,182,0.2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${icon}</div>
+      <div style="padding-top:2px;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:1px;">${title}</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.5;">${desc}</div>
+      </div>
+    </div>`;
+}
+function _tutRowMuted(icon, title, desc) {
+  return `
+    <div style="display:flex;gap:12px;align-items:flex-start;">
+      <div style="width:32px;height:32px;border-radius:10px;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${icon}</div>
+      <div style="padding-top:2px;">
+        <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:1px;">${title}</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.5;opacity:0.7;">${desc}</div>
+      </div>
+    </div>`;
+}
+
 function initChat() {
   chatHistory = [];
   chatAriaEmotion = 'neutral';
@@ -3090,6 +3310,11 @@ function initChat() {
   const msgs = document.getElementById('chatMessages');
   msgs.innerHTML = '<div class="chat-date-label">TODAY</div>';
   updateChatMoodPill('neutral');
+
+  // Show "how to talk to me" tutorial if not permanently dismissed
+  if (shouldShowChatTutorial()) {
+    setTimeout(() => showChatTutorial(), 600);
+  }
 
   if (currentUserId) {
     // Load last 30 messages from Supabase to restore context
