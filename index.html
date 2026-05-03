@@ -147,6 +147,7 @@
        2. Uncomment the playPLSting() call below.
        The 150ms delay fires after the first chevron lands (~0.9s total).
   ─────────────────────────────────────────────────────────────── -->
+  <audio id="plStingAudio" src="pl-sting.mp3" preload="auto"></audio>
   <script>
     window.playPLSting = function() {
       var audio = document.getElementById('plStingAudio');
@@ -155,8 +156,7 @@
         audio.play().catch(function(){});
       }
     };
-    // Uncomment this line once your audio file is in place:
-    // setTimeout(window.playPLSting, 150);
+    setTimeout(window.playPLSting, 150);
   </script>
 </div>
 
