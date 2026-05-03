@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@800&family=Barlow+Condensed:wght@300&display=swap');
 
-/* ─── RESET & ROOT ─────────────────────────────────────────── */
+/* reset & root */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
 :root {
@@ -79,7 +79,7 @@ body::after {
 .screen:not(#introScreen) { display: none; }
 .screen.active { display: flex !important; }
 
-/* ─── SHARED UI ─────────────────────────────────────────────── */
+/* shared ui */
 .top-bar {
   padding: 18px 20px 0;
   display: flex; align-items: center; gap: 14px;
@@ -124,7 +124,7 @@ body::after {
   letter-spacing: 2px; padding: 0 20px; margin-bottom: 12px;
 }
 
-/* ─── TOAST ─────────────────────────────────────────────────── */
+/* toast */
 .toast {
   position: fixed; bottom: 28px; left: 50%;
   transform: translateX(-50%) translateY(20px);
@@ -139,7 +139,7 @@ body::after {
 .toast.toast-green { background: #d1fae5; color: #065f46; }
 .toast.toast-blue { background: #dbeafe; color: #1e3a5f; }
 
-/* ─── MODAL ─────────────────────────────────────────────────── */
+/* modal */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 100;
   background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
@@ -173,7 +173,7 @@ body::after {
   cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
 
-/* ─── CURSOR ─────────────────────────────────────────────────── */
+/* cursor */
 .cursor {
   display: inline-block; width: 2px; height: 14px;
   background: var(--rose); margin-left: 2px;
@@ -181,12 +181,12 @@ body::after {
 }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
-/* ─── SLIDE UP ANIM ─────────────────────────────────────────── */
+/* slide up anim */
 @keyframes slide-up { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
 @keyframes fade-in { from{opacity:0} to{opacity:1} }
 @keyframes scale-in { from{opacity:0;transform:scale(0.94)} to{opacity:1;transform:scale(1)} }
 
-/* ─── AUTH GATE ─────────────────────────────────────────────── */
+/* auth gate */
 #authGate {
   position: fixed; inset: 0; z-index: 2000;
   background: var(--bg);
@@ -360,7 +360,7 @@ body::after {
 .gate-orb-wrap { display: none; }
 .gate-orb, .gate-ring, .gate-ring-2 { display: none; }
 
-/* ─── MEMORY SCREEN ─────────────────────────────────────────── */
+/* memory screen */
 #memoryScreen { padding-bottom: 80px; }
 
 .memory-header-card {
@@ -448,7 +448,7 @@ body::after {
 }
 .memory-learn-btn:active { background: var(--rose-dim); }
 
-/* ─── INTRO SCREEN ──────────────────────────────────────────── */
+/* intro screen */
 #introScreen { padding-bottom: 0; min-height: 100vh; }
 
 .intro-scroll { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
@@ -607,7 +607,7 @@ body::after {
 .stat-num { font-family: 'Instrument Serif', serif; font-size: 22px; color: var(--text); }
 .stat-label { font-size: 10px; color: var(--muted); margin-top: 2px; letter-spacing: 0.5px; }
 
-/* ─── CONTACT SCREEN ─────────────────────────────────────────── */
+/* contact screen */
 #contactScreen { padding-bottom: 80px; }
 
 /* Search bar */
@@ -703,7 +703,7 @@ body::after {
   padding: 2px 8px; border-radius: 8px; white-space: nowrap; display: inline-block;
 }
 
-/* ─── DRIFT DETECTION ──────────────────────────────────────────── */
+/* drift detection */
 .drift-badge {
   font-size: 10px; padding: 2px 8px; border-radius: 8px;
   white-space: nowrap; display: inline-block;
@@ -772,7 +772,7 @@ body::after {
 }
 .add-contact-card:active { border-color: var(--rose-border); }
 
-/* ─── REPLY SCREEN ─────────────────────────────────────────────── */
+/* reply screen */
 #replyScreen { padding-bottom: 24px; }
 
 .convo-area { padding: 0 20px; margin-bottom: 16px; }
@@ -955,7 +955,7 @@ body::after {
 .action-btn-sm:active { border-color: var(--rose-border); color: var(--rose); }
 .action-btn-sm .btn-icon { display: block; font-size: 16px; margin-bottom: 3px; }
 
-/* ─── CONTACT MEMORY CARD ─────────────────────────────────────────── */
+/* contact memory card */
 .contact-memory-card {
   background: linear-gradient(135deg, rgba(249,115,22,0.06), rgba(96,165,250,0.04));
   border: 1px solid var(--rose-border);
@@ -1142,7 +1142,7 @@ textarea.context-input::placeholder { color: var(--muted); }
 .platform-pill.active.twitter { background: rgba(96,165,250,0.1); border-color: rgba(96,165,250,0.3); color: #60a5fa; }
 .platform-pill.active.snapchat { background: rgba(255,252,0,0.1); border-color: rgba(255,252,0,0.3); color: #e8e300; }
 
-/* ─── HISTORY SCREEN ─────────────────────────────────────────── */
+/* history screen */
 #historyScreen { padding-bottom: 80px; }
 
 .history-card {
@@ -1173,7 +1173,7 @@ textarea.context-input::placeholder { color: var(--muted); }
   padding: 2px 8px; border-radius: 8px;
 }
 
-/* ─── PROFILE/VOICE SCREEN ───────────────────────────────────── */
+/* profile / voice screen */
 #profileScreen { padding-bottom: 80px; }
 
 .profile-hero {
@@ -1258,8 +1258,8 @@ input[type=range]::-webkit-slider-thumb {
   background: var(--rose); box-shadow: 0 0 10px rgba(249,115,22,0.4);
 }
 
-/* ─── NAV BAR ─────────────────────────────────────────────────── */
-/* ─── HAMBURGER BUTTON ───────────────────────────────────────── */
+/* nav bar */
+/* hamburger button */
 .hamburger-btn {
   position: fixed; bottom: 24px; right: 20px; z-index: 100;
   width: 52px; height: 52px; border-radius: 50%;
@@ -1282,7 +1282,7 @@ input[type=range]::-webkit-slider-thumb {
 .hamburger-btn.open .hb-line:nth-child(2) { opacity: 0; transform: scaleX(0); }
 .hamburger-btn.open .hb-line:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-/* ─── MENU DRAWER ────────────────────────────────────────────── */
+/* menu drawer */
 .menu-drawer {
   position: fixed; bottom: 0; left: 50%; transform: translateX(-50%) translateY(100%);
   width: 100%; max-width: 480px; z-index: 99;
@@ -1321,7 +1321,7 @@ input[type=range]::-webkit-slider-thumb {
 }
 .menu-overlay.open { opacity: 1; pointer-events: all; }
 
-/* ─── ADD CONTACT MODAL ──────────────────────────────────────── */
+/* add contact modal */
 .form-field { margin-bottom: 14px; }
 .form-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; margin-bottom: 6px; }
 .form-input {
@@ -1344,7 +1344,7 @@ input[type=range]::-webkit-slider-thumb {
   cursor: pointer; letter-spacing: 0.5px; margin-top: 8px;
 }
 
-/* ─── STREAK / STATS SECTION ─────────────────────────────────── */
+/* streak / stats section */
 .streak-banner {
   margin: 0 20px 20px;
   background: linear-gradient(135deg, rgba(249,115,22,0.08), rgba(190,24,93,0.05));
@@ -1362,7 +1362,7 @@ input[type=range]::-webkit-slider-thumb {
   font-size: 11px; color: var(--rose);
 }
 
-/* ─── MOOD SCREEN ────────────────────────────────────────────── */
+/* mood screen */
 #moodScreen { padding-bottom: 80px; }
 .mood-grid {
   padding: 0 20px; display: grid; grid-template-columns: 1fr 1fr;
@@ -1381,7 +1381,7 @@ input[type=range]::-webkit-slider-thumb {
 .mood-card-label { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
 .mood-card-sub { font-size: 11px; color: var(--muted); line-height: 1.4; }
 
-/* ─── SMART SUGGESTIONS ──────────────────────────────────────── */
+/* smart suggestions */
 .smart-suggestions {
   padding: 0 20px; margin-bottom: 16px;
 }
@@ -1395,7 +1395,7 @@ input[type=range]::-webkit-slider-thumb {
 }
 .suggestion-chip:active { border-color: var(--rose-border); background: var(--rose-dim); color: var(--rose); }
 
-/* ─── LOADING SKELETON ───────────────────────────────────────── */
+/* loading skeleton */
 @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
 .skeleton {
   background: linear-gradient(90deg, var(--card) 25%, var(--card2) 50%, var(--card) 75%);
@@ -1404,17 +1404,15 @@ input[type=range]::-webkit-slider-thumb {
   border-radius: var(--radius-sm);
 }
 
-/* ─── SCROLLBAR ──────────────────────────────────────────────── */
+/* scrollbar */
 ::-webkit-scrollbar { width: 0; background: transparent; }
 
-/* ─── CHAT SCREEN ─────────────────────────────────────────────── */
+/* chat screen */
 #chatScreen { padding-bottom: 0; }
 
-/* ══════════════════════════════════════════════════════════════════
-   CHAT SCREEN — FULL REDESIGN
-   ══════════════════════════════════════════════════════════════════ */
+/* chat screen — full redesign */
 
-/* ── Top bar ─────────────────────────────────────────────────────── */
+/* top bar */
 .chat-top-bar {
   padding: 14px 18px 12px;
   display: flex; align-items: center; gap: 10px;
@@ -1485,7 +1483,7 @@ input[type=range]::-webkit-slider-thumb {
   display: none;
 }
 
-/* ── Message list ─────────────────────────────────────────────────── */
+/* message list */
 .chat-messages {
   flex: 1; overflow-y: auto;
   padding: 16px 16px 20px;
@@ -1498,7 +1496,7 @@ input[type=range]::-webkit-slider-thumb {
   letter-spacing: 1.5px; margin: 4px 0; text-transform: uppercase;
 }
 
-/* ── Aria message block ───────────────────────────────────────────── */
+/* aria message block */
 .chat-msg-aria-wrap {
   display: flex; flex-direction: column;
   align-items: flex-start; gap: 0;
@@ -1561,7 +1559,7 @@ input[type=range]::-webkit-slider-thumb {
   padding: 14px 18px; min-width: 70px;
 }
 
-/* ── User message block ───────────────────────────────────────────── */
+/* user message block */
 .chat-msg-user { display: flex; justify-content: flex-end; align-self: flex-end; max-width: 88%; }
 .chat-msg-user-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
 .chat-bubble-user {
@@ -1585,7 +1583,7 @@ input[type=range]::-webkit-slider-thumb {
 .chat-typing-dot:nth-child(2) { animation-delay: 0.2s; }
 .chat-typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
-/* ── Input bar ───────────────────────────────────────────────────── */
+/* input bar */
 .chat-input-bar {
   flex-shrink: 0;
   background: rgba(10,10,10,0.97); backdrop-filter: blur(20px);
@@ -1632,20 +1630,20 @@ textarea.chat-input::placeholder { color: var(--muted); }
   border-radius: 20px; animation: fade-in 0.4s ease;
 }
 
-/* ─── ANIMATIONS ─────────────────────────────────────────────── */
+/* animations */
 .stagger-1 { animation-delay: 0.05s; }
 .stagger-2 { animation-delay: 0.1s; }
 .stagger-3 { animation-delay: 0.15s; }
 .stagger-4 { animation-delay: 0.2s; }
 .stagger-5 { animation-delay: 0.25s; }
 
-/* ─── DIVIDER ────────────────────────────────────────────────── */
+/* divider */
 .divider {
   height: 1px; background: var(--border);
   margin: 0 20px 20px;
 }
 
-/* ─── ARIA SPEAKING ─────────────────────────────────────────── */
+/* aria speaking */
 .aria-orb.speaking {
   animation: orb-speaking 0.45s ease-in-out infinite !important;
   box-shadow: 0 0 90px rgba(249,115,22,0.75), 0 0 200px rgba(249,115,22,0.3) !important;
@@ -1727,7 +1725,7 @@ textarea.chat-input::placeholder { color: var(--muted); }
 .mute-btn.muted { border-color: rgba(100,100,100,0.3); opacity: 0.5; }
 .mute-btn:active { transform: scale(0.9); }
 
-/* ─── VOICE PICKER ───────────────────────────────────────────── */
+/* voice picker */
 .voice-section { margin-bottom: 24px; }
 .voice-list {
   max-height: 220px; overflow-y: auto;
@@ -1793,7 +1791,7 @@ textarea.chat-input::placeholder { color: var(--muted); }
 .voice-mute-label { font-size: 13px; color: var(--text); font-weight: 500; }
 .voice-mute-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
-/* ─── EMPTY STATE ────────────────────────────────────────────── */
+/* empty state */
 .empty-state {
   text-align: center; padding: 40px 20px;
   animation: fade-in 0.4s ease;
@@ -1801,7 +1799,7 @@ textarea.chat-input::placeholder { color: var(--muted); }
 .empty-state-icon { font-size: 40px; margin-bottom: 16px; opacity: 0.5; }
 .empty-state-text { font-size: 14px; color: var(--muted); line-height: 1.6; }
 
-/* ─── FLOATING COPY BUTTON ───────────────────────────────────── */
+/* floating copy button */
 .float-copy {
   position: fixed; bottom: 90px; right: 20px;
   width: 52px; height: 52px; border-radius: 50%;
@@ -1838,7 +1836,7 @@ textarea.chat-input::placeholder { color: var(--muted); }
 .profile-orb { background: transparent !important; box-shadow: 0 0 30px rgba(249,115,22,0.25) !important; }
 .aria-reaction-orb { background: transparent !important; }
 
-/* ─── GLOW-UP SCREEN ─────────────────────────────────────────── */
+/* glow-up screen */
 #glowupScreen { padding-bottom: 80px; }
 
 .glowup-result {
@@ -1866,7 +1864,7 @@ textarea.chat-input::placeholder { color: var(--muted); }
 .glowup-var-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
 .glowup-copy-row { display: flex; gap: 8px; padding: 0 20px; margin-bottom: 16px; display: none; }
 
-/* ─── RED FLAG SCREEN ─────────────────────────────────────────── */
+/* red flag screen */
 #redflagScreen { padding-bottom: 80px; }
 
 .redflag-result { margin: 0 20px 16px; display: none; animation: slide-up 0.3s ease; }
@@ -1903,7 +1901,7 @@ textarea.chat-input::placeholder { color: var(--muted); }
 }
 .redflag-suggestion-label { font-size: 10px; color: var(--rose); letter-spacing: 1.5px; margin-bottom: 6px; }
 
-/* ─── VIBE REPORT SCREEN ─────────────────────────────────────── */
+/* vibe report screen */
 #vibeScreen { padding-bottom: 80px; }
 
 .vibe-contact-select {
@@ -1964,7 +1962,7 @@ textarea.chat-input::placeholder { color: var(--muted); }
 .vibe-pattern-icon { font-size: 16px; flex-shrink: 0; }
 .vibe-pattern-text { flex: 1; color: var(--text2); line-height: 1.4; }
 
-/* ─── CLARIFY MODAL ─────────────────────────────────────────── */
+/* clarify modal */
 .clarify-questions { margin-bottom: 16px; }
 .clarify-q {
   margin-bottom: 12px;
@@ -1978,7 +1976,7 @@ textarea.chat-input::placeholder { color: var(--muted); }
 }
 .clarify-q-input:focus { border-color: var(--rose-border); }
 
-/* ─── ARIA ASK BUTTON (on reply screen) ─────────────────────── */
+/* aria ask button (on reply screen) */
 .ask-aria-btn {
   width: 100%; padding: 12px;
   background: var(--card); border: 1px dashed var(--rose-border);
@@ -1989,7 +1987,7 @@ textarea.chat-input::placeholder { color: var(--muted); }
 }
 .ask-aria-btn:active { background: var(--rose-dim); }
 
-/* ─── AUTH MODAL ─────────────────────────────────────────────── */
+/* auth modal */
 #authModal .modal-sheet { position: relative; }
 .auth-orb-wrap {
   display: flex; justify-content: center; margin-bottom: 16px; padding-top: 4px;
@@ -2082,7 +2080,7 @@ textarea.chat-input::placeholder { color: var(--muted); }
   font-size: 13px; color: var(--text); margin-bottom: 20px;
 }
 
-/* ─── PRE-SEND SCREEN ────────────────────────────────────────── */
+/* pre-send screen */
 #presendScreen { padding-bottom: 80px; }
 
 .presend-header-banner {
@@ -2289,7 +2287,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 .presend-retry-btn { background: var(--card); border: 1px solid var(--border); color: var(--muted); }
 .presend-retry-btn:active { border-color: var(--rose-border); color: var(--rose); }
 
-/* ─── FULL THREAD MODE (reply screen) ──────────── */
+/* full thread mode (reply screen) */
 .thread-mode-banner {
   margin: 0 20px 12px;
   padding: 12px 14px;
@@ -2339,7 +2337,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 .onboard-contact-row { display: flex; gap: 10px; }
 .onboard-contact-row .onboard-input { flex: 1; }
 
-/* ─── CONTACT PROFILE PAGE ─────────────────── */
+/* contact profile page */
 #contactProfileScreen { padding-bottom: 80px; }
 .contact-profile-header { padding: 24px 20px 16px; display: flex; flex-direction: column; align-items: center; text-align: center; }
 .contact-profile-avatar { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 700; margin-bottom: 12px; box-shadow: 0 0 24px rgba(249,115,22,0.2); }
@@ -2358,7 +2356,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 .contact-reply-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
 .contact-reply-meta { display: flex; justify-content: space-between; margin-top: 8px; font-size: 10px; color: var(--muted); }
 
-/* ─── HOME INSIGHT BANNER ────────────────────── */
+/* home insight banner */
 .aria-insight-banner {
   margin: 0 20px 16px;
   background: var(--card); border: 1px solid var(--rose-border);
@@ -2382,7 +2380,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 }
 .aria-insight-text { font-size: 13px; color: var(--text2); line-height: 1.65; font-style: italic; }
 
-/* ─── TONE QUICK-STRIP (reply screen) ──────── */
+/* tone quick-strip (reply screen) */
 .tone-strip { padding: 0 20px; margin-bottom: 12px; overflow-x: auto; display: flex; gap: 8px; scrollbar-width: none; -ms-overflow-style: none; }
 .tone-strip::-webkit-scrollbar { display: none; }
 .tone-chip {
@@ -2395,7 +2393,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 .tone-chip.active { background: var(--rose-dim); border-color: var(--rose-border); color: var(--rose); }
 .tone-chip:active { transform: scale(0.95); }
 
-/* ─── REPLY QUEUE (swipeable) ────────────────── */
+/* reply queue (swipeable) */
 #queueScreen { padding-bottom: 80px; overflow: hidden; }
 .queue-header { padding: 16px 20px 8px; }
 .queue-title { font-family: 'Instrument Serif', serif; font-size: 24px; margin-bottom: 4px; }
@@ -2431,7 +2429,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 .queue-empty-icon { font-size: 48px; margin-bottom: 12px; }
 .queue-empty-text { font-size: 14px; color: var(--muted); line-height: 1.6; }
 
-/* ─── DID IT WORK? FOLLOW-UP ─────────────────── */
+/* did it work? follow-up */
 .followup-nudge {
   position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(80px);
   background: var(--card); border: 1px solid var(--rose-border);
@@ -2454,7 +2452,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 .followup-btn.meh { border-color: var(--amber); color: var(--amber); }
 .followup-btn.bad { border-color: rgba(244,63,94,0.5); color: #f43f5e; }
 
-/* ─── LONG GAME ────────────────────────────────────────────────── */
+/* long game */
 #longGameScreen { padding-bottom: 100px; overflow-y: auto; }
 .lg-header { padding: 20px 20px 8px; }
 .lg-title { font-family: 'Instrument Serif', serif; font-size: 26px; color: var(--text); margin-bottom: 4px; }
@@ -2710,7 +2708,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 }
 
 
-/* ── CONTACT PROFILE: action row + Long Game strip ── */
+/* contact profile: action row + long game strip */
 .cp-action-row {
   display: flex;
   gap: 8px;
@@ -2744,20 +2742,20 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 }
 .cp-action-longgame:active { opacity: 0.75; }
 
-/* ── LONG GAME: Arc preview ── */
+/* long game: arc preview */
 #lgArcPreviewScreen {
   padding-bottom: 100px;
   overflow-y: auto;
 }
 
-/* ── LONG GAME: outcome selected state ── */
+/* long game: outcome selected state */
 .lg-outcome-btn.selected {
   transform: scale(1.04);
   box-shadow: 0 0 0 2px currentColor;
   font-weight: 600;
 }
 
-/* ── LONG GAME: priority badge ── */
+/* long game: priority badge */
 .lg-priority-badge {
   width: 20px; height: 20px; border-radius: 50%;
   background: rgba(167,139,250,0.15);
@@ -2767,10 +2765,10 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   flex-shrink: 0; margin-right: 8px;
 }
 
-/* ── LONG GAME: done card ── */
+/* long game: done card */
 .lg-game-card.done-card { opacity: 0.55; }
 
-/* ── LONG GAME: completion card ── */
+/* long game: completion card */
 .lg-completion-card {
   background: linear-gradient(135deg, rgba(167,139,250,0.08), rgba(52,211,153,0.05));
   border: 1px solid rgba(167,139,250,0.25);
@@ -2832,10 +2830,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   letter-spacing: 0.5px;
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   ARIA EXPRESSION TRANSITIONS
-   Three animation styles — randomly assigned per expression render.
-   ══════════════════════════════════════════════════════════════════ */
+/* aria expression transitions three animation styles — randomly assigned per expression render. */
 
 /* --- Fade in --- */
 @keyframes aria-fade-in {
@@ -2871,9 +2866,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   will-change: opacity, transform;
 }
 
-/* ═══════════════════════════════════════════════════════
-   ARIA LOCK SCREEN
-   ═══════════════════════════════════════════════════════ */
+/* aria lock screen */
 
 #ariaLockOverlay {
   position: fixed;
@@ -2966,7 +2959,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   font-style: italic;
 }
 
-/* ─── PARADIGM LEVELING BRANDING ──────────────────────────── */
+/* paradigm leveling branding */
 .pl-brand {
   display: flex;
   align-items: center;
@@ -3000,13 +2993,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
 }
 
 
-/* ═══════════════════════════════════════════════════════════
-   PARADIGM LEVELING — LOADING SCREEN v2
-   Fully scoped under pl2- prefix — zero collision risk.
-   All animations use only transform + opacity (compositor-only,
-   zero repaint, zero layout — eliminates all jank on mobile).
-   Sound hook: window.playPLSting() — see index.html loader block.
-═══════════════════════════════════════════════════════════ */
+/* paradigm leveling — loading screen v2 fully scoped under pl2- prefix — zero collision risk. all animations use only transform + opacity (compositor-only, zero repaint, zero layout — eliminates all jank on mobile). sound hook: window.playplsting() — see index.html loader block. */
 
 #ariaLoader {
   position: fixed;
@@ -3027,7 +3014,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   pointer-events: none;
 }
 
-/* ── Ambient glow ── */
+/* ambient glow */
 .pl2-bg-glow {
   position: fixed;
   inset: 0;
@@ -3038,7 +3025,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
     radial-gradient(ellipse at 70% 50%, rgba(52,211,153,0.05) 0%, transparent 55%);
 }
 
-/* ── Main layout ── */
+/* main layout */
 .pl2-loader {
   display: flex;
   flex-direction: column;
@@ -3051,7 +3038,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   transform-style: preserve-3d;
 }
 
-/* ── Chevron container ── */
+/* chevron container */
 .pl2-chevrons {
   display: flex;
   align-items: center;
@@ -3062,7 +3049,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   transform-style: preserve-3d;
 }
 
-/* ── Each chevron SVG wrapper ── */
+/* each chevron svg wrapper */
 .pl2-ch {
   width: 58px;
   height: 76px;
@@ -3078,7 +3065,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   overflow: visible;
 }
 
-/* ── Per-arrow glow halos ── */
+/* per-arrow glow halos */
 .pl2-ch::after {
   content: '';
   position: absolute;
@@ -3096,7 +3083,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   to   { opacity: 1; }
 }
 
-/* ── 3D FLY-IN — each arrow from a different direction, depth, and angle ── */
+/* 3d fly-in — each arrow from a different direction, depth, and angle */
 
 /* Arrow 1 — flies in from top-left, spinning on Y */
 .pl2-ch-1 {
@@ -3156,7 +3143,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   50%     { transform: translateX(2px) translateY(-3px) scale(1.03); }
 }
 
-/* ── Drop shadow under chevrons group ── */
+/* drop shadow under chevrons group */
 .pl2-chevrons-shadow {
   width: 220px;
   height: 16px;
@@ -3171,7 +3158,7 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   to   { opacity: 1; transform: scaleX(1); }
 }
 
-/* ── Wordmark ── */
+/* wordmark */
 .pl2-wordmark {
   text-align: center;
   position: relative;

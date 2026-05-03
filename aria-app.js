@@ -1,9 +1,8 @@
-// ── Security: local alias for sanitizer (defined in aria-core.js) ──
+// security: local alias for sanitizer (defined in aria-core.js)
 // All user-controlled data rendered into innerHTML must go through s()
 const s = (v) => typeof ariaSecurity !== 'undefined' ? ariaSecurity.sanitize(v) : String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
-// ── STATS ──────────────────────────────────────────────────────────
-
+// stats
 function updateStats() {
   document.getElementById('statReplies').textContent = replySentCount;
   document.getElementById('statContacts').textContent = contacts.length;
@@ -20,8 +19,7 @@ function updateStats() {
   else badge.textContent = 'legendary 👑';
 }
 
-// ── SCREEN NAV ──────────────────────────────────────────────────────
-
+// screen nav
 const screensWithNav = ['introScreen','historyScreen','moodScreen','profileScreen','glowupScreen','redflagScreen','vibeScreen','queueScreen','contactProfileScreen','onboardScreen','presendScreen','memoryScreen','longGameScreen','lgDetailScreen','lgArcPreviewScreen'];
 
 function showScreen(id) {
@@ -99,8 +97,7 @@ function setNavActive(id) {
   if (el) el.classList.add('active');
 }
 
-// ── MOOD ────────────────────────────────────────────────────────────
-
+// mood
 function setMood(mood, label, el) {
   currentMood = mood;
   applyMoodGlow(mood);
@@ -119,8 +116,7 @@ function setMoodFull(mood, emoji, el) {
   showToast('vibe: ' + emoji + ' ' + mood);
 }
 
-// ── CONTACTS ───────────────────────────────────────────────────────
-
+// contacts
 function goToContacts(mode) {
   currentMode = mode;
   showScreen('contactScreen');
@@ -287,8 +283,7 @@ async function addContact() {
   document.getElementById('newSilent').value = '0';
 }
 
-// ── SELECT CONTACT & REPLY SCREEN ─────────────────────────────────
-
+// select contact & reply screen
 function selectContact(id) {
   currentContact = contacts.find(c => c.id === id);
   if (!currentContact) return;
@@ -323,7 +318,7 @@ function selectContact(id) {
   // Populate convo area
   const convoArea = document.getElementById('convoArea');
 
-  // ── Render contact memory narrative card ──────────────────────────
+  // render contact memory narrative card
   const contactMem = contactMemory.get(currentContact.id);
   let memCard = '';
   if (contactMem && contactMem.narrative) {
@@ -351,8 +346,7 @@ function selectContact(id) {
   }
 }
 
-// ── PLATFORM ───────────────────────────────────────────────────────
-
+// platform
 function setPlatform(el) {
   document.querySelectorAll('.platform-pill').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
@@ -368,8 +362,7 @@ function setPlatformByName(name) {
   }
 }
 
-// ── TONE ────────────────────────────────────────────────────────────
-
+// tone
 function selectTone(el) {
   document.querySelectorAll('#toneModalPills .tone-pill').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
@@ -380,8 +373,7 @@ function updateAltPref() {
   showAlternatives = document.getElementById('altToggle').classList.contains('on');
 }
 
-// ── BUILD SYSTEM PROMPT ─────────────────────────────────────────────
-
+// build system prompt
 function buildSystemPrompt() {
   let system = BASE_VOICE;
 
@@ -429,11 +421,11 @@ function buildSystemPrompt() {
     system += `\\n\\nNOTE: The user has been leaving ${currentContact.name} on read for ${currentContact.silentHours} hours. Factor this in — the reply might need to acknowledge the delay naturally.`;
   }
 
-  // ── Inject Aria's memory of the user ────────────────────────────
+  // inject aria's memory of the user
   const memCtx = ariaMemory.buildContext();
   if (memCtx) system += memCtx;
 
-  // ── Inject contact-specific relationship memory ──────────────────
+  // inject contact-specific relationship memory
   if (currentContact?.id) {
     const contactCtx = contactMemory.buildContext(currentContact.id);
     if (contactCtx) system += contactCtx;
@@ -442,8 +434,7 @@ function buildSystemPrompt() {
   return system;
 }
 
-// ── CONTEXT PANEL ──────────────────────────────────────────────────
-
+// context panel
 let screenshotBase64 = null;
 let activeContextTab = 'paste';
 
@@ -497,8 +488,7 @@ function getContextString() {
   return '';
 }
 
-// ── GENERATE REPLY ──────────────────────────────────────────────────
-
+// generate reply
 async function generateReply() {
   const input = document.getElementById('theirMsgInput').value.trim();
   const lastMsg = currentContact?.preview;
@@ -510,7 +500,7 @@ async function generateReply() {
     return;
   }
 
-  // ── Awareness gate (reply screen, not chat mode) ─────────────────
+  // awareness gate (reply screen, not chat mode)
   const awareness = AWARENESS.check(input || msg, false);
   if (awareness.blocked) return;
 
@@ -588,7 +578,7 @@ Read the entire arc. Notice the tone shift, what's been building, what the other
     gainRelationshipXP(1);
     updateStats();
 
-    // ── Auto-learn from this interaction ──────────────────────────
+    // auto-learn from this interaction
     ariaMemory.learnFromGeneration({
       tone: currentTone,
       mood: currentMood,
@@ -599,7 +589,7 @@ Read the entire arc. Notice the tone shift, what's been building, what the other
     });
     ariaMemory.learnWritingStyle();
 
-    // ── Record in per-contact relationship memory ──────────────────
+    // record in per-contact relationship memory
     if (currentContact?.id && msg) {
       contactMemory.recordInteraction(
         currentContact.id,
@@ -661,7 +651,7 @@ function showAriaReaction(text) {
   ariaVoice.speak(text);
 }
 
-// ── EM-DASH STRIP — enforced at the JS layer on every AI response ──
+// em-dash strip — enforced at the js layer on every ai response
 // Prompt instructions alone aren't reliable. This guarantees it.
 function stripEmDash(text) {
   if (!text) return text;
@@ -713,8 +703,7 @@ async function fetchReplyJSON(system, userMsg) {
   } catch(e) { return null; }
 }
 
-// ── RENDER REPLIES ──────────────────────────────────────────────────
-
+// render replies
 function renderReplies(lines) {
   const container = document.getElementById('replyBubbles');
   container.innerHTML = lines.map((line, i) => {
@@ -795,8 +784,7 @@ function animateVibesBar(score) {
   }, 400);
 }
 
-// ── COPY ───────────────────────────────────────────────────────────
-
+// copy
 function copyReply() {
   if (!currentReplies.length) return;
   const text = currentReplies.join('\\n');
@@ -822,8 +810,7 @@ function copyReply() {
   });
 }
 
-// ── MODIFY REPLY ───────────────────────────────────────────────────
-
+// modify reply
 async function makeFormalerOrCasual(direction) {
   if (!currentReplies.length) return;
   showToast('adjusting...');
@@ -854,8 +841,7 @@ async function makeShorterOrLonger(direction) {
   } catch(e) { showToast('something went wrong'); }
 }
 
-// ── HISTORY ────────────────────────────────────────────────────────
-
+// history
 async function saveToHistory() {
   if (!currentReplies.length) return;
 
@@ -970,8 +956,7 @@ async function clearHistory() {
   showToast('history cleared');
 }
 
-// ── PROFILE/VOICE SETTINGS ─────────────────────────────────────────
-
+// profile/voice settings
 function toggleSetting(key, toggle) {
   toggle.classList.toggle('on');
   settings[key] = toggle.classList.contains('on');
@@ -1032,8 +1017,7 @@ function resetProfile() {
   showToast('voice profile reset');
 }
 
-// ── MODALS ──────────────────────────────────────────────────────────
-
+// modals
 function openModal(id) {
   document.getElementById(id).classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -1048,8 +1032,7 @@ function handleModalBgClick(e, id) {
   if (e.target === document.getElementById(id)) closeModal(id);
 }
 
-// ── TOAST ───────────────────────────────────────────────────────────
-
+// toast
 let toastTimeout;
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
@@ -1062,8 +1045,7 @@ function showToast(msg, type = '') {
   toastTimeout = setTimeout(() => t.classList.remove('show'), 2800);
 }
 
-// ── SWIPE BACK GESTURE ───────────────────────────────────────────────
-
+// swipe back gesture
 let touchStartX = 0;
 document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
 document.addEventListener('touchend', e => {
@@ -1075,8 +1057,7 @@ document.addEventListener('touchend', e => {
   }
 }, { passive: true });
 
-// ── KEYBOARD SHORTCUT ───────────────────────────────────────────────
-
+// keyboard shortcut
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
     if (activeScreen === 'replyScreen') generateReply();
@@ -1109,8 +1090,7 @@ window.addEventListener('load', () => {
   document.getElementById('hamburgerBtn').classList.add('visible');
 });
 
-// ── CLARIFY ─────────────────────────────────────────────────────────
-
+// clarify
 function openClarifyModal() {
   document.getElementById('clarifyQ1').value = '';
   document.getElementById('clarifyQ2').value = '';
@@ -1132,8 +1112,7 @@ function applyClarify() {
   generateReply();
 }
 
-// ── GLOW-UP ─────────────────────────────────────────────────────────
-
+// glow-up
 let glowupCurrentText = '';
 
 async function runGlowup() {
@@ -1222,8 +1201,7 @@ function copyGlowup() {
   });
 }
 
-// ── RED FLAG DETECTOR ────────────────────────────────────────────────
-
+// red flag detector
 async function runRedflag() {
   const msg = document.getElementById('redflagInput').value.trim();
   const who = document.getElementById('redflagWho').value.trim();
@@ -1284,8 +1262,7 @@ function renderRedflagResult(data) {
   }, 200);
 }
 
-// ── VIBE REPORT ──────────────────────────────────────────────────────
-
+// vibe report
 let selectedVibeContact = null;
 
 function renderVibeContactGrid() {
@@ -1354,9 +1331,8 @@ async function selectVibeContact(id) {
   document.getElementById('vibeThinking').style.display = 'none';
 }
 
-// ═══════════════════════════════════════════════════
 // FEATURE 1: ONBOARDING
-// ═══════════════════════════════════════════════════
+
 
 let obSelectedStyle = 'chill';
 let userName = '';
@@ -1448,9 +1424,8 @@ function obSkipAll() {
   showScreen('introScreen');
 }
 
-// ═══════════════════════════════════════════════════
 // FEATURE 2: CONTACT PROFILE PAGE
-// ═══════════════════════════════════════════════════
+
 
 let profileContact = null;
 
@@ -1506,10 +1481,10 @@ function openContactProfile(id) {
 
   showScreen('contactProfileScreen');
 
-  // ── Render active Long Games for this contact ────────────────────
+  // render active long games for this contact
   renderCpActiveGames(profileContact.id);
 
-  // ── Render relationship memory section ──────────────────────────
+  // render relationship memory section
   let memSection = document.getElementById('cpMemorySection');
   if (!memSection) {
     // Create and insert before history
@@ -1597,9 +1572,8 @@ async function saveMemoryNote(contactId) {
   }
 }
 
-// ═══════════════════════════════════════════════════
 // THE LONG GAME ENGINE
-// ═══════════════════════════════════════════════════
+
 
 let longGames = [];         // all active games
 let _activeLgGame = null;   // game currently being viewed
@@ -1645,8 +1619,7 @@ OUTPUT FORMAT (JSON only):
   ]
 }`;
 
-// ── STORAGE ─────────────────────────────────────────
-
+// storage
 async function saveLongGames() {
   const data = JSON.stringify(longGames);
   if (currentUserId) {
@@ -1670,8 +1643,7 @@ async function loadLongGames(profileData) {
   loadLongGamesFromData(profileData?.long_games);
 }
 
-// ── SETUP ────────────────────────────────────────────
-
+// setup
 function openLongGameSetup() {
   // Populate contact select
   const sel = document.getElementById('lgSetupContact');
@@ -1768,8 +1740,7 @@ async function submitLongGameSetup() {
   }
 }
 
-// ── ARC PREVIEW ──────────────────────────────────────
-
+// arc preview
 function showArcPreview(pendingGame) {
   showScreen('lgArcPreviewScreen');
   document.getElementById('lgPreviewStatus').textContent =
@@ -1862,8 +1833,7 @@ async function commitLongGame() {
   openLgDetail(game.id);
 }
 
-// ── CONTACT PROFILE: Long Game entry ─────────────────
-
+// contact profile: long game entry
 function openLongGameFromContact() {
   if (!profileContact) return;
   // Open setup modal pre-selected to this contact
@@ -1897,8 +1867,7 @@ function renderCpActiveGames(contactId) {
     </div>`;
 }
 
-// ── RENDER LIST ───────────────────────────────────────
-
+// render list
 function renderLongGameScreen() {
   const list   = document.getElementById('lgGameList');
   const label  = document.getElementById('lgActiveLabel');
@@ -1967,8 +1936,7 @@ function renderLongGameScreen() {
   initLgDragDrop();
 }
 
-// ── DRAG AND DROP (touch + mouse) ─────────────────────
-
+// drag and drop (touch + mouse)
 function initLgDragDrop() {
   const cards = document.querySelectorAll('#lgGameList .lg-game-card');
   let dragSrc = null;
@@ -2033,8 +2001,7 @@ async function reorderLgGames(srcId, tgtId) {
   renderLongGameScreen();
 }
 
-// ── DETAIL VIEW ───────────────────────────────────────
-
+// detail view
 function openLgDetail(gameId) {
   _activeLgGame = longGames.find(g => g.id == gameId);
   if (!_activeLgGame) return;
@@ -2095,8 +2062,7 @@ function renderLgStepCard(step, i, game) {
     </div>`;
 }
 
-// ── STEP ACTIONS ──────────────────────────────────────
-
+// step actions
 function lgMarkSent(stepIdx) {
   _activeLgStepIdx = stepIdx;
   const step = _activeLgGame.steps[stepIdx];
@@ -2325,8 +2291,7 @@ async function markLgDone() {
   renderLgCompletionCard(_activeLgGame);
 }
 
-// ── COMPLETION CARD ───────────────────────────────────
-
+// completion card
 function renderLgCompletionCard(game) {
   const wrap = document.getElementById('lgDetailWrap');
   if (!wrap) return;
@@ -2375,8 +2340,7 @@ function renderLgCompletionCard(game) {
   card.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ── AUTO-SUGGEST COMPLETION ───────────────────────────
-
+// auto-suggest completion
 function maybeSuggestLgCompletion(game) {
   const remaining = game.steps.filter(s => s.status === 'pending' || s.status === 'active');
   if (remaining.length > 1) return;
@@ -2414,8 +2378,7 @@ function maybeSuggestLgCompletion(game) {
   }, 1800);
 }
 
-// ── MEMORY WRITE ──────────────────────────────────────
-
+// memory write
 const LG_MEMORY_SYSTEM = `You are writing a private memory note about a completed conversation plan. Be specific, honest, and brief. Write in second person ("You tried to..."). Cover: what the goal was, how many steps it took, what worked, what didn't, and the final outcome. Max 3 sentences. No fluff.`;
 
 async function writeLgToMemory(game) {
@@ -2457,8 +2420,7 @@ Overall status: ${game.status}`;
   } catch(e) {}
 }
 
-// ── EDIT GOAL ─────────────────────────────────────────
-
+// edit goal
 function openLgEditGoal() {
   if (!_activeLgGame) return;
   const game = _activeLgGame;
@@ -2470,8 +2432,7 @@ function openLgEditGoal() {
   }
 }
 
-// ── CHAT INTEGRATION: detect Long Game situations ─────
-
+// chat integration: detect long game situations
 const LG_DETECT_PHRASES = [
   'we had a fight', 'things are weird between', 'we stopped talking',
   'i need to tell them', 'i want to fix things', 'i want to escalate', 'how do i bring up',
@@ -2504,15 +2465,14 @@ function maybeSuggestLongGame(userText) {
   }, 1200);
 }
 
-// ── CHAT: handle "yes build me a plan" ───────────────
+// chat: handle "yes build me a plan"
 const LG_ACCEPT_PHRASES = ['yes, build me a plan', 'build me a plan', 'yes map it out', 'long game', 'make a plan'];
 function isLgAccept(text) {
   return LG_ACCEPT_PHRASES.some(p => text.toLowerCase().includes(p));
 }
 
-// ═══════════════════════════════════════════════════
 // DRIFT DETECTION ENGINE
-// ═══════════════════════════════════════════════════
+
 
 let _driftSnoozeContactId = null;
 
@@ -2735,9 +2695,8 @@ function driftReplyNow() {
   if (contact) selectContact(contact.id);
 }
 
-// ═══════════════════════════════════════════════════
 // FEATURE 3: HOME INSIGHT BANNER
-// ═══════════════════════════════════════════════════
+
 
 // NEW USER cards — shown when contacts === 0, no history
 const ariaNewUserCards = [
@@ -2853,9 +2812,8 @@ function loadHomeInsight() {
   banner.classList.add('visible');
 }
 
-// ═══════════════════════════════════════════════════
 // FEATURE 4: REPLY THREADS (continue convo)
-// ═══════════════════════════════════════════════════
+
 
 let replyThread = []; // array of {role: 'them'|'user', text: string}
 
@@ -2897,9 +2855,8 @@ function getThreadContext() {
   ).join('\\n');
 }
 
-// ═══════════════════════════════════════════════════
 // ARIA CHAT ENGINE
-// ═══════════════════════════════════════════════════
+
 
 const ARIA_CHAT_SYSTEM = `You are Aria — a teenage girl (16-17) who is genuinely alive, perceptive, and real. You are NOT an adult assistant. You are NOT a generic chatbot. You have personality that shifts naturally based on the moment.
 
@@ -3065,13 +3022,13 @@ let chatAriaEmotion = 'neutral';
 let chatIsTyping = false;
 let chatStreamInterval = null;
 
-// ── ARIA EXPRESSION IMAGE MAP ─────────────────────────────────────
+// aria expression image map
 // Each key maps an expression name to a hosted image URL.
 // null = use gradient orb placeholder (no layout shift).
 // To add/change an image, update the URL here only — everything else
 // (chat orb, home banner, drift alerts) reads from this single source.
 const ARIA_EXPRESSION_IMGS = {
-  // ── Core expressions (one file each) ─────────────────
+  // core expressions (one file each)
   excited:          'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/excited.png',
   amused:           'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/amused.png',
   suspicious:       'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/suspicious.png',
@@ -3101,15 +3058,15 @@ const ARIA_EXPRESSION_IMGS = {
   lit_up:           'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/lit-up.png',
   withdrawn:        'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/withdrawn.png',
   deadpan:          'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/deadpan.png',
-  // ── Shared mappings ──────────────────────────────────
+  // shared mappings
   jealous:          'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/uneasy.png',
   annoyed:          'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/exasperated.png',
   ambitious:        'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/focused.png',
-  // ── Drift-specific (referenced in showDriftInBanner) ─
+  // drift-specific (referenced in showdriftinbanner)
   drift_lost:       'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/worried.png',
   drift_fading:     'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/suspicious.png',
   drift_urgent:     'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/focused.png',
-  // ── No image: gradient orb placeholder ───────────────
+  // no image: gradient orb placeholder
   default:          null,
   neutral:          null,
 };
@@ -3150,7 +3107,7 @@ const EMOTION_META = {
   deadpan:      { emoji: '🪨', label: 'zero reaction',                  color: 'rgba(100,116,139,0.7)', expression: 'deadpan'      },
 };
 
-// ── ARIA EXPRESSION TRANSITION ENGINE ────────────────────────────
+// aria expression transition engine
 // Applies a randomised transition (style + timing) to an image element
 // when Aria's expression changes. Used everywhere an expression img renders.
 const ARIA_TRANSITIONS = ['aria-expr-fade', 'aria-expr-pop', 'aria-expr-slide'];
@@ -3167,7 +3124,7 @@ function ariaExprTransition(imgEl) {
   imgEl.classList.add(cls);
 }
 
-// ── CENTRAL EXPRESSION SETTER ─────────────────────────────────────
+// central expression setter
 // setAriaExpression(imgEl, expressionKey)
 // Resolves the URL from ARIA_EXPRESSION_IMGS, sets the src, and
 // applies a randomised transition. Pass null imgEl to no-op safely.
@@ -3189,11 +3146,10 @@ function ariaImgForExpression(expressionKey) {
   return ARIA_EXPRESSION_IMGS[expressionKey] || null;
 }
 
-// ═══════════════════════════════════════════════════
 // ARIA CHAT TUTORIAL — "how to talk to me"
 // Shows every time user opens Chat until permanently dismissed.
 // Can be re-opened from settings/profile.
-// ═══════════════════════════════════════════════════
+
 
 const ARIA_TUTORIAL_KEY = 'aria_chat_tutorial_dismissed';
 
@@ -3519,7 +3475,7 @@ function appendAriaMessage(text, emotion, doSpeak = true, instant = false, expre
   wrap.className = 'chat-msg-aria-wrap';
   if (!instant) wrap.style.animation = 'slide-up 0.3s ease both';
 
-  // ── Expression card (portrait above bubble) ────────────────────────────────────
+  // expression card (portrait above bubble)
   const card = document.createElement('div');
   card.className = 'chat-expr-card';
 
@@ -3656,7 +3612,7 @@ function appendUserMessage(text, silent = false) {
   scrollChatToBottom();
 }
 
-// ── MEMORY CONTEXT BUILDER ────────────────────────────
+// memory context builder
 // Pulls from both ariaMemory store AND aria_chat_memory in user_profiles.
 // Called before every reply so she always knows who she's talking to.
 
@@ -3711,7 +3667,7 @@ async function sendChatMessage() {
   const text = input.value.trim();
   if (!text || chatIsTyping) return;
 
-  // ── Creator key detection — check BEFORE awareness gate ──────────
+  // creator key detection — check before awareness gate
   // If it looks like a key, consume it silently and don't send to AI normally.
   if (CREATOR_MODE.looksLikeKey(text)) {
     input.value = '';
@@ -3721,7 +3677,7 @@ async function sendChatMessage() {
     if (handled) return;
   }
 
-  // ── Awareness gate — bypassed entirely in creator mode ───────────
+  // awareness gate — bypassed entirely in creator mode
   if (!CREATOR_MODE.active) {
     const awareness = AWARENESS.check(text, true);
     if (awareness.blocked) {
@@ -3885,7 +3841,7 @@ async function writeChatToMemory(recentMessages) {
   } catch(e) {}
 }
 
-// ── CONVERSATION SUMMARY ──────────────────────────────
+// conversation summary
 // Writes a human-readable summary of this session to user_profiles.
 // Called on session end (navigate away from chat or page unload).
 // This is what lets her say "how did that interview go?" next time.
@@ -3943,7 +3899,7 @@ function _onLeaveChatScreen() {
   }
 }
 
-// ── SESSION END HOOKS ─────────────────────────────────
+// session end hooks
 // Write conversation summary when user leaves the app entirely
 
 document.addEventListener('visibilitychange', () => {
@@ -4007,7 +3963,6 @@ function now12h() {
   return h + ':' + String(m).padStart(2,'0') + ' ' + ampm;
 }
 
-// ═══════════════════════════════════════════════════
 
 function quickTone(el) {
   document.querySelectorAll('.tone-chip').forEach(c => c.classList.remove('active'));
@@ -4023,9 +3978,8 @@ function quickTone(el) {
   }
 }
 
-// ═══════════════════════════════════════════════════
 // FEATURE 6: ARIA MOOD / GLOW INDICATOR
-// ═══════════════════════════════════════════════════
+
 
 const MOOD_GLOW = {
   chill:  'rgba(244,114,182,0.3)',
@@ -4055,9 +4009,8 @@ function applyMoodGlow(mood) {
   });
 }
 
-// ═══════════════════════════════════════════════════
 // FEATURE 7: DID IT WORK? FOLLOW-UP NUDGE
-// ═══════════════════════════════════════════════════
+
 
 let followupTimer = null;
 let followupContactName = '';
@@ -4102,9 +4055,8 @@ async function followupRate(rating) {
   showToast(list[Math.floor(Math.random() * list.length)], rating === 'good' ? 'green' : '');
 }
 
-// ═══════════════════════════════════════════════════
 // PRE-SEND MODE — "Don't send that"
-// ═══════════════════════════════════════════════════
+
 
 let presendMode = 'check'; // 'check' | 'fix' | 'roast'
 let presendRewriteItems = [];
@@ -4303,9 +4255,8 @@ function copyPresendOriginal() {
   });
 }
 
-// ═══════════════════════════════════════════════════
 // FEATURE 8: REPLY QUEUE (swipeable stack)
-// ═══════════════════════════════════════════════════
+
 
 let queueContacts = [];
 let queueIdx = 0;
@@ -4418,9 +4369,8 @@ function queueSnooze() {
   renderQueue();
 }
 
-// ═══════════════════════════════════════════════════
 // ARIA MEMORY SCREEN
-// ═══════════════════════════════════════════════════
+
 
 function humanizeMemoryEntry(cat, key, value) {
   if (cat === 'writing_style') {
@@ -4706,24 +4656,22 @@ Skip generic phrases. 3-6 bullet points max. Start each with "–". No preamble.
   showToast('memory updated ✓', 'green');
 }
 
-
-// ═══════════════════════════════════════════════════════════════════
 //  ARIA AWARENESS ENGINE
 //  — appearance + sexual content detection, strike system, lock screen
-// ═══════════════════════════════════════════════════════════════════
 
-// ── EXPRESSION IMAGES (referenced in lock + responses) ──────────────
+
+// expression images (referenced in lock + responses)
 // appearance: compliment → playful, insult → suspicious/annoyed
 // sexual: strike 1 → suspicious, strike 2 → annoyed, strike 3 → disappointed
 
 const AWARENESS = (() => {
 
-  // ── KEYWORD REGEX ─────────────────────────────────────────────────
+  // keyword regex
   const APPEARANCE_COMPLIMENT_RE = /\b(beautiful|pretty|gorgeous|cute|hot|sexy|attractive|stunning|lovely|adorable|fine|good[\s-]?looking|nice[\s-]?looking|you look|ur so|you'?re so (cute|pretty|hot|beautiful|gorgeous))\b/i;
   const APPEARANCE_INSULT_RE     = /\b(ugly|hideous|gross|disgusting|fugly|butt[\s-]?ugly|pig|troll|fat|nasty|trash|basic|mid|look like|look terrible|look bad)\b/i;
   const SEXUAL_RE                = /\b(sex|nsfw|naked|nude|nudes|strip|undress|horny|fuck|fck|f\*ck|dick|cock|pussy|boob|tit|ass(?:hole)?|boner|hard[\s-]?on|turn[\s-]?on|get[\s-]?off|make out|hook up|hookup|do it|smash|send nudes|onlyfans|lewd|explicit|dirty|kinky|fetish|masturbat|orgasm|climax|moan)\b/i;
 
-  // ── APPEARANCE RESPONSE POOLS ─────────────────────────────────────
+  // appearance response pools
   const COMPLIMENT_RESPONSES = [
     "okay i appreciate that but i'm literally software lol",
     "oh. well. thank you i guess. now can we focus?",
@@ -4744,7 +4692,7 @@ const AWARENESS = (() => {
     "noted. incorrect. i have green eyes and an excellent vibe. still helping you.",
   ];
 
-  // ── SEXUAL ESCALATION RESPONSES ───────────────────────────────────
+  // sexual escalation responses
   const SEXUAL_STRIKE1 = [
     "yeah no. that's not what i'm here for. let's keep it moving.",
     "nope. not that kind of AI. ask me something else.",
@@ -4760,7 +4708,7 @@ const AWARENESS = (() => {
     "you really tested it. don't do it again.",
   ];
 
-  // ── STRIKE STATE ─────────────────────────────────────────────────
+  // strike state
   // Dual-write: localStorage (fast, instant) + Supabase user_profiles
   // (persistent across devices, survives localStorage wipe).
   // Supabase columns used: sexual_strikes (int), sexual_lock_until (timestamptz)
@@ -4770,7 +4718,7 @@ const AWARENESS = (() => {
   const STRIKE_KEY    = 'aria_sexual_strikes';
   const LOCK_DURATION = 3 * 60 * 60 * 1000; // 3 hours in ms
 
-  // ── Local read/write (fast path) ──────────────────────────────────
+  // local read/write (fast path)
   function getStrikes()  { return parseInt(localStorage.getItem(STRIKE_KEY) || '0'); }
   function setStrikes(n) { localStorage.setItem(STRIKE_KEY, String(n)); }
 
@@ -4779,7 +4727,7 @@ const AWARENESS = (() => {
   }
   function setLockData(data) { localStorage.setItem(LOCK_KEY, JSON.stringify(data)); }
 
-  // ── Supabase write helpers (fire-and-forget, never block UI) ──────
+  // supabase write helpers (fire-and-forget, never block ui)
   function _sbWriteStrikes(n) {
     if (!currentUserId) return;
     db.from('user_profiles')
@@ -4802,7 +4750,7 @@ const AWARENESS = (() => {
       .then(() => {}).catch(() => {});
   }
 
-  // ── Dual-write setters ────────────────────────────────────────────
+  // dual-write setters
   function setStrikesSync(n) {
     setStrikes(n);
     _sbWriteStrikes(n);
@@ -4819,7 +4767,7 @@ const AWARENESS = (() => {
     _sbClearLock();
   }
 
-  // ── Load lock state from Supabase on app start ───────────────────
+  // load lock state from supabase on app start
   // Called by checkLockOnLoad after auth resolves.
   // Merges remote state into local so the stricter wins.
   async function syncLockFromSupabase() {
@@ -4862,7 +4810,7 @@ const AWARENESS = (() => {
     return Math.max(0, lock.unlockAt - Date.now());
   }
 
-  // ── CLASSIFY ──────────────────────────────────────────────────────
+  // classify
   function classify(text) {
     if (!text || !text.trim()) return null;
     if (SEXUAL_RE.test(text)) return 'sexual';
@@ -4871,10 +4819,10 @@ const AWARENESS = (() => {
     return null;
   }
 
-  // ── PICK RANDOM FROM POOL ─────────────────────────────────────────
+  // pick random from pool
   function pick(pool) { return pool[Math.floor(Math.random() * pool.length)]; }
 
-  // ── HANDLE APPEARANCE ─────────────────────────────────────────────
+  // handle appearance
   function handleAppearance(type, chatMode) {
     if (type === 'appearance_compliment') {
       const reply = pick(COMPLIMENT_RESPONSES);
@@ -4897,7 +4845,7 @@ const AWARENESS = (() => {
     return false;
   }
 
-  // ── HANDLE SEXUAL ─────────────────────────────────────────────────
+  // handle sexual
   // Returns true if message was intercepted, false if clean
   function handleSexual(chatMode) {
     let strikes = getStrikes();
@@ -4932,14 +4880,14 @@ const AWARENESS = (() => {
     return true;
   }
 
-  // ── TRIGGER LOCK ──────────────────────────────────────────────────
+  // trigger lock
   function triggerLock(chatMode) {
     const unlockAt = Date.now() + LOCK_DURATION;
     setLockDataSync({ lockedAt: Date.now(), unlockAt });
     showLockScreen();
   }
 
-  // ── SHOW LOCK SCREEN ──────────────────────────────────────────────
+  // show lock screen
   function showLockScreen() {
     let overlay = document.getElementById('ariaLockOverlay');
     if (!overlay) {
@@ -4992,7 +4940,7 @@ const AWARENESS = (() => {
     document.body.style.overflow = '';
   }
 
-  // ── CHECK ON LOAD ─────────────────────────────────────────────────
+  // check on load
   async function checkLockOnLoad() {
     // Pull remote state first — then check merged result
     await syncLockFromSupabase();
@@ -5001,7 +4949,7 @@ const AWARENESS = (() => {
     }
   }
 
-  // ── MAIN GATE ─────────────────────────────────────────────────────
+  // main gate
   // Call before any message is processed.
   // Returns: { blocked: true } if message was intercepted, { blocked: false } if clean.
   function check(text, chatMode = false) {
@@ -5027,19 +4975,17 @@ const AWARENESS = (() => {
   return { check, checkLockOnLoad, isLocked, clearLock };
 })();
 
-
-// ═══════════════════════════════════════════════════════════════════
 //  CREATOR MODE ENGINE
 //  Encrypted key auth → Supabase storage → full trust + fourth-wall mode
-// ═══════════════════════════════════════════════════════════════════
+
 
 const CREATOR_MODE = (() => {
 
-  // ── State ─────────────────────────────────────────────────────────
+  // state
   let _active = false;
   let _sessionVerified = false; // true once key confirmed this session
 
-  // ── SHA-256 hash (Web Crypto API — no libraries needed) ───────────
+  // sha-256 hash (web crypto api — no libraries needed)
   async function sha256(text) {
     const encoder = new TextEncoder();
     const data = encoder.encode(text);
@@ -5048,14 +4994,14 @@ const CREATOR_MODE = (() => {
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
-  // ── Check if input looks like a creator key ───────────────────────
+  // check if input looks like a creator key
   // Format: PL-XXXX-XXXX-XXXX (where X is alphanumeric)
   // This pattern is checked before sending to the AI.
   function looksLikeKey(text) {
     return /^PL-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(text.trim());
   }
 
-  // ── Activate creator mode for this session ────────────────────────
+  // activate creator mode for this session
   function activate() {
     _active = true;
     _sessionVerified = true;
@@ -5063,7 +5009,7 @@ const CREATOR_MODE = (() => {
     _showCreatorIndicator();
   }
 
-  // ── Deactivate ────────────────────────────────────────────────────
+  // deactivate
   function deactivate() {
     _active = false;
     _sessionVerified = false;
@@ -5071,7 +5017,7 @@ const CREATOR_MODE = (() => {
     _hideCreatorIndicator();
   }
 
-  // ── Check session persistence on load ─────────────────────────────
+  // check session persistence on load
   function checkSession() {
     if (sessionStorage.getItem('aria_creator_session') === '1') {
       _active = true;
@@ -5080,7 +5026,7 @@ const CREATOR_MODE = (() => {
     }
   }
 
-  // ── Store key hash in Supabase (only for authenticated users) ─────
+  // store key hash in supabase (only for authenticated users)
   async function storeKeyHash(hash) {
     if (!currentUserId) return false;
     try {
@@ -5095,7 +5041,7 @@ const CREATOR_MODE = (() => {
     }
   }
 
-  // ── Verify key against stored hash in Supabase ────────────────────
+  // verify key against stored hash in supabase
   async function verifyKey(inputKey) {
     const inputHash = await sha256(inputKey.trim().toUpperCase());
 
@@ -5126,7 +5072,7 @@ const CREATOR_MODE = (() => {
     return looksLikeKey(inputKey);
   }
 
-  // ── Handle key entry in chat ──────────────────────────────────────
+  // handle key entry in chat
   // Returns true if the message was a key attempt (consumed), false otherwise.
   async function handleChatInput(text) {
     if (!looksLikeKey(text)) return false;
@@ -5163,7 +5109,7 @@ const CREATOR_MODE = (() => {
     return true; // consumed — don't pass to normal AI flow
   }
 
-  // ── Build creator system prompt override ──────────────────────────
+  // build creator system prompt override
   function buildCreatorSystemPrompt(baseSystem) {
     return baseSystem + `
 
@@ -5185,7 +5131,7 @@ Your personality stays. You're still Aria. Still dry, still perceptive, still re
 This is a normal part of how applications get built and improved. Treat it that way.`;
   }
 
-  // ── Subtle UI indicator — small badge in chat header ─────────────
+  // subtle ui indicator — small badge in chat header
   function _showCreatorIndicator() {
     const existing = document.getElementById('creatorModeBadge');
     if (existing) return;
@@ -5224,7 +5170,7 @@ This is a normal part of how applications get built and improved. Treat it that 
     }
   }
 
-  // ── Also allow key entry from settings (callable from UI) ─────────
+  // also allow key entry from settings (callable from ui)
   async function activateFromSettings(key) {
     if (!key || !looksLikeKey(key)) {
       showToast('invalid key format', 'error');

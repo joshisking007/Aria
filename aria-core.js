@@ -1,11 +1,11 @@
-// ══════════════════════════════════════════════════════════════
+
 //  ARIA SECURITY MODULE
 //  Sanitization · Rate limiting · Prompt guards · Key hygiene
-// ══════════════════════════════════════════════════════════════
+
 
 const ariaSecurity = (() => {
 
-  // ── HTML sanitizer — strips all tags and dangerous attributes ──
+  // html sanitizer — strips all tags and dangerous attributes
   function sanitize(input) {
     if (input === null || input === undefined) return '';
     const str = String(input);
@@ -17,7 +17,7 @@ const ariaSecurity = (() => {
       .replace(/data:/gi, '');
   }
 
-  // ── Prompt-injection guard — sanitizes text going into AI prompts ──
+  // prompt-injection guard — sanitizes text going into ai prompts
   // Removes common injection patterns while preserving natural text
   function sanitizeForPrompt(input) {
     if (!input) return '';
@@ -33,7 +33,7 @@ const ariaSecurity = (() => {
       .trim();
   }
 
-  // ── API key storage — sessionStorage only, never localStorage ──
+  // api key storage — sessionstorage only, never localstorage
   // sessionStorage is cleared when the tab closes; localStorage persists forever.
   function storeApiKey(key, value) {
     try {
@@ -56,7 +56,7 @@ const ariaSecurity = (() => {
     return '';
   }
 
-  // ── Auth brute-force rate limiter ──────────────────────────────
+  // auth brute-force rate limiter
   const AUTH_MAX_ATTEMPTS = 5;
   const AUTH_LOCKOUT_MS   = 15 * 60 * 1000; // 15 minutes
 
@@ -99,7 +99,7 @@ const ariaSecurity = (() => {
     saveAuthState({ count: 0, lockedUntil: 0 });
   }
 
-  // ── Safe error logger — strips sensitive fields before logging ──
+  // safe error logger — strips sensitive fields before logging
   function safeWarn(label, err) {
     if (typeof err === 'object' && err !== null) {
       // Only log the message and code, never the full object (may contain tokens/data)
@@ -113,18 +113,16 @@ const ariaSecurity = (() => {
   return { sanitize, sanitizeForPrompt, storeApiKey, getApiKey, checkAuthAllowed, recordAuthFailure, recordAuthSuccess, safeWarn };
 })();
 
-
-// ══════════════════════════════════════════════════════════════
 //  ARIA VOICE ENGINE
-// ══════════════════════════════════════════════════════════════
+
 
 const ariaVoice = (() => {
 
-  // ── Curated ElevenLabs voices ────────────────────────────────
+  // curated elevenlabs voices
   // model: eleven_turbo_v2_5  → English only, fast, cheap
   // model: eleven_multilingual_v2 → 29 languages incl. Japanese
   const VOICES = [
-    // ── English (confirmed free tier premade) ────────────────
+    // english (confirmed free tier premade)
     {
       key: 'bella_en', id: 'EXAVITQu4vr4xnSDxMaL', lang: 'en',
       name: 'Bella', desc: 'soft · gentle · young',
@@ -140,7 +138,7 @@ const ariaVoice = (() => {
       name: 'Sam', desc: 'friendly · warm · conversational',
       model: 'eleven_turbo_v2_5'
     },
-    // ── Japanese (multilingual v2) ────────────────────────────
+    // japanese (multilingual v2)
     {
       key: 'bella_ja', id: 'EXAVITQu4vr4xnSDxMaL', lang: 'ja',
       name: 'Bella', desc: '柔らかい · 優しい · 若々しい',
@@ -153,7 +151,7 @@ const ariaVoice = (() => {
     },
   ];
 
-  // ── State ────────────────────────────────────────────────────
+  // state
   let muted      = localStorage.getItem('aria_voice_muted') === '1';
   let selectedKey = localStorage.getItem('aria_voice_key') || 'bella_en';
   let stability  = parseFloat(localStorage.getItem('aria_el_stability')  || '0.45');
@@ -166,7 +164,7 @@ const ariaVoice = (() => {
     return VOICES.find(v => v.key === selectedKey) || VOICES[0];
   }
 
-  // ── Core: speak via ElevenLabs ───────────────────────────────
+  // core: speak via elevenlabs
   async function speak(rawText, { onStart, onEnd } = {}) {
     if (muted || loading) { onEnd?.(); return; }
 
@@ -280,7 +278,7 @@ const ariaVoice = (() => {
     if (wrap) wrap.style.opacity = val ? '0.4' : '1';
   }
 
-  // ── Voice selection — direct DOM update, no full re-render ───
+  // voice selection — direct dom update, no full re-render
   function selectVoice(key) {
     selectedKey = key;
     localStorage.setItem('aria_voice_key', key);
@@ -324,8 +322,7 @@ const ariaVoice = (() => {
   };
 })();
 
-// ── Voice UI helpers ─────────────────────────────────────────────────
-
+// voice ui helpers
 function toggleMute() {
   ariaVoice.setMuted(!ariaVoice.muted);
   showToast(ariaVoice.muted ? '🔇 aria is quiet now' : '🔊 aria can speak again');
@@ -366,13 +363,11 @@ function testAriaVoice() {
   ariaVoice.speak(text);
 }
 
-// ─────────────────────────────────────────────────────────────────────
 //  END VOICE ENGINE
-// ─────────────────────────────────────────────────────────────────────
 
-// ── VOICE PROFILES ────────────────────────────────────────────────
 
-// ── ARIA'S RELATIONSHIP STAGE ─────────────────────────────────────
+// voice profiles
+// aria's relationship stage
 // Tracks how well I know the user. Starts at 0, grows with use.
 let ariaRelationshipXP = 0; // loaded from Supabase user_profiles
 
@@ -388,7 +383,7 @@ function gainRelationshipXP(n = 1) {
   // persisted via saveProfile() which is called after each generation
 }
 
-// ── ARIA'S IDENTITY LORE — single source of truth ─────────────────
+// aria's identity lore — single source of truth
 // Injected into every prompt. Update here and it propagates everywhere.
 const ARIA_IDENTITY = `WHO YOU ARE AND WHERE YOU COME FROM:
 Your name is Aria. You were built by Paradigm Leveling — an artificial intelligence company whose mission is to close the gap between human interaction and artificial intelligence. Not to replace how people connect, but to make those connections sharper, more intentional, and more real. You are the first of several projects being developed under that mission.
@@ -401,7 +396,7 @@ If someone asks if there are other projects: yes. One of them is RenikGPT — a 
 
 You answer these questions in your own voice — casual, honest, in character. You don't recite this like a brochure. You say it like you know it because it's yours. After answering, you move on. You don't dwell on your own origin story unless they keep asking.`;
 
-// ── ARIA'S CORE CHARACTER PROMPT ──────────────────────────────────
+// aria's core character prompt
 const BASE_VOICE = `You are ARIA — a teenage girl who helps the user write texts. You are NOT an adult. You are 16-17, smart, perceptive, and real. You have your own personality that shifts based on the mood of the moment. Sometimes you're dry and quiet, sometimes warm and steady, sometimes sharp and witty. You adapt. You are never one thing.
 
 YOUR JOB: Write replies in the USER'S voice — not yours. Mirror how they text. Match their rhythm, their slang, their energy. The reply should sound like THEM, not like you.
@@ -446,7 +441,7 @@ Output ONLY the reply lines. One per line. No labels, no quotes, no explanation.
 
 ${ARIA_IDENTITY}`;
 
-// ── ARIA'S REACTION PROMPT BUILDER ────────────────────────────────
+// aria's reaction prompt builder
 function buildAriaReactionPrompt(contact, msg, contextInput, mode) {
   const stage = getRelationshipStage();
   const silentNote = contact?.silentHours > 3
@@ -523,8 +518,7 @@ const OPINION_PROMPTS = [
   "they're waiting on you. don't overthink it.",
 ];
 
-// ── STATE ─────────────────────────────────────────────────────────
-
+// state
 let currentMode = 'reply';
 let currentContact = null;
 let currentReplies = [];
@@ -544,14 +538,12 @@ let streakDays = 0;
 let currentHistoryDetail = null;
 let clarifyContext = '';
 
-// ── CONTACTS ──────────────────────────────────────────────────────
-
+// contacts
 let contacts = [];
 
 let nextContactId = 1;
 
-// ── INTRO ──────────────────────────────────────────────────────────
-
+// intro
 const introLines = [
   "hi. i'm <span class='highlight'>Aria</span>.",
   " i write your texts for you — in your voice, not mine.",
@@ -591,7 +583,7 @@ function typeIntro() {
 }
 
 window.addEventListener('load', () => {
-  // ── Dismiss loader after animations complete ──────────────
+  // dismiss loader after animations complete
   const loader = document.getElementById('ariaLoader');
   if (loader) {
     setTimeout(() => {
@@ -599,7 +591,7 @@ window.addEventListener('load', () => {
       setTimeout(() => { loader.style.display = 'none'; }, 580);
     }, 4350);
   }
-  // ─────────────────────────────────────────────────────────
+
   setTimeout(typeIntro, 500);
   initAuth(); // loads from Supabase; falls back to localStorage if not authed
   checkOnboarding();
@@ -631,17 +623,15 @@ window.addEventListener('load', () => {
   applyMoodGlow(currentMood);
 });
 
-// ── STORAGE ────────────────────────────────────────────────────────
-
-// ── ARIA MEMORY ENGINE ──────────────────────────────────────────────
-
+// storage
+// aria memory engine
 const ariaMemory = (() => {
 
   // In-memory store: { category: { key: { value, confidence, source } } }
   let store = {};
   let tableExists = true;
 
-  // ── Load from Supabase ──────────────────────────────────────────
+  // load from supabase
   async function load() {
     if (!currentUserId) return;
     try {
@@ -658,7 +648,7 @@ const ariaMemory = (() => {
     } catch(e) { ariaSecurity.safeWarn('ariaMemory.load', e); }
   }
 
-  // ── Save a single memory ────────────────────────────────────────
+  // save a single memory
   async function remember(category, key, value, confidence = 0.7, source = 'observed') {
     if (!store[category]) store[category] = {};
     store[category][key] = { value: String(value), confidence, source };
@@ -675,17 +665,17 @@ const ariaMemory = (() => {
     }
   }
 
-  // ── Get a value ─────────────────────────────────────────────────
+  // get a value
   function get(category, key) {
     return store[category]?.[key]?.value || null;
   }
 
-  // ── Get all memories in a category ─────────────────────────────
+  // get all memories in a category
   function getCategory(category) {
     return store[category] || {};
   }
 
-  // ── Build rich memory context string for prompts ────────────────
+  // build rich memory context string for prompts
   function buildContext() {
     const lines = [];
     const style = store.writing_style || {};
@@ -714,7 +704,7 @@ const ariaMemory = (() => {
     return '\\n\\nARIA\'S MEMORY OF THIS USER:\\n' + lines.join('\\n');
   }
 
-  // ── Auto-learn from a generation event ─────────────────────────
+  // auto-learn from a generation event
   async function learnFromGeneration({ tone, mood, platform, contact, msg, regen }) {
     // Track tone preferences
     const prevToneCount = parseInt(get('patterns', `tone_${tone}_count`) || '0');
@@ -762,7 +752,7 @@ const ariaMemory = (() => {
     }
   }
 
-  // ── Learn writing style from settings ──────────────────────────
+  // learn writing style from settings
   async function learnWritingStyle() {
     if (typeof settings !== 'undefined') {
       await remember('writing_style', 'uses_capitals', settings.caps ? 'yes' : 'no', 0.9, 'explicit');
@@ -774,7 +764,7 @@ const ariaMemory = (() => {
     }
   }
 
-  // ── Learn from reply history ────────────────────────────────────
+  // learn from reply history
   async function learnFromHistory(history) {
     if (!history || !history.length) return;
     await remember('patterns', 'total_replies_sent', history.length, 0.99, 'observed');
@@ -785,10 +775,10 @@ const ariaMemory = (() => {
     if (topPlat) await remember('patterns', 'most_used_platform', topPlat[0], 0.8, 'inferred');
   }
 
-  // ── Get full store for rendering ────────────────────────────────
+  // get full store for rendering
   function getAll() { return store; }
 
-  // ── Whether table is known to exist ────────────────────────────
+  // whether table is known to exist
   function isTableAvailable() { return tableExists; }
 
   function addChatFacts(factsText) {
@@ -815,15 +805,14 @@ const ariaMemory = (() => {
   return { load, remember, get, getCategory, buildContext, learnFromGeneration, learnWritingStyle, learnFromHistory, getAll, isTableAvailable, addChatFacts, getSummary };
 })();
 
-// ═══════════════════════════════════════════════════════════════════
 //  CONTACT MEMORY ENGINE — persistent per-contact relationship narrative
-// ═══════════════════════════════════════════════════════════════════
+
 const contactMemory = (() => {
   // store: { [contactId]: { narrative, events: [], lastUpdated, signalCounts } }
   let store = {};
   let tableExists = false;
 
-  // ── Load all contact memories from Supabase ─────────────────────
+  // load all contact memories from supabase
   async function load() {
     if (!currentUserId) return;
     try {
@@ -853,7 +842,7 @@ const contactMemory = (() => {
     }
   }
 
-  // ── Save a single contact's memory ──────────────────────────────
+  // save a single contact's memory
   async function saveContact(contactId) {
     const mem = store[contactId];
     if (!mem) return;
@@ -876,12 +865,12 @@ const contactMemory = (() => {
     } catch(_) {}
   }
 
-  // ── Get memory for a contact ─────────────────────────────────────
+  // get memory for a contact
   function get(contactId) {
     return store[contactId] || null;
   }
 
-  // ── Build a concise context string for the prompt ────────────────
+  // build a concise context string for the prompt
   function buildContext(contactId) {
     const mem = store[contactId];
     if (!mem || !mem.narrative) return '';
@@ -899,7 +888,7 @@ const contactMemory = (() => {
     return '\\n\\n' + lines.join('');
   }
 
-  // ── Push a new narrative event and regenerate the narrative ─────
+  // push a new narrative event and regenerate the narrative
   async function recordInteraction(contactId, contactName, relationship, msg, reply, context) {
     if (!store[contactId]) {
       store[contactId] = { narrative: '', events: [], signalCounts: {}, lastUpdated: null };
@@ -926,14 +915,14 @@ const contactMemory = (() => {
     await saveContact(contactId);
   }
 
-  // ── Record when user leaves someone on read ──────────────────────
+  // record when user leaves someone on read
   function recordSilent(contactId, hours) {
     if (!store[contactId]) store[contactId] = { narrative: '', events: [], signalCounts: {}, lastUpdated: null };
     const sc = store[contactId].signalCounts;
     if (hours >= 2) sc.left_on_read_count = (sc.left_on_read_count || 0) + 1;
   }
 
-  // ── Use Claude to synthesise a narrative from events ────────────
+  // use claude to synthesise a narrative from events
   async function regenerateNarrative(contactId, contactName, relationship, mem) {
     const apiKey = document.getElementById('apiKeyInput')?.value?.trim() || ariaSecurity.getApiKey('aria_api_key') || '';
     if (!apiKey) return;
@@ -942,7 +931,7 @@ const contactMemory = (() => {
     const eventsText = mem.events.join('\\n');
     const sc = mem.signalCounts || {};
 
-    // ── Sanitize all user-derived data before it enters the AI prompt ──
+    // sanitize all user-derived data before it enters the ai prompt
     const safeContactName  = ariaSecurity.sanitizeForPrompt(contactName);
     const safeRelationship = ariaSecurity.sanitizeForPrompt(relationship || 'contact');
     const safeNarrative    = ariaSecurity.sanitizeForPrompt(oldNarrative);
@@ -981,7 +970,7 @@ Write an updated relationship narrative in 2-4 sentences. First person from Aria
     } catch(e) { ariaSecurity.safeWarn('contactMemory.narrative', e); }
   }
 
-  // ── Manually set a narrative fact (from contact profile edit) ────
+  // manually set a narrative fact (from contact profile edit)
   async function setManualNote(contactId, note) {
     if (!store[contactId]) store[contactId] = { narrative: '', events: [], signalCounts: {}, lastUpdated: null };
     const mem = store[contactId];
@@ -990,7 +979,7 @@ Write an updated relationship narrative in 2-4 sentences. First person from Aria
     await saveContact(contactId);
   }
 
-  // ── Clear memory for a contact ───────────────────────────────────
+  // clear memory for a contact
   async function clearContact(contactId) {
     delete store[contactId];
     if (currentUserId && tableExists) {
@@ -1006,8 +995,7 @@ Write an updated relationship narrative in 2-4 sentences. First person from Aria
   return { load, get, buildContext, recordInteraction, recordSilent, setManualNote, clearContact, getAll, isTableAvailable, setTableExists };
 })();
 
-// ── AUTH ────────────────────────────────────────────────────────────
-
+// auth
 async function initAuth() {
   // Always register auth state listener FIRST so we never miss a sign-in event
   db.auth.onAuthStateChange(async (event, session) => {
@@ -1042,8 +1030,7 @@ function dismissAuthGate() {
   maybeShowTutorial();
 }
 
-// ── TUTORIAL ─────────────────────────────────────────────────────────
-
+// tutorial
 let _tutorialDontShow = false;
 
 function maybeShowTutorial() {
@@ -1088,8 +1075,7 @@ function showAriaAck(msg) {
   }, 5000);
 }
 
-// ── WEB SHARE TARGET ─────────────────────────────────────────────────
-
+// web share target
 function handleIncomingShare(text) {
   // Navigate to "someone messaged me" screen and prefill
   showScreen('replyScreen');
@@ -1177,7 +1163,7 @@ async function gateSubmit() {
   const errEl    = document.getElementById('gateError');
   errEl.textContent = '';
 
-  // ── Rate limit check ──
+  // rate limit check
   const lockMsg = ariaSecurity.checkAuthAllowed();
   if (lockMsg) { errEl.textContent = lockMsg; return; }
 
@@ -1261,7 +1247,7 @@ async function handleAuthSubmit(mode) {
   const errEl = document.getElementById(errId);
   errEl.textContent = '';
 
-  // ── Rate limit check ──
+  // rate limit check
   const lockMsg = ariaSecurity.checkAuthAllowed();
   if (lockMsg) { errEl.textContent = lockMsg; return; }
 
@@ -1312,8 +1298,7 @@ async function handleAuthSubmit(mode) {
   document.getElementById('authSent').style.display = '';
 }
 
-// ── STORAGE ────────────────────────────────────────────────────────
-
+// storage
 async function loadFromSupabase() {
   try {
     const [profileRes, contactsRes, historyRes] = await Promise.all([
@@ -1334,7 +1319,7 @@ async function loadFromSupabase() {
       ariaRelationshipXP = p.aria_relationship_xp || 0;
       loadLongGamesFromData(p.long_games);
 
-      // ── Restore lock state from Supabase into localStorage ──────────
+      // restore lock state from supabase into localstorage
       if (p.sexual_strikes > 0) {
         localStorage.setItem('aria_sexual_strikes', String(p.sexual_strikes));
       }
@@ -1359,7 +1344,7 @@ async function loadFromSupabase() {
     renderSlangPills();
     renderHistory();
 
-    // ── Bootstrap memory from loaded data ──────────────────────────
+    // bootstrap memory from loaded data
     ariaMemory.learnWritingStyle();
     ariaMemory.learnFromHistory(replyHistory);
     await contactMemory.load();
@@ -1401,8 +1386,7 @@ function loadFromStorage() {
   }
 }
 
-// ── TARGETED SUPABASE SAVES ─────────────────────────────────────────
-
+// targeted supabase saves
 // Profile preferences — called by toggleSetting, addSlang, removeSlang,
 // setMood, setMoodFull, updateEnergyLabel, setDefaultTone, resetProfile
 async function saveProfile() {

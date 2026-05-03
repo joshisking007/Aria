@@ -42,14 +42,12 @@
 </script>
 </head>
 <body>
-<!-- ═══════════════════════════════════════════════
-     LOADING SCREEN — Paradigm Leveling (3D fly-in v2)
-════════════════════════════════════════════════ -->
+<!-- loading screen — paradigm leveling (3d fly-in v2) -->
 <div id="ariaLoader">
   <div class="pl2-bg-glow"></div>
   <div class="pl2-loader">
 
-    <!-- ── 4 Chevron arrows — original logo colours ── -->
+    <!-- 4 chevron arrows — original logo colours -->
     <div class="pl2-chevrons">
 
       <!-- Arrow 1: deep blue — flies in from top-left, spinning on Y -->
@@ -129,7 +127,7 @@
     <!-- drop shadow under chevrons -->
     <div class="pl2-chevrons-shadow"></div>
 
-    <!-- ── Wordmark ── -->
+    <!-- wordmark -->
     <div class="pl2-wordmark">
       <div class="pl2-paradigm">PARADIGM</div>
       <div class="pl2-divider"><div class="pl2-divider-shine"></div></div>
@@ -147,9 +145,7 @@
 <div class="ambient ambient-2"></div>
 <div class="ambient ambient-3"></div>
 
-<!-- ═══════════════════════════════════════════════
-     AUTH GATE (full-screen lock)
-════════════════════════════════════════════════ -->
+<!-- auth gate (full-screen lock) -->
 <div id="authGate">
   <div id="gateDefault" class="gate-inner">
 
@@ -201,9 +197,7 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN: MY MEMORY
-════════════════════════════════════════════════ -->
+<!-- screen: my memory -->
 <div class="screen" id="memoryScreen" style="display:none;">
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
@@ -231,9 +225,7 @@
   <button class="memory-learn-btn" onclick="forceMemoryLearn()">re-learn from my history</button>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN: INTRO
-════════════════════════════════════════════════ -->
+<!-- screen: intro -->
 <div class="screen active" id="introScreen">
   <div class="intro-scroll">
 
@@ -368,9 +360,7 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN: CONTACTS
-════════════════════════════════════════════════ -->
+<!-- screen: contacts -->
 <div class="screen" id="contactScreen">
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
@@ -402,9 +392,7 @@
   <div id="contactList"></div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN: REPLY
-════════════════════════════════════════════════ -->
+<!-- screen: reply -->
 <div class="screen" id="replyScreen">
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('contactScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
@@ -568,9 +556,7 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN: HISTORY
-════════════════════════════════════════════════ -->
+<!-- screen: history -->
 <div class="screen" id="historyScreen">
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
@@ -585,9 +571,7 @@
   <div id="historyList"></div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN: PROFILE / VOICE SETTINGS
-════════════════════════════════════════════════ -->
+<!-- screen: profile / voice settings -->
 <div class="screen" id="profileScreen">
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
@@ -700,7 +684,7 @@
     </div>
   </div>
 
-  <!-- ── MY VOICE ── -->
+  <!-- my voice -->
   <div class="profile-section voice-section">
     <div class="profile-section-title">MY VOICE</div>
     <div class="profile-card">
@@ -765,9 +749,7 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN: MOOD (contextual)
-════════════════════════════════════════════════ -->
+<!-- screen: mood (contextual) -->
 <div class="screen" id="moodScreen" style="display:none;">
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
@@ -813,13 +795,9 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     NAVIGATION BAR
-════════════════════════════════════════════════ -->
+<!-- navigation bar -->
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN: PRE-SEND (don't send that)
-════════════════════════════════════════════════ -->
+<!-- screen: pre-send (don't send that) -->
 <div class="screen" id="presendScreen" style="display:none;">
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
@@ -922,9 +900,7 @@
 
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN: GLOW-UP
-════════════════════════════════════════════════ -->
+<!-- screen: glow-up -->
 <div class="screen" id="glowupScreen" style="display:none;">
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
@@ -975,9 +951,7 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN: RED FLAG DETECTOR
-════════════════════════════════════════════════ -->
+<!-- screen: red flag detector -->
 <div class="screen" id="redflagScreen" style="display:none;">
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
@@ -1016,9 +990,7 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN: VIBE REPORT
-════════════════════════════════════════════════ -->
+<!-- screen: vibe report -->
 <div class="screen" id="vibeScreen" style="display:none;">
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
@@ -1058,9 +1030,7 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN: ONBOARDING
-════════════════════════════════════════════════ -->
+<!-- screen: onboarding -->
 <div class="screen" id="onboardScreen" style="display:none;">
   <div class="onboard-wrap">
     <div class="onboard-progress">
@@ -1119,9 +1089,7 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN: CONTACT PROFILE
-════════════════════════════════════════════════ -->
+<!-- screen: contact profile -->
 <div class="screen" id="contactProfileScreen" style="display:none;">
   <div class="top-bar">
     <button class="back-btn" id="contactProfileBackBtn" onclick="showScreen('contactScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
@@ -1154,9 +1122,7 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN: REPLY QUEUE
-════════════════════════════════════════════════ -->
+<!-- screen: reply queue -->
 <div class="screen" id="queueScreen" style="display:none;">
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
@@ -1180,9 +1146,7 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN: THE LONG GAME
-════════════════════════════════════════════════ -->
+<!-- screen: the long game -->
 <div class="screen" id="longGameScreen" style="display:none;">
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
@@ -1285,7 +1249,7 @@
   </div>
 </div>
 
-<!-- ─── DID IT WORK? NUDGE ─────────────────────── -->
+<!-- did it work? nudge -->
 <div class="followup-nudge" id="followupNudge">
   <div class="followup-nudge-top">
     <div class="followup-nudge-orb"></div>
@@ -1441,9 +1405,7 @@
   </button>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SCREEN: CHAT WITH ARIA
-════════════════════════════════════════════════ -->
+<!-- screen: chat with aria -->
 <div class="screen" id="chatScreen" style="display:none; height:100dvh; overflow:hidden;">
 
   <!-- Top bar -->
@@ -1488,9 +1450,7 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     MODALS
-════════════════════════════════════════════════ -->
+<!-- modals -->
 
 <!-- Tone modal -->
 <div class="modal-overlay" id="toneModal" onclick="handleModalBgClick(event,'toneModal')">
@@ -1694,18 +1654,10 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- ═══════════════════════════════════════════════
-     SCRIPTS — load order matters:
-     1. aria-core.js  (memory, auth, Supabase, storage — no DOM deps)
-     2. aria-app.js   (all features — depends on core)
-════════════════════════════════════════════════ -->
+<!-- scripts — load order matters: 1. aria-core.js (memory, auth, supabase, storage — no dom deps) 2. aria-app.js (all features — depends on core) -->
 <script src="aria-core.js"></script>
 <script src="aria-app.js"></script>
-<!-- ═══════════════════════════════════════════════
-  ARIA LOCK SCREEN OVERLAY
-  Injected by AWARENESS.showLockScreen() — this is the empty mount point.
-  The actual content is built in JS so the timer can be live.
-════════════════════════════════════════════════ -->
+<!-- aria lock screen overlay injected by awareness.showlockscreen() — this is the empty mount point. the actual content is built in js so the timer can be live. -->
 <div id="ariaLockOverlay"></div>
 
 </body>

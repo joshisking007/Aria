@@ -2,10 +2,10 @@
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
 
-// ── Security: only forward share data to same-origin windows ────────
+// security: only forward share data to same-origin windows
 const ALLOWED_ORIGIN = self.location.origin;
 
-// ── Security: sanitize and cap share payload fields ─────────────────
+// security: sanitize and cap share payload fields
 function sanitizeShareField(val, maxLen) {
   if (typeof val !== 'string') return '';
   // Strip any HTML/script injection attempts
