@@ -44,9 +44,6 @@
 <body>
 <!-- ═══════════════════════════════════════════════
      LOADING SCREEN — Paradigm Leveling (3D fly-in v2)
-     Sound hook: drop an <audio id="plStingAudio"> here when ready,
-     or call window.playPLSting() from aria-core.js after the loader
-     timeout. The hook is already wired — just add your audio file.
 ════════════════════════════════════════════════ -->
 <div id="ariaLoader">
   <div class="pl2-bg-glow"></div>
@@ -141,23 +138,7 @@
 
   </div>
 
-  <!-- ── Sound hook — EA-Sports-style sting ──────────────────────
-       When your audio file is ready:
-       1. Add:  <audio id="plStingAudio" src="pl-sting.mp3" preload="auto"></audio>
-       2. Uncomment the playPLSting() call below.
-       The 150ms delay fires after the first chevron lands (~0.9s total).
-  ─────────────────────────────────────────────────────────────── -->
-  <audio id="plStingAudio" src="pl-sting.mp3" preload="auto"></audio>
-  <script>
-    window.playPLSting = function() {
-      var audio = document.getElementById('plStingAudio');
-      if (audio) {
-        audio.volume = 0.85;
-        audio.play().catch(function(){});
-      }
-    };
-    setTimeout(window.playPLSting, 150);
-  </script>
+
 </div>
 
 
