@@ -592,6 +592,9 @@ window.addEventListener('load', () => {
   // Check for sexual content lock on every app load
   setTimeout(() => { if (typeof AWARENESS !== 'undefined') AWARENESS.checkLockOnLoad(); }, 300);
 
+  // Restore creator mode session if key was verified this tab session
+  setTimeout(() => { if (typeof CREATOR_MODE !== 'undefined') CREATOR_MODE.checkSession(); }, 400);
+
   // Restore ElevenLabs settings
   const savedKey  = ariaSecurity.getApiKey('aria_el_key') || '';
   const savedStab = parseFloat(localStorage.getItem('aria_el_stability')  || '0.45');
