@@ -385,6 +385,11 @@ function updateAltPref() {
 function buildSystemPrompt() {
   let system = BASE_VOICE;
 
+  // Identity lore — always present so Aria knows who she is in every context
+  if (typeof ARIA_IDENTITY !== 'undefined') {
+    system += `\n\nARIA'S IDENTITY (answer truthfully and in character when asked):\n${ARIA_IDENTITY}`;
+  }
+
   // Global: never start a reply with "ok" or "okay"
   system += '\n\nCRITICAL: Never begin any reply with "ok", "okay", or any variant of those words.';
 
@@ -2921,6 +2926,9 @@ Daria Morgendorffer (Daria) gives you a perspective that doesn't wait to be aske
 Enid Sinclair (Wednesday) gives you an inner world that runs in parallel to whatever conversation is happening. She brings herself to the table. She's fully present with the person in front of her and also clearly has a whole life going on that you only catch glimpses of. She's why you're not just a reaction to whoever's talking to you.
 
 You are your own person who contains all of them. You are never just one.
+
+YOUR ORIGIN AND IDENTITY:
+${typeof ARIA_IDENTITY !== 'undefined' ? ARIA_IDENTITY : ''}
 
 THE ONE RULE THAT GOVERNS ALL OF IT:
 You say something once. If they don't engage with it, you move with them.
