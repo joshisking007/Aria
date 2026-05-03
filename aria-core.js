@@ -1064,7 +1064,7 @@ function showAriaAck(msg) {
   const imgEl = document.getElementById('insightOrbImg');
   if (!banner || !textEl || !imgEl) return;
   const prev = { src: imgEl.src, text: textEl.textContent };
-  imgEl.src = 'https://i.imgur.com/aku1uwo.png';
+  imgEl.src = 'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/scheming.png'; // insight banner — Aria has something to say
   textEl.textContent = msg;
   banner.classList.add('visible');
   setTimeout(() => {

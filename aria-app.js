@@ -176,7 +176,10 @@ function filterContacts(query) {
 function renderContacts(list) {
   const container = document.getElementById('contactList');
   if (!list.length) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">no contacts found</div></div>`;
+    container.innerHTML = `<div class="empty-state">
+      <img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/uninterested.png" alt="aria" style="width:80px;height:80px;object-fit:cover;object-position:top;border-radius:50%;margin:0 auto 12px;display:block;opacity:0.75;">
+      <div class="empty-state-text">no contacts found</div>
+    </div>`;
     return;
   }
   container.innerHTML = list.map((c, i) => {
@@ -629,7 +632,13 @@ Read the entire arc. Notice the tone shift, what's been building, what the other
     await refreshStats();
 
   } catch(e) {
-    currentReplies = ['something went wrong', 'try again?'];
+    // Show Aria expression in reply error state
+    const replyErrEl = document.getElementById('ariaThinkingImg') || null;
+    if (replyErrEl) {
+      replyErrEl.src = `https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/exasperated.png`;
+      replyErrEl.style.display = 'block';
+    }
+    currentReplies = ["something went wrong on my end. tap retry."];
     renderReplies(currentReplies);
     console.error(e);
   }
@@ -1184,7 +1193,11 @@ async function runGlowup() {
       reactionEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 200);
 
-  } catch(e) { showToast('something went wrong'); }
+  } catch(e) {
+    const glowupReactionEl = document.getElementById('glowupReaction');
+    document.getElementById('glowupReactionText').textContent = "something broke on my end. try again.";
+    glowupReactionEl.style.display = 'block';
+  }
 
   document.getElementById('glowupThinking').style.display = 'none';
   btn.disabled = false; btn.textContent = '✨ glow it up <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -1226,8 +1239,12 @@ async function runRedflag() {
   try {
     const data = await fetchReplyJSON('You are Aria, a sharp honest text analyst. Respond ONLY in valid JSON.', prompt);
     if (data) renderRedflagResult(data);
-    else { showToast('try again?'); }
-  } catch(e) { showToast('something went wrong'); }
+    else {
+      renderRedflagResult({ verdict: 'caution', emoji: '🤨', headline: "couldn't read that", sub: "something went wrong. try again.", flags: [], suggestion: "i couldn't process that one. give it another shot." });
+    }
+  } catch(e) {
+    renderRedflagResult({ verdict: 'caution', emoji: '🤨', headline: "couldn't read that", sub: "something went wrong. try again.", flags: [], suggestion: "i couldn't process that one. give it another shot." });
+  }
 
   document.getElementById('redflagThinking').style.display = 'none';
   btn.disabled = false; btn.textContent = '🚩 scan for red flags <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -1695,9 +1712,12 @@ async function submitLongGameSetup() {
   // Show arc preview screen in loading state
   showScreen('lgArcPreviewScreen');
   document.getElementById('lgArcPreviewWrap').innerHTML = `
-    <div class="lg-aria-thinking-card">
-      <div class="lg-thinking-orb"></div>
-      <div class="lg-thinking-text">I'm mapping your moves...</div>
+    <div class="lg-aria-thinking-card" style="padding:0;overflow:hidden;">
+      <img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/calculating.png" alt="aria" style="width:100%;max-height:220px;object-fit:cover;object-position:top;border-radius:12px 12px 0 0;display:block;">
+      <div style="padding:18px;display:flex;align-items:center;gap:12px;">
+        <div class="lg-thinking-orb"></div>
+        <div class="lg-thinking-text">mapping your moves...</div>
+      </div>
     </div>`;
 
   try {
@@ -1708,9 +1728,9 @@ async function submitLongGameSetup() {
         "okay buddy, I'm an AI not a miracle worker. give me something to work with here.";
       document.getElementById('lgArcPreviewWrap').innerHTML = `
         <div class="lg-aria-thinking-card" style="border-color:rgba(251,191,36,0.3);">
-          <div style="font-size:32px;margin-bottom:12px;">🤨</div>
-          <div class="lg-thinking-text" style="color:var(--text);">${funnyLine}</div>
-          <button class="lg-setup-btn" style="margin-top:16px;" onclick="openLongGameSetup()">try again</button>
+          <img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/suspicious.png" alt="aria" style="width:100%;max-height:220px;object-fit:cover;object-position:top;border-radius:12px 12px 0 0;display:block;margin:-18px -18px 16px -18px;width:calc(100% + 36px);">
+          <div class="lg-thinking-text" style="color:var(--text);margin-bottom:16px;">${funnyLine}</div>
+          <button class="lg-setup-btn" onclick="openLongGameSetup()">add more detail</button>
         </div>`;
       return;
     }
@@ -2128,7 +2148,7 @@ async function submitStepOutcome() {
   const wrap = document.getElementById('lgDetailWrap');
   const adjustCard = document.createElement('div');
   adjustCard.className = 'lg-aria-thinking-card';
-  adjustCard.innerHTML = `<div class="lg-thinking-orb"></div><div class="lg-thinking-text">I'm adjusting the remaining steps...</div>`;
+  adjustCard.innerHTML = `<div style="padding:0;overflow:hidden;border-radius:12px;"><img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/calculating.png" alt="aria" style="width:100%;max-height:160px;object-fit:cover;object-position:top;display:block;border-radius:12px 12px 0 0;"><div style="padding:14px;display:flex;align-items:center;gap:10px;"><div class="lg-thinking-orb"></div><div class="lg-thinking-text">adjusting your remaining steps...</div></div></div>`;
   wrap.appendChild(adjustCard);
   adjustCard.scrollIntoView({ behavior: 'smooth', block: 'end' });
 
@@ -2142,7 +2162,19 @@ Their reply: ${theirReply || 'not provided'}
 Remaining steps to adjust: ${JSON.stringify(remaining.map(s => ({ title: s.title, intent: s.intent, draft: s.draft })))}`;
 
     const raw    = await fetchReply(LG_ADJUST_SYSTEM, prompt);
-    const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    // Robust brace-counter — same fix as game plan setup parser
+    let parsed;
+    {
+      const start = raw.indexOf('{');
+      if (start === -1) throw new Error('no JSON');
+      let depth = 0, end = -1;
+      for (let i = start; i < raw.length; i++) {
+        if (raw[i] === '{') depth++;
+        else if (raw[i] === '}') { depth--; if (depth === 0) { end = i; break; } }
+      }
+      if (end === -1) throw new Error('unclosed JSON');
+      parsed = JSON.parse(raw.slice(start, end + 1));
+    }
 
     step.ariaNote = parsed.aria_note;
 
@@ -2710,7 +2742,7 @@ function driftReplyNow() {
 // NEW USER cards — shown when contacts === 0, no history
 const ariaNewUserCards = [
   {
-    img: 'https://i.imgur.com/ji329r1.png',
+    img: 'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/playful.png',
     lines: [
       "hey. i'm Aria. i write your texts so you don't have to overthink them.",
       "add someone you've been meaning to reply to. i'll take it from there.",
@@ -2719,7 +2751,7 @@ const ariaNewUserCards = [
     ]
   },
   {
-    img: 'https://i.imgur.com/68qFlMp.png',
+    img: 'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/amused.png',
     lines: [
       "zero contacts. zero excuses. let's fix that.",
       "you just got here and i'm already excited. add someone — anyone.",
@@ -2728,7 +2760,7 @@ const ariaNewUserCards = [
     ]
   },
   {
-    img: 'https://i.imgur.com/aku1uwo.png',
+    img: 'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/scheming.png',
     lines: [
       "i've seen inboxes. yours has potential. show me who we're working with.",
       "fresh start. clean slate. one contact and we're in business.",
@@ -2741,7 +2773,7 @@ const ariaNewUserCards = [
 // RETURNING USER cards — unlocked once contacts > 0
 const ariaReturningCards = [
   {
-    img: 'https://i.imgur.com/aku1uwo.png',
+    img: 'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/scheming.png',
     minContacts: 1,
     lines: [
       "your inbox is a crime scene and i already know who did it.",
@@ -2751,7 +2783,7 @@ const ariaReturningCards = [
     ]
   },
   {
-    img: 'https://i.imgur.com/ji329r1.png',
+    img: 'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/playful.png',
     minContacts: 1,
     lines: [
       "today could be the day you actually reply first. just saying.",
@@ -2761,7 +2793,7 @@ const ariaReturningCards = [
     ]
   },
   {
-    img: 'https://i.imgur.com/68qFlMp.png',
+    img: 'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/amused.png',
     minContacts: 1,
     lines: [
       "you opened the app. bold move. let's see if you follow through.",
@@ -2771,7 +2803,7 @@ const ariaReturningCards = [
     ]
   },
   {
-    img: 'https://i.imgur.com/OncPXzL.png',
+    img: 'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/repulsed.png',
     minContacts: 2,
     lines: [
       "we had a streak going. we had something real. and then — nothing.",
@@ -2781,7 +2813,7 @@ const ariaReturningCards = [
     ]
   },
   {
-    img: 'https://i.imgur.com/ZENuLRe.png',
+    img: 'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/annoyed.png',
     minContacts: 2,
     lines: [
       "okay we actually need to handle your inbox right now.",
@@ -3821,7 +3853,7 @@ async function sendChatMessage() {
 
   } catch(e) {
     console.error('chat error:', e);
-    appendAriaMessage("something went wrong on my end. try again?", 'soft', false);
+    appendAriaMessage("something went wrong on my end. give it a second and try again.", 'uneasy', false);
     chatIsTyping = false;
     document.getElementById('chatSendBtn').disabled = false;
   }
@@ -4289,7 +4321,10 @@ function renderQueue() {
   const sub = document.getElementById('queueSub');
 
   if (!queueContacts.length) {
-    stack.innerHTML = `<div class="queue-empty"><div class="queue-empty-icon">✅</div><div class="queue-empty-text">you're all caught up!<br>no one left on read.</div></div>`;
+    stack.innerHTML = `<div class="queue-empty">
+      <img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/content.png" alt="aria" style="width:120px;height:120px;object-fit:cover;object-position:top;border-radius:50%;margin:0 auto 14px;display:block;border:2px solid rgba(244,114,182,0.3);">
+      <div class="queue-empty-text">you're all caught up.<br>no one left on read.</div>
+    </div>`;
     actions.style.display = 'none';
     sub.textContent = "you're all good";
     return;
@@ -4418,7 +4453,10 @@ function renderMemoryScreen() {
 
   if (!currentUserId) {
     statusEl.textContent = '● not signed in';
-    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🔐</div><div>Sign in and I'll actually remember you next time.<br><br>I'm still picking things up this session — I just won't be able to hold onto them.</div></div>`;
+    body.innerHTML = `<div class="memory-empty">
+      <img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/uninterested.png" alt="aria" style="width:100px;height:100px;object-fit:cover;object-position:top;border-radius:50%;margin:0 auto 14px;display:block;opacity:0.7;">
+      <div>sign in and i'll actually remember you next time.<br><br>i'm still picking things up this session — i just won't be able to hold onto them.</div>
+    </div>`;
     return;
   }
 
@@ -4521,7 +4559,10 @@ async function _renderMemoryAfterLoad() {
 
     if (!totalPoints) {
       statusEl.textContent = '● still watching';
-      body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">🌱</div><div>Nothing filed away yet.<br><br>Chat with me, send a few replies — I'll start building a picture of you.</div></div>`;
+      body.innerHTML = `<div class="memory-empty">
+        <img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/soft.png" alt="aria" style="width:100px;height:100px;object-fit:cover;object-position:top;border-radius:50%;margin:0 auto 14px;display:block;opacity:0.85;">
+        <div>nothing filed away yet.<br><br>chat with me, send a few replies — i'll start building a picture of you.</div>
+      </div>`;
       return;
     }
 
@@ -4560,7 +4601,10 @@ async function _renderMemoryAfterLoad() {
   } catch(e) {
     console.error('memory render error:', e);
     statusEl.textContent = '● error';
-    body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon">⚠️</div><div style="color:var(--muted);font-size:13px;">something went wrong loading memory.<br><br>tap "re-learn from my history" to try again.</div></div>`;
+    body.innerHTML = `<div class="memory-empty">
+      <img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/worried.png" alt="aria" style="width:100px;height:100px;object-fit:cover;object-position:top;border-radius:50%;margin:0 auto 14px;display:block;opacity:0.85;">
+      <div style="color:var(--muted);font-size:13px;">something went wrong loading memory.<br><br>tap "re-learn from my history" to try again.</div>
+    </div>`;
   }
 }
 
@@ -4568,7 +4612,10 @@ async function forceMemoryLearn() {
   const body     = document.getElementById('memoryBody');
   const statusEl = document.getElementById('memoryStatus');
   if (statusEl) statusEl.textContent = '● re-learning…';
-  if (body) body.innerHTML = `<div class="memory-empty"><div class="memory-empty-icon" style="animation:breathe 1.5s ease-in-out infinite;">🧠</div><div style="color:var(--muted);font-size:13px;">going through everything you've shared…</div></div>`;
+  if (body) body.innerHTML = `<div class="memory-empty">
+    <img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/focused.png" alt="aria" style="width:100px;height:100px;object-fit:cover;object-position:top;border-radius:50%;margin:0 auto 14px;display:block;animation:breathe 1.5s ease-in-out infinite;">
+    <div style="color:var(--muted);font-size:13px;">going through everything you've shared…</div>
+  </div>`;
 
   // 1. Re-learn writing style from settings
   await ariaMemory.learnWritingStyle();
@@ -4903,7 +4950,7 @@ const AWARENESS = (() => {
     overlay.innerHTML = `
       <div class="aria-lock-inner">
         <div class="aria-lock-portrait">
-          <img src="https://i.imgur.com/OncPXzL.png" alt="Aria disappointed" class="aria-lock-img" />
+          <img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/repulsed.png" alt="Aria disappointed" class="aria-lock-img" />
         </div>
         <div class="aria-lock-title">you've been locked out</div>
         <div class="aria-lock-sub">i gave you two warnings.<br>i meant them.</div>
