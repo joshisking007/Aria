@@ -438,33 +438,48 @@ const ariaGames = (() => {
           <button class="g-back" onclick="showScreen('introScreen')">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 14L6 9L11 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
-          <span class="g-topbar-label">// games</span>
+          <span class="g-topbar-label">Games</span>
         </div>
 
         <div class="g-lobby">
           <div class="g-hero">
-            <div class="g-hero-label">pattern</div>
-            <div class="g-hero-title">sequence</div>
+            <div class="g-hero-eyebrow">pattern recognition</div>
+            <div class="g-hero-title">Se<span>qu</span>ence</div>
             <div class="g-hero-sub">i show you a sequence. you tell me what comes next. three rounds, escalating difficulty. at the end i tell you what i noticed.</div>
           </div>
 
-          <div class="g-diff-label">// pick your level</div>
+          <div class="g-divider">
+            <div class="g-divider-line"></div>
+            <div class="g-divider-text">pick your level</div>
+            <div class="g-divider-line"></div>
+          </div>
+
           <div class="g-diff-grid">
-            ${Object.entries(DIFFICULTY).map(([key, d]) => `
-              <button class="g-diff-card" onclick="ariaGames.selectDifficulty('${key}')">
-                <div class="g-diff-name">${d.label}</div>
-                <div class="g-diff-desc">${d.desc}</div>
-                <div class="g-diff-arrow">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8H12M9 5L12 8L9 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            ${[
+              { key: 'easy',   num: '01', label: 'Easy',   desc: 'short sequences, clear rules',        color: '#34d399' },
+              { key: 'medium', num: '02', label: 'Medium', desc: 'longer sequences, mixed types',        color: '#fbbf24' },
+              { key: 'hard',   num: '03', label: 'Hard',   desc: 'complex rules, ambiguous patterns',    color: '#f97316' },
+            ].map(d => `
+              <button class="g-diff-card" data-level="${d.key}" onclick="ariaGames.selectDifficulty('${d.key}')">
+                <div class="g-diff-card-inner">
+                  <div class="g-diff-num">${d.num}</div>
+                  <div class="g-diff-content">
+                    <div class="g-diff-name">${d.label}</div>
+                    <div class="g-diff-desc">${d.desc}</div>
+                  </div>
+                  <div class="g-diff-arrow">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M4 9H14M10 5L14 9L10 13" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </div>
                 </div>
+                <div class="g-diff-accent"></div>
               </button>
             `).join('')}
           </div>
 
           <div class="g-rules">
-            <div class="g-rule">three rounds per session</div>
-            <div class="g-rule">wrong answers stay in the data</div>
-            <div class="g-rule">you get a read at the end</div>
+            <div class="g-rule">three rounds</div>
+            <div class="g-rule">mistakes stay in</div>
+            <div class="g-rule">read at the end</div>
           </div>
         </div>
       </div>
@@ -510,7 +525,7 @@ const ariaGames = (() => {
           <button class="g-back" onclick="ariaGames.showLobby()">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M11 14L6 9L11 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
-          <span class="g-topbar-label">// round ${roundIndex + 1} of 3</span>
+          <span class="g-topbar-label">Round ${roundIndex + 1} of 3</span>
           <span class="g-round-tag">${roundLabel}</span>
         </div>
 
@@ -698,7 +713,7 @@ const ariaGames = (() => {
     container.innerHTML = `
       <div class="g-screen">
         <div class="g-topbar">
-          <span class="g-topbar-label">// the read</span>
+          <span class="g-topbar-label">The Read</span>
         </div>
 
         <div class="g-read-body">
@@ -717,7 +732,7 @@ const ariaGames = (() => {
           </div>
 
           <div class="g-obs-section">
-            <div class="g-obs-label">// what i noticed</div>
+            <div class="g-obs-label">what i noticed</div>
             ${obsHtml}
           </div>
 
