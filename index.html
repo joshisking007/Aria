@@ -22,6 +22,7 @@
   let currentUserId = null;
 </script>
 <link rel="stylesheet" href="style.css"/>
+<link rel="stylesheet" href="aria-games.css"/>
 <link rel="manifest" href="manifest.json"/>
 
 <!-- Service Worker (Web Share Target) -->
@@ -1430,6 +1431,10 @@
     <span class="menu-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></span>
     <div><div class="menu-item-label">My Memory</div><div class="menu-item-sub">What I know about you</div></div>
   </button>
+  <button class="menu-item" id="navGames" onclick="menuNavTo('gamesScreen','navGames');ariaGames.init()">
+    <span class="menu-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></span>
+    <div><div class="menu-item-label">Games</div><div class="menu-item-sub">Pattern reads and diagnostics</div></div>
+  </button>
 </div>
 
 <!-- screen: chat with aria -->
@@ -1687,8 +1692,11 @@
 <!-- scripts — load order matters: 1. aria-core.js (memory, auth, supabase, storage — no dom deps) 2. aria-app.js (all features — depends on core) -->
 <script src="aria-core.js"></script>
 <script src="aria-app.js"></script>
+<script src="aria-games.js"></script>
 <!-- aria lock screen overlay injected by awareness.showlockscreen() — this is the empty mount point. the actual content is built in js so the timer can be live. -->
 <div id="ariaLockOverlay"></div>
+<!-- games screen — self-renders via ariaGames.init() -->
+<div id="gamesScreen" class="screen"></div>
 
 </body>
 </html>
