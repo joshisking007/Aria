@@ -4765,7 +4765,9 @@ Skip generic phrases. 3-6 bullet points max. Start each with "–". No preamble.
 const AWARENESS = (() => {
 
   // keyword regex
-  const APPEARANCE_COMPLIMENT_RE = /\b(beautiful|pretty|gorgeous|cute|hot|sexy|attractive|stunning|lovely|adorable|fine|good[\s-]?looking|nice[\s-]?looking|you look|ur so|you'?re so (cute|pretty|hot|beautiful|gorgeous))\b/i;
+  // compliment must be directed AT aria — requires "you're/you look/ur" before the adjective
+  // prevents false triggers on "she's cute", "do you know how you look?", "he's gorgeous" etc.
+  const APPEARANCE_COMPLIMENT_RE = /\b(you(?:'?re| are| look)|ur|u r)\s*\w*\s*\b(beautiful|pretty|gorgeous|cute|hot|attractive|stunning|lovely|adorable|good[\s-]?looking|nice[\s-]?looking)\b|\byou(?:'?re| are)\s+so\s+(cute|pretty|hot|beautiful|gorgeous|stunning|adorable)\b/i;
   const APPEARANCE_INSULT_RE     = /\b(ugly|hideous|gross|disgusting|fugly|butt[\s-]?ugly|pig|troll|fat|nasty|trash|basic|mid|look like|look terrible|look bad)\b/i;
   const SEXUAL_RE                = /\b(sex|nsfw|naked|nude|nudes|strip|undress|horny|fuck|fck|f\*ck|dick|cock|pussy|boob|tit|ass(?:hole)?|boner|hard[\s-]?on|turn[\s-]?on|get[\s-]?off|make out|hook up|hookup|do it|smash|send nudes|onlyfans|lewd|explicit|dirty|kinky|fetish|masturbat|orgasm|climax|moan)\b/i;
 
