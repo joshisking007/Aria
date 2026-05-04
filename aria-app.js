@@ -211,7 +211,7 @@ function renderContacts(list) {
           <div class="contact-preview">${s(drift && !c.drift_dismissed ? drift.preview : (c.preview || (c.relationship ? '(' + c.relationship + ')' : 'no recent messages')))}</div>
         </div>
         <div class="contact-meta">
-          <div class="contact-time">${s(c.time || '')}</div>
+          <div class="contact-time">${s(c.silentHours > 0 ? c.silentHours + 'h ago' : c.time || '')}</div>
           ${badgeHtml}
         </div>
       </div>
@@ -251,14 +251,12 @@ async function addContact() {
       relationship: relationship || 'contact',
       platform,
       preview:      preview || 'no recent messages',
-      time,
       silent,
-      silent_hours: silentHours,
-      online:       false
+      silent_hours: silentHours
     }).select().single();
 
     if (error) { showToast('could not save contact'); console.error(error); return; }
-    contacts.push({ ...data, silentHours: data.silent_hours });
+    contacts.push({ ...data, silentHours: data.silent_hours || 0, time: data.silent_hours > 0 ? data.silent_hours + 'h ago' : 'just now' });
   } else {
     const newContact = {
       id: nextContactId++,
@@ -303,7 +301,7 @@ function selectContact(id) {
   document.getElementById('pasteArea').style.display = 'block';
   document.getElementById('theirMsgInput').value = '';
   document.getElementById('genReplyBtn').disabled = false;
-  document.getElementById('genReplyBtn').textContent = 'ask me to reply <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  document.getElementById('genReplyBtn').innerHTML = 'ask me to reply <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   document.getElementById('floatCopy').classList.remove('visible');
   currentReplies = [];
   // Reset context panel
@@ -338,7 +336,7 @@ function selectContact(id) {
       <div class="convo-label">LAST FROM ${currentContact.name.toUpperCase()}</div>
       <div class="convo-thread">
         <div class="thread-msg them">${currentContact.preview}</div>
-        <div class="thread-timestamp">${currentContact.time}</div>
+        <div class="thread-timestamp">${currentContact.silentHours > 0 ? currentContact.silentHours + 'h ago' : currentContact.time || 'just now'}</div>
       </div>
     `;
   } else {
@@ -414,6 +412,15 @@ function buildSystemPrompt() {
   // Contact relationship
   if (currentContact?.relationship) {
     system += `\\n\\nWHO THEY'RE TEXTING: ${currentContact.name} — ${currentContact.relationship} of the user.`;
+    if (userName && userName !== 'you') system += `\\nYOU ARE WRITING AS: ${userName}.`;
+    // CRM context
+    if (currentContact.birthday) {
+      const bd = new Date(currentContact.birthday);
+      system += `\\nBIRTHDAY: ${bd.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.`;
+    }
+    if (currentContact.how_we_met) system += `\\nHOW THEY MET: ${currentContact.how_we_met}.`;
+    if (currentContact.topics?.length) system += `\\nTHEIR INTERESTS: ${currentContact.topics.join(', ')}.`;
+    if (currentContact.notes) system += `\\nNOTES: ${currentContact.notes}`;
   }
 
   // Silent hours note
@@ -638,7 +645,7 @@ Read the entire arc. Notice the tone shift, what's been building, what the other
   document.getElementById('ariaThinking').style.display = 'none';
   document.getElementById('replyAriaOrb').classList.remove('thinking');
   btn.disabled = false;
-  btn.textContent = 'ask me to reply <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  btn.innerHTML = 'ask me to reply <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 
 function showAriaReaction(text) {
@@ -727,7 +734,7 @@ function renderReplies(lines) {
   animateVibesBar(score);
 
   document.getElementById('replySection').style.display = 'block';
-  document.getElementById('mainCopyBtn').textContent = 'copy & send <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  document.getElementById('mainCopyBtn').innerHTML = 'copy & send <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   document.getElementById('mainCopyBtn').classList.remove('copied');
   document.getElementById('floatCopy').classList.add('visible');
 
@@ -795,7 +802,7 @@ function copyReply() {
     btn.classList.add('copied');
     showToast('copied! go paste it 🚀', 'green');
     setTimeout(() => {
-      btn.textContent = 'copy & send <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      btn.innerHTML = 'copy & send <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
       btn.classList.remove('copied');
     }, 3000);
   }).catch(() => {
@@ -862,6 +869,13 @@ async function saveToHistory() {
       alternatives:    window._altReplies || null
     });
     if (error) { showToast('could not save to history'); console.error(error); return; }
+    // Update last_talked_at on the contact
+    if (currentContact?.id) {
+      db.from('contacts').update({ last_talked_at: new Date().toISOString() }).eq('id', currentContact.id).then(() => {
+        const idx = contacts.findIndex(c => c.id === currentContact.id);
+        if (idx !== -1) contacts[idx].last_talked_at = new Date().toISOString();
+      });
+    }
     // DB trigger handles streak / replySentCount — just refresh
     await refreshStats();
   } else {
@@ -1179,7 +1193,7 @@ async function runGlowup() {
   }
 
   document.getElementById('glowupThinking').style.display = 'none';
-  btn.disabled = false; btn.textContent = '✨ glow it up <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  btn.disabled = false; btn.innerHTML = '✨ glow it up <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 
 function selectGlowupVariant(i) {
@@ -1197,7 +1211,7 @@ function copyGlowup() {
     btn.textContent = '✓ copied';
     btn.classList.add('copied');
     showToast('copied! go paste it 🚀', 'green');
-    setTimeout(() => { btn.textContent = 'copy it <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'; btn.classList.remove('copied'); }, 3000);
+    setTimeout(() => { btn.innerHTML = 'copy it <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'; btn.classList.remove('copied'); }, 3000);
   });
 }
 
@@ -1225,7 +1239,7 @@ async function runRedflag() {
   }
 
   document.getElementById('redflagThinking').style.display = 'none';
-  btn.disabled = false; btn.textContent = '🚩 scan for red flags <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  btn.disabled = false; btn.innerHTML = '🚩 scan for red flags <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 
 function renderRedflagResult(data) {
@@ -1391,8 +1405,7 @@ async function obFinish() {
         silent:       false,
         silent_hours: 0,
         platform:     'iMessage',
-        relationship: cRel || 'contact',
-        online:       false
+        relationship: cRel || 'contact'
       }).select().single().then(r => r.data);
       if (data) contacts.unshift({ ...data, silentHours: 0 });
     } else {
@@ -1479,6 +1492,7 @@ function openContactProfile(id) {
     `).join('');
   }
 
+  populateCrmFields(profileContact);
   showScreen('contactProfileScreen');
 
   // render active long games for this contact
@@ -1707,7 +1721,19 @@ async function submitLongGameSetup() {
       return;
     }
 
-    const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    // Robust JSON extraction — handles fenced blocks and extra text around the JSON
+    let parsed;
+    {
+      const start = raw.indexOf('{');
+      if (start === -1) throw new Error('no JSON');
+      let depth = 0, end = -1;
+      for (let i = start; i < raw.length; i++) {
+        if (raw[i] === '{') depth++;
+        else if (raw[i] === '}') { depth--; if (depth === 0) { end = i; break; } }
+      }
+      if (end === -1) throw new Error('unclosed JSON');
+      parsed = JSON.parse(raw.slice(start, end + 1));
+    }
 
     // Store pending game (not committed yet — user reviews first)
     window._lgPendingGame = {
@@ -1733,9 +1759,10 @@ async function submitLongGameSetup() {
 
   } catch(e) {
     document.getElementById('lgArcPreviewWrap').innerHTML = `
-      <div class="lg-aria-thinking-card">
-        <div class="lg-thinking-text">something went wrong. tap below to try again.</div>
-        <button class="lg-setup-btn" style="margin-top:16px;" onclick="openLongGameSetup()">try again</button>
+      <div class="lg-aria-thinking-card" style="border-color:rgba(251,191,36,0.3);">
+        <img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/suspicious.png" alt="aria" style="width:100%;max-height:220px;object-fit:cover;object-position:top;border-radius:12px 12px 0 0;display:block;margin:-18px -18px 16px -18px;width:calc(100% + 36px);">
+        <div class="lg-thinking-text" style="color:var(--text);margin-bottom:16px;">i need a bit more to work with. try adding more context about the situation or what you want to happen.</div>
+        <button class="lg-setup-btn" onclick="openLongGameSetup()">add more detail</button>
       </div>`;
   }
 }
@@ -4069,9 +4096,9 @@ function setPresendMode(mode, el) {
   el.classList.add('active');
   // Update button label
   const btn = document.getElementById('psRunBtn');
-  if (mode === 'check') btn.textContent = '🛑 let me check it <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  else if (mode === 'fix') btn.textContent = '✏️ check & rewrite it <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  else btn.textContent = '🔥 be brutal <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  if (mode === 'check') btn.innerHTML = '🛑 let me check it <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  else if (mode === 'fix') btn.innerHTML = '✏️ check & rewrite it <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  else btn.innerHTML = '🔥 be brutal <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 
 // Live word count
@@ -4244,7 +4271,7 @@ function copyPresendRewrite() {
   navigator.clipboard.writeText(item.text).then(() => {
     const btn = document.getElementById('psCopyRewriteBtn');
     btn.textContent = '✓ copied';
-    setTimeout(() => { btn.textContent = 'copy rewrite <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'; }, 2500);
+    setTimeout(() => { btn.innerHTML = 'copy rewrite <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'; }, 2500);
     showToast('rewrite copied ✓', 'green');
   });
 }
@@ -4253,6 +4280,76 @@ function copyPresendOriginal() {
   navigator.clipboard.writeText(presendOriginalDraft).then(() => {
     showToast('copied — go send it 🚀', 'green');
   });
+}
+
+
+// CRM FIELDS
+
+let _crmDirty = false;
+
+function populateCrmFields(contact) {
+  _crmDirty = false;
+  const saveBtn = document.getElementById('cpCrmSaveBtn');
+  if (saveBtn) saveBtn.style.display = 'none';
+  const bd = document.getElementById('cpBirthday');
+  const hwm = document.getElementById('cpHowWeMet');
+  const top = document.getElementById('cpTopics');
+  const notes = document.getElementById('cpNotes');
+  if (bd)    bd.value    = contact.birthday    || '';
+  if (hwm)   hwm.value   = contact.how_we_met  || '';
+  if (top)   top.value   = (contact.topics     || []).join(', ');
+  if (notes) notes.value = contact.notes       || '';
+}
+
+function markCrmDirty() {
+  _crmDirty = true;
+  const saveBtn = document.getElementById('cpCrmSaveBtn');
+  if (saveBtn) saveBtn.style.display = '';
+}
+
+async function saveCrmFields() {
+  if (!profileContact) return;
+  const birthday   = document.getElementById('cpBirthday').value   || null;
+  const how_we_met = document.getElementById('cpHowWeMet').value.trim() || null;
+  const topicsRaw  = document.getElementById('cpTopics').value;
+  const topics     = topicsRaw.split(',').map(t => t.trim()).filter(Boolean);
+  const notes      = document.getElementById('cpNotes').value.trim() || null;
+
+  // Update local
+  const idx = contacts.findIndex(c => c.id === profileContact.id);
+  if (idx !== -1) {
+    contacts[idx] = { ...contacts[idx], birthday, how_we_met, topics, notes };
+    profileContact = contacts[idx];
+  }
+
+  if (currentUserId) {
+    const { error } = await db.from('contacts')
+      .update({ birthday, how_we_met, topics, notes })
+      .eq('id', profileContact.id);
+    if (error) { showToast('could not save'); console.error(error); return; }
+  }
+
+  _crmDirty = false;
+  document.getElementById('cpCrmSaveBtn').style.display = 'none';
+  showToast('saved', 'green');
+}
+
+async function importFromPhone() {
+  if (!('contacts' in navigator && 'ContactsManager' in window)) {
+    showToast('not available on this browser');
+    return;
+  }
+  try {
+    const results = await navigator.contacts.select(['name'], { multiple: false });
+    if (!results || !results.length) return;
+    const name = (results[0].name || [])[0] || '';
+    if (name) {
+      const el = document.getElementById('newName');
+      if (el) { el.value = name; el.focus(); }
+    }
+  } catch(e) {
+    // user cancelled — do nothing
+  }
 }
 
 // FEATURE 8: REPLY QUEUE (swipeable stack)
@@ -4264,8 +4361,9 @@ let queueDragStart = null;
 let queueDragX = 0;
 
 function renderQueue() {
-  queueContacts = contacts.filter(c => c.silent && c.silentHours > 0)
-    .sort((a, b) => b.silentHours - a.silentHours);
+  queueContacts = contacts
+    .filter(c => c.preview)
+    .sort((a, b) => (b.silentHours || 0) - (a.silentHours || 0));
 
   const stack = document.getElementById('queueStack');
   const actions = document.getElementById('queueActions');
@@ -4295,7 +4393,7 @@ function renderQueue() {
         <div class="queue-card-avatar" style="background:${colorMap[c.color] || '#f472b6'}22;color:${colorMap[c.color] || '#f472b6'};border:2px solid ${colorMap[c.color] || '#f472b6'}44;">${c.initials || c.name[0]}</div>
         <div>
           <div class="queue-card-name">${c.name}</div>
-          <div class="queue-card-time">${c.relationship || 'contact'} · ${c.silentHours}h ago</div>
+          <div class="queue-card-time">${c.relationship || 'contact'} · ${c.silentHours > 0 ? c.silentHours + 'h ago' : 'just now'}</div>
         </div>
       </div>
       <div class="queue-card-msg">"${c.preview || 'no preview'}"</div>

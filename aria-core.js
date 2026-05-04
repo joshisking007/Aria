@@ -1335,7 +1335,7 @@ async function loadFromSupabase() {
     }
 
     if (contactsRes.data && contactsRes.data.length) {
-      contacts      = contactsRes.data;
+      contacts      = contactsRes.data.map(c => ({ ...c, silentHours: c.silent_hours || 0, time: c.silent_hours > 0 ? c.silent_hours + 'h ago' : 'just now', topics: c.topics || [], how_we_met: c.how_we_met || null, birthday: c.birthday || null, notes: c.notes || null }));
       nextContactId = Math.max(...contacts.map(c => c.id)) + 1;
     }
     replyHistory = historyRes.data || [];

@@ -1116,6 +1116,33 @@
     </div>
   </div>
   <div id="cpActiveGamesStrip"></div>
+
+  <!-- CRM section -->
+  <div id="cpCrmSection" style="padding:0 20px;margin-bottom:4px;">
+    <div class="cp-section-label">ABOUT THEM</div>
+    <div class="cp-crm-fields">
+      <div class="cp-field-row">
+        <label class="cp-field-label">BIRTHDAY</label>
+        <input type="date" id="cpBirthday" class="cp-field-input" oninput="markCrmDirty()"/>
+      </div>
+      <div class="cp-field-row">
+        <label class="cp-field-label">HOW YOU MET</label>
+        <input type="text" id="cpHowWeMet" class="cp-field-input" placeholder="high school, work, mutual friends..." oninput="markCrmDirty()"/>
+      </div>
+      <div class="cp-field-row">
+        <label class="cp-field-label">INTERESTS</label>
+        <input type="text" id="cpTopics" class="cp-field-input" placeholder="music, basketball, fashion..." oninput="markCrmDirty()"/>
+      </div>
+      <div class="cp-field-row">
+        <label class="cp-field-label">NOTES FOR ARIA</label>
+        <textarea id="cpNotes" class="cp-field-input cp-field-textarea" placeholder="anything Aria should know about this person..." oninput="markCrmDirty()"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="cp-crm-save" id="cpCrmSaveBtn" onclick="saveCrmFields()" style="display:none;">save</button>
+    </div>
+  </div>
+
   <div class="contact-profile-history">
     <div class="contact-profile-history-label">REPLY HISTORY WITH THEM</div>
     <div id="cpHistoryList"></div>
@@ -1494,7 +1521,10 @@
     <div class="modal-sub">Add someone Aria should know about. The more context you give, the better the replies.</div>
 
     <div class="form-field">
-      <div class="form-label">NAME</div>
+      <div class="form-label" style="display:flex;align-items:center;justify-content:space-between;">
+        NAME
+        <button onclick="importFromPhone()" style="font-size:10px;color:var(--rose);background:none;border:none;padding:0;cursor:pointer;letter-spacing:0.5px;">import from phone</button>
+      </div>
       <input class="form-input" id="newName" placeholder="e.g. Jensel, mom, bro from work…"/>
     </div>
     <div class="form-field">
