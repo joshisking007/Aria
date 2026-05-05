@@ -356,6 +356,35 @@ body::after {
 }
 .gate-skip:active { color: var(--text2); }
 
+/* Google sign-in divider */
+.gate-divider {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  margin: 4px 0 12px;
+}
+.gate-divider::before,
+.gate-divider::after {
+  content: ''; flex: 1;
+  height: 1px; background: var(--border);
+}
+.gate-divider span {
+  font-size: 11px; color: var(--muted); letter-spacing: 0.5px;
+}
+
+/* Google button */
+.gate-google-btn {
+  width: 100%;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 13px 16px;
+  color: var(--text); font-size: 14px; font-weight: 500;
+  font-family: 'DM Sans', sans-serif; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: border-color 0.2s, background 0.2s;
+  margin-bottom: 4px;
+}
+.gate-google-btn:hover { border-color: var(--border-hover); background: var(--card2); }
+.gate-google-btn:active { opacity: 0.8; }
+.gate-google-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* Old gate-orb-wrap — kept for compatibility but hidden */
 .gate-orb-wrap { display: none; }
 .gate-orb, .gate-ring, .gate-ring-2 { display: none; }
