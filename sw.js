@@ -1,14 +1,14 @@
 // ─────────────────────────────────────────────────────────────
-//  ARIA SERVICE WORKER  v2.0
-//  Asset caching (cache-first) + Web Share Target forwarding
+//  ARIA SERVICE WORKER  v3.0
+//  SAFE asset caching (cache-first) + Web Share Target forwarding
+//  FIXED: prevents AI/chat/API responses from being cached/replayed
 // ─────────────────────────────────────────────────────────────
 
 // Bump this version string whenever you deploy new JS/CSS/HTML.
-// The activate handler will automatically purge the old cache.
 const CACHE_VERSION = 'aria-v3';
 
 // App-shell assets to pre-cache on install.
-// These load instantly on every subsequent visit — no network needed.
+// Keep this list small and stable.
 const SHELL_ASSETS = [
   '/',
   '/index.html',
@@ -21,24 +21,13 @@ const SHELL_ASSETS = [
 ];
 
 // Domains whose requests should NEVER be cached.
-// API calls, auth, TTS, and AI completions must always hit the network.
 const NEVER_CACHE_ORIGINS = [
-  'mmtdtcmhvbruubrjgjrz.supabase.co',   // Supabase (auth + DB + edge functions)
-  'api.anthropic.com',                    // Anthropic (if ever called direct)
-  'api.elevenlabs.io',                    // ElevenLabs TTS
+  'mmtdtcmhvbruubrjgjrz.supabase.co', // Supabase (auth + DB + edge functions)
+  'api.anthropic.com',                // Anthropic
+  'api.elevenlabs.io',                // ElevenLabs
 ];
 
-// ── 2b. Same-origin dynamic routes → network only ───────────
-//    FIX: AI chat responses were being cached and replayed here.
-if (
-  url.origin === ALLOWED_ORIGIN &&
-  NEVER_CACHE_PATHS.some(path => url.pathname.startsWith(path))
-) {
-  return;
-}
-
-// Same-origin path prefixes that must NEVER be cached.
-// Caching these was the root cause of Aria replaying old AI responses.
+// Same-origin routes that must NEVER be cached (AI/chat endpoints).
 const NEVER_CACHE_PATHS = [
   '/api/',
   '/functions/',
@@ -69,7 +58,7 @@ self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_VERSION)
       .then(cache => cache.addAll(SHELL_ASSETS))
-      .then(() => self.skipWaiting())   // activate immediately, don't wait for tabs to close
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -81,10 +70,10 @@ self.addEventListener('activate', e => {
     caches.keys()
       .then(keys => Promise.all(
         keys
-          .filter(k => k !== CACHE_VERSION)   // delete anything that isn't the current version
+          .filter(k => k !== CACHE_VERSION)
           .map(k => caches.delete(k))
       ))
-      .then(() => self.clients.claim())        // take control of all open tabs immediately
+      .then(() => self.clients.claim())
   );
 });
 
@@ -95,8 +84,6 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
   // ── 1. Web Share Target (GET /?text=...&title=...) ──────────
-  //    Intercept, forward to open windows, redirect to clean URL.
-  //    Preserved exactly from original sw.js.
   if (
     url.origin === ALLOWED_ORIGIN &&
     url.pathname === '/' &&
@@ -120,50 +107,72 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // ── 2. API / dynamic origins → network only, never cache ────
-  //    Supabase, Anthropic, ElevenLabs responses must be fresh.
+  // ── 2. Never cache certain external API domains ─────────────
   if (NEVER_CACHE_ORIGINS.some(host => url.hostname.includes(host))) {
-    // Just let the request fall through — the browser handles it normally
     return;
   }
 
-  // ── 3. Non-GET requests → network only ──────────────────────
-  //    POST, PUT, DELETE etc. must never be served from cache.
+  // ── 3. Never cache certain same-origin dynamic routes ───────
+  if (
+    url.origin === ALLOWED_ORIGIN &&
+    NEVER_CACHE_PATHS.some(path => url.pathname.startsWith(path))
+  ) {
+    return;
+  }
+
+  // ── 4. Non-GET requests must never be cached ────────────────
   if (e.request.method !== 'GET') return;
 
-  // ── 4. Cross-origin CDN assets (fonts, scripts) → stale-while-revalidate ──
-  //    Cache a copy after first fetch; serve the cached version while
-  //    fetching a fresh one in the background for next time.
+  // ── 5. Only cache STATIC asset file types (safe caching) ────
+  // This prevents caching HTML/API responses that cause loops.
+  const isStaticAsset =
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.css') ||
+    url.pathname.endsWith('.png') ||
+    url.pathname.endsWith('.jpg') ||
+    url.pathname.endsWith('.jpeg') ||
+    url.pathname.endsWith('.webp') ||
+    url.pathname.endsWith('.gif') ||
+    url.pathname.endsWith('.svg') ||
+    url.pathname.endsWith('.ico') ||
+    url.pathname.endsWith('.woff') ||
+    url.pathname.endsWith('.woff2') ||
+    url.pathname.endsWith('.ttf') ||
+    url.pathname.endsWith('.otf') ||
+    url.pathname.endsWith('.json');
+
+  // If it's not a static asset, do NOT cache it.
+  if (!isStaticAsset) {
+    return;
+  }
+
+  // ── 6. Cross-origin static assets → stale-while-revalidate ───
   if (url.origin !== ALLOWED_ORIGIN) {
     e.respondWith(staleWhileRevalidate(e.request));
     return;
   }
 
-  // ── 5. Same-origin assets → cache-first ─────────────────────
-  //    JS, CSS, HTML: serve instantly from cache; fall back to
-  //    network if not cached yet (and store the response for next time).
+  // ── 7. Same-origin static assets → cache-first ──────────────
   e.respondWith(cacheFirst(e.request));
 });
 
 // ─────────────────────────────────────────────────────────────
 //  STRATEGY: Cache-First
-//  Best for: versioned JS/CSS/HTML that rarely change mid-session.
-//  Upgrade path: bump CACHE_VERSION → install event refills the cache.
 // ─────────────────────────────────────────────────────────────
 async function cacheFirst(request) {
   const cached = await caches.match(request);
   if (cached) return cached;
 
-  // Not in cache yet — fetch from network and store for next time
   try {
     const response = await fetch(request);
-    if (response.ok) {
+
+    if (response && response.ok) {
       const cache = await caches.open(CACHE_VERSION);
-      cache.put(request, response.clone()); // clone: body can only be consumed once
+      cache.put(request, response.clone());
     }
+
     return response;
   } catch {
-    // Offline and not cached — return a minimal offline fallback
     return new Response('Aria is offline. Please reconnect.', {
       status: 503,
       headers: { 'Content-Type': 'text/plain' }
@@ -173,20 +182,19 @@ async function cacheFirst(request) {
 
 // ─────────────────────────────────────────────────────────────
 //  STRATEGY: Stale-While-Revalidate
-//  Best for: CDN assets (Google Fonts, jsDelivr scripts).
-//  Serves the cached copy immediately; quietly fetches a fresh
-//  copy in the background so the next visit gets the update.
 // ─────────────────────────────────────────────────────────────
 async function staleWhileRevalidate(request) {
-  const cache  = await caches.open(CACHE_VERSION);
+  const cache = await caches.open(CACHE_VERSION);
   const cached = await cache.match(request);
 
-  // Kick off a background refresh regardless
-  const networkFetch = fetch(request).then(response => {
-    if (response.ok) cache.put(request, response.clone());
-    return response;
-  }).catch(() => null); // swallow network errors silently
+  const networkFetch = fetch(request)
+    .then(response => {
+      if (response && response.ok) {
+        cache.put(request, response.clone());
+      }
+      return response;
+    })
+    .catch(() => null);
 
-  // Return cached immediately if available, otherwise await network
   return cached || networkFetch;
 }
