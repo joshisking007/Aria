@@ -3834,7 +3834,9 @@ async function sendChatMessage() {
     }
 
     chatAriaEmotion = emotion;
-    chatHistory.push({ role: 'assistant', content: rawText });
+    // FIX: push replyText (JSON stripped), NOT rawText — prevents JSON metadata
+    // from polluting the transcript on subsequent turns and causing repeated limitations.
+    chatHistory.push({ role: 'assistant', content: replyText });
 
     // Feed Aria's emotion signal into threshold detector (pattern tracking)
     if (typeof ariaThresholdDetector !== 'undefined') {
