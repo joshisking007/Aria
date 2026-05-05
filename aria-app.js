@@ -304,7 +304,6 @@ function selectContact(id) {
   document.getElementById('genReplyBtn').innerHTML = 'ask me to reply <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   document.getElementById('floatCopy').classList.remove('visible');
   currentReplies = [];
-  _regenCountForContact = 0; // reset regen counter for new contact session
   // Reset context panel
   const ctxBody = document.getElementById('contextBody');
   const ctxToggle = document.getElementById('contextToggle');
@@ -439,11 +438,16 @@ function buildSystemPrompt() {
     if (contactCtx) system += contactCtx;
   }
 
-  // inject game profile disposition — behavioral directives from pattern game
-  // ariaGamesUpgrade patches this too, but we guard here so it works regardless of load order
+  // inject game profile disposition (pattern game — aria-games-upgrades.js)
   if (typeof ariaGamesUpgrade !== 'undefined') {
     const gameFragment = ariaGamesUpgrade.dispositionCache.buildPromptFragment();
     if (gameFragment) system += gameFragment;
+  }
+
+  // inject cross-game unified profile (triangulated from all games — aria-unified-profile.js)
+  if (typeof ariaUnifiedProfile !== 'undefined') {
+    const unifiedFragment = ariaUnifiedProfile.buildPromptFragment();
+    if (unifiedFragment) system += unifiedFragment;
   }
 
   return system;
@@ -452,7 +456,6 @@ function buildSystemPrompt() {
 // context panel
 let screenshotBase64 = null;
 let activeContextTab = 'paste';
-let _regenCountForContact = 0; // resets on new contact/message, increments each generateReply call
 
 function toggleContextPanel() {
   const toggle = document.getElementById('contextToggle');
@@ -591,49 +594,8 @@ Read the entire arc. Notice the tone shift, what's been building, what the other
 
     // Update stats
     replySentCount++;
-    _regenCountForContact++;
     gainRelationshipXP(1);
     updateStats();
-
-    // Check if ariaGamesUpgrade should suggest the pattern game
-    if (typeof ariaGamesUpgrade !== 'undefined') {
-      const suggestion = ariaGamesUpgrade.suggest({
-        regenCount:  _regenCountForContact,
-        tone:        currentTone,
-        mood:        currentMood,
-        contactName: currentContact?.name,
-        stepCount:   replySentCount
-      });
-      if (suggestion) {
-        // Show as the insight banner — Aria floats it, tapping navigates to the game
-        const banner = document.getElementById('ariaInsightBanner');
-        const textEl = document.getElementById('ariaInsightText');
-        const imgEl  = document.getElementById('insightOrbImg');
-        if (banner && textEl && imgEl) {
-          setAriaExpression(imgEl, 'scheming');
-          textEl.textContent = suggestion.text;
-          banner.classList.add('visible');
-          // Pre-invoke so the game lobby knows why it was triggered
-          ariaGamesUpgrade.invoke(suggestion.reason, suggestion.context);
-          // Tapping the banner goes to the game
-          banner.onclick = () => {
-            banner.classList.remove('visible');
-            banner.onclick = null;
-            showScreen('gamesScreen');
-            if (typeof ariaGames !== 'undefined') ariaGames.init();
-          };
-          banner.style.cursor = 'pointer';
-          // Auto-dismiss after 10s if ignored — restore default banner behavior
-          setTimeout(() => {
-            if (banner.classList.contains('visible')) {
-              banner.classList.remove('visible');
-              banner.onclick = null;
-              banner.style.cursor = '';
-            }
-          }, 10000);
-        }
-      }
-    }
 
     // auto-learn from this interaction
     ariaMemory.learnFromGeneration({
@@ -3433,6 +3395,7 @@ function initChat() {
   chatHistory = [];
   chatAriaEmotion = 'neutral';
   _sessionSummarised = false; // allow summary to be written for this new session
+  if (typeof ariaThresholdDetector !== 'undefined') ariaThresholdDetector.resetSession();
   const msgs = document.getElementById('chatMessages');
   msgs.innerHTML = '<div class="chat-date-label">TODAY</div>';
   updateChatMoodPill('neutral');
@@ -3804,6 +3767,13 @@ async function sendChatMessage() {
     let systemWithMem = ARIA_CHAT_SYSTEM + identityBlock +
       (memCtx ? `\n\nWHAT YOU KNOW ABOUT THIS USER:\n${memCtx}` : '');
 
+    // Therapy threshold — score the incoming message, inject directive if needed
+    if (typeof ariaThresholdDetector !== 'undefined') {
+      const { level } = ariaThresholdDetector.ingestUserMessage(text);
+      const thresholdFragment = ariaThresholdDetector.buildPromptFragment(level);
+      if (thresholdFragment) systemWithMem += thresholdFragment;
+    }
+
     // Creator mode — override with full-trust, no-wall prompt
     if (CREATOR_MODE.active) {
       systemWithMem = CREATOR_MODE.buildCreatorSystemPrompt(systemWithMem);
@@ -3851,6 +3821,11 @@ async function sendChatMessage() {
     chatAriaEmotion = emotion;
     chatHistory.push({ role: 'assistant', content: rawText });
 
+    // Feed Aria's emotion signal into threshold detector (pattern tracking)
+    if (typeof ariaThresholdDetector !== 'undefined') {
+      ariaThresholdDetector.ingestAriaEmotion(emotion);
+    }
+
     // Persist reply + write to memory
     if (currentUserId) {
       db.from('chat_messages').insert({
@@ -3874,39 +3849,6 @@ async function sendChatMessage() {
     if (['soft', 'worried', 'panicked'].includes(emotion)) gainRelationshipXP(1);  // emotional moment: they shared something real
     if (chatHistory.length === 20) gainRelationshipXP(2);                          // long convo bonus at 10 exchanges, fires once
     saveProfile();
-
-    // At 20 exchanges, if no game profile exists yet — Aria offers the game naturally
-    if (chatHistory.length === 20 && typeof ariaGamesUpgrade !== 'undefined') {
-      const disposition = ariaGamesUpgrade.dispositionCache.load();
-      if (!disposition) {
-        setTimeout(() => {
-          ariaGamesUpgrade.invoke(
-            ariaGamesUpgrade.triggerAPI.TRIGGER_REASONS.FIRST_REAL_CONVO
-          );
-          appendAriaMessage(
-            "we've been talking for a bit now. want to do something? there's a quick pattern game — takes 5 mins. at the end i tell you what i actually think about how your brain works.",
-            'curious', false
-          );
-          // Inject a tap-to-play button after the message
-          setTimeout(() => {
-            const msgs = document.querySelectorAll('.chat-msg.aria');
-            const last = msgs[msgs.length - 1];
-            if (last) {
-              const btn = document.createElement('button');
-              btn.className = 'chat-game-suggest-btn';
-              btn.textContent = 'yeah, let\'s do it';
-              btn.style.cssText = 'display:block;margin:8px 0 0 0;padding:6px 14px;background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);border-radius:20px;color:#a855f7;font-size:0.82em;cursor:pointer;';
-              btn.onclick = () => {
-                btn.remove();
-                showScreen('gamesScreen');
-                if (typeof ariaGames !== 'undefined') ariaGames.init();
-              };
-              last.appendChild(btn);
-            }
-          }, 400);
-        }, 2000);
-      }
-    }
 
     if (suggestions.length) {
       setTimeout(() => renderChatSuggestions(suggestions), 900);
