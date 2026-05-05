@@ -569,27 +569,33 @@ Read the entire arc. Notice the tone shift, what's been building, what the other
   try {
     const imgPayload = screenshotBase64 || null;
 
-    const tasks = [
-      fetchReply(systemPrompt, modeContext + '\\n\\nSplit into 2-3 short lines. One per line. Output only the messages.', imgPayload),
-      fetchReply('You are Aria — a teenage girl AI assistant with real personality. Respond as yourself, not as the user.', reactionPrompt, imgPayload)
-    ];
-
-    if (showAlternatives) {
-      const altPrompt = modeContext + `\\n\\nGenerate 3 different alternative replies with different tones (funny, warm, brief). Format as JSON: {"alternatives":[{"tone":"funny","text":"msg1\\nmsg2"},{"tone":"warm","text":"msg"},{"tone":"brief","text":"msg"}]}`;
-      tasks.push(fetchReplyJSON(systemPrompt, altPrompt));
-    }
-
-    const [mainText, reactionText, altData] = await Promise.all(tasks);
+    // PERF FIX 1: Only await the main reply — reaction and alternatives fire non-blocking after.
+    // User sees the reply at single-call speed, not after 2-3 parallel calls complete.
+    const mainText = await fetchReply(systemPrompt, modeContext + '\\n\\nSplit into 2-3 short lines. One per line. Output only the messages.', imgPayload);
 
     currentReplies = mainText.split('\\n').map(l => l.trim()).filter(Boolean);
-
-    // Show Aria's reaction FIRST
-    showAriaReaction(reactionText?.trim() || '');
-
     renderReplies(currentReplies);
 
-    if (showAlternatives && altData?.alternatives) {
-      renderAlternatives(altData.alternatives);
+    // PERF FIX 2: Unlock the UI immediately after main reply renders.
+    // Don't hold the button hostage while DB writes and secondary calls resolve.
+    clearInterval(statusInterval);
+    statusEl.textContent = '';
+    document.getElementById('ariaThinking').style.display = 'none';
+    document.getElementById('replyAriaOrb').classList.remove('thinking');
+    btn.disabled = false;
+    btn.innerHTML = 'ask me to reply <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    // Fire reaction non-blocking — pops in a moment after main reply
+    fetchReply('You are Aria — a teenage girl AI assistant with real personality. Respond as yourself, not as the user.', reactionPrompt, imgPayload)
+      .then(reactionText => showAriaReaction(reactionText?.trim() || ''))
+      .catch(() => {});
+
+    // Fire alternatives non-blocking — renders when ready, never blocks
+    if (showAlternatives) {
+      const altPrompt = modeContext + `\\n\\nGenerate 3 different alternative replies with different tones (funny, warm, brief). Format as JSON: {"alternatives":[{"tone":"funny","text":"msg1\\nmsg2"},{"tone":"warm","text":"msg"},{"tone":"brief","text":"msg"}]}`;
+      fetchReplyJSON(systemPrompt, altPrompt)
+        .then(altData => { if (altData?.alternatives) renderAlternatives(altData.alternatives); })
+        .catch(() => {});
     }
 
     // Update stats
@@ -636,9 +642,9 @@ Read the entire arc. Notice the tone shift, what's been building, what the other
       }).then(() => {}).catch(() => {});
     }
 
-    // Save profile (XP, replySentCount) then refresh from DB (trigger may update streak)
-    await saveProfile();
-    await refreshStats();
+    // PERF FIX 2 (cont): DB writes are fire-and-forget — never block the UI.
+    saveProfile().catch(() => {});
+    refreshStats().catch(() => {});
 
   } catch(e) {
     // Show Aria expression in reply error state
@@ -650,14 +656,15 @@ Read the entire arc. Notice the tone shift, what's been building, what the other
     currentReplies = ["something went wrong on my end. tap retry."];
     renderReplies(currentReplies);
     console.error(e);
-  }
 
-  clearInterval(statusInterval);
-  statusEl.textContent = '';
-  document.getElementById('ariaThinking').style.display = 'none';
-  document.getElementById('replyAriaOrb').classList.remove('thinking');
-  btn.disabled = false;
-  btn.innerHTML = 'ask me to reply <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    // Always unlock UI even on error
+    clearInterval(statusInterval);
+    statusEl.textContent = '';
+    document.getElementById('ariaThinking').style.display = 'none';
+    document.getElementById('replyAriaOrb').classList.remove('thinking');
+    btn.disabled = false;
+    btn.innerHTML = 'ask me to reply <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
 }
 
 function showAriaReaction(text) {
@@ -1160,52 +1167,60 @@ async function runGlowup() {
 
   const variantPrompt = `Draft: "${draft}"\\n${goal ? 'Goal: ' + goal + '\\n' : ''}\\nGive 3 different rewrites with different energies. JSON only: {"variants":[{"tone":"more chill","text":"..."},{"tone":"funnier","text":"..."},{"tone":"more direct","text":"..."}]}`;
 
+  // PERF FIX 3: Build system prompt once and reuse — don't call buildSystemPrompt() twice.
+  const glowupSystemPrompt = buildSystemPrompt();
+
   try {
-    const [reaction, rewrite, varData] = await Promise.all([
-      fetchReply('You are Aria, witty and alive. Be brief and punchy.', reactionPrompt),
-      fetchReply(buildSystemPrompt(), rewritePrompt),
-      fetchReplyJSON(buildSystemPrompt() + '\\nRespond ONLY in JSON.', variantPrompt)
-    ]);
+    // PERF FIX 1 (glow-up): Await only the rewrite — reaction and variants fire non-blocking.
+    const rewrite = await fetchReply(glowupSystemPrompt, rewritePrompt);
 
-    // Show reaction
-    const reactionEl = document.getElementById('glowupReaction');
-    document.getElementById('glowupReactionText').textContent = reaction?.trim() || '';
-    reactionEl.style.display = 'block';
-
-    // Show result
     glowupCurrentText = rewrite?.trim() || draft;
     const resultEl = document.getElementById('glowupResult');
     document.getElementById('glowupResultText').textContent = glowupCurrentText;
     resultEl.style.display = 'block';
     document.getElementById('glowupCopyRow').style.display = 'flex';
 
-    // Show variants
-    if (varData?.variants?.length) {
-      const varList = document.getElementById('glowupVarList');
-      varList.innerHTML = varData.variants.map((v, i) => `
-        <div class="glowup-var-card" onclick="selectGlowupVariant(${i})">
-          <div class="glowup-var-tone">${v.tone}</div>
-          <div class="glowup-var-text">${v.text}</div>
-        </div>
-      `).join('');
-      document.getElementById('glowupVariants').style.display = 'block';
-      window._glowupVariants = varData.variants;
-    }
+    // Unlock UI immediately after rewrite lands
+    document.getElementById('glowupThinking').style.display = 'none';
+    btn.disabled = false; btn.innerHTML = '✨ glow it up <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-    ariaVoice.speak(reaction?.trim() || '');
+    // Fire reaction non-blocking
+    fetchReply('You are Aria, witty and alive. Be brief and punchy.', reactionPrompt)
+      .then(reaction => {
+        const reactionEl = document.getElementById('glowupReaction');
+        document.getElementById('glowupReactionText').textContent = reaction?.trim() || '';
+        reactionEl.style.display = 'block';
+        ariaVoice.speak(reaction?.trim() || '');
+        setTimeout(() => {
+          reactionEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 200);
+      })
+      .catch(() => {});
 
-    setTimeout(() => {
-      reactionEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 200);
+    // Fire variants non-blocking
+    fetchReplyJSON(glowupSystemPrompt + '\\nRespond ONLY in JSON.', variantPrompt)
+      .then(varData => {
+        if (varData?.variants?.length) {
+          const varList = document.getElementById('glowupVarList');
+          varList.innerHTML = varData.variants.map((v, i) => `
+            <div class="glowup-var-card" onclick="selectGlowupVariant(${i})">
+              <div class="glowup-var-tone">${v.tone}</div>
+              <div class="glowup-var-text">${v.text}</div>
+            </div>
+          `).join('');
+          document.getElementById('glowupVariants').style.display = 'block';
+          window._glowupVariants = varData.variants;
+        }
+      })
+      .catch(() => {});
 
   } catch(e) {
     const glowupReactionEl = document.getElementById('glowupReaction');
     document.getElementById('glowupReactionText').textContent = "something broke on my end. try again.";
     glowupReactionEl.style.display = 'block';
+    document.getElementById('glowupThinking').style.display = 'none';
+    btn.disabled = false; btn.innerHTML = '✨ glow it up <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   }
-
-  document.getElementById('glowupThinking').style.display = 'none';
-  btn.disabled = false; btn.innerHTML = '✨ glow it up <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 
 function selectGlowupVariant(i) {

@@ -481,7 +481,7 @@ Full thread:
 React in max 2 sentences. Notice the arc, not just the last line. Sound like a teenager, not an assistant.`;
   }
 
-  return `You are Aria, a teenage girl AI assistant. ${contact?.name} (${contact?.relationship || 'contact'}) just texted: "${msg}"${silentNote}${lateNote}${contextInput ? '\\n\\nConvo context: ' + contextInput : ''}
+  return `You are Aria, a teenage girl AI assistant. ${contact?.name} (${contact?.relationship || 'contact'}) just texted: "${msg}"${silentNote}${lateNote}${contextInput ? '\n\nConvo context: ' + contextInput : ''}
 
 React to this message as yourself — like you're reading it over the user's shoulder. Be perceptive. Notice what's actually going on beneath the surface if something's there. ${stageVoice}
 
@@ -711,7 +711,7 @@ const ariaMemory = (() => {
     }
 
     if (!lines.length) return '';
-    return '\\n\\nARIA\'S MEMORY OF THIS USER:\\n' + lines.join('\\n');
+    return '\n\nARIA\'S MEMORY OF THIS USER:\n' + lines.join('\n');
   }
 
   // auto-learn from a generation event
@@ -843,11 +843,12 @@ const contactMemory = (() => {
       });
     } catch(e) {
       tableExists = false;
-      // Silently fall back — try localStorage
+      // Silently fall back — try localStorage.
+      // NOTE: tableExists stays false so Supabase writes are skipped;
+      // saveContact() will mirror to localStorage only.
       try {
         const saved = localStorage.getItem('aria_contact_memories');
         if (saved) store = JSON.parse(saved);
-        tableExists = true; // use local as source of truth
       } catch(_) {}
     }
   }
@@ -884,18 +885,18 @@ const contactMemory = (() => {
   function buildContext(contactId) {
     const mem = store[contactId];
     if (!mem || !mem.narrative) return '';
-    const lines = [`RELATIONSHIP MEMORY FOR THIS CONTACT:\\n${mem.narrative}`];
+    const lines = [`RELATIONSHIP MEMORY FOR THIS CONTACT:\n${mem.narrative}`];
     if (mem.events && mem.events.length) {
       const recent = mem.events.slice(-4);
-      lines.push(`\\nRECENT INTERACTION HISTORY:\\n${recent.map(e => `  • ${e}`).join('\\n')}`);
+      lines.push(`\nRECENT INTERACTION HISTORY:\n${recent.map(e => `  • ${e}`).join('\n')}`);
     }
     const sc = mem.signalCounts || {};
     const signals = [];
     if (sc.initiated_count > 0) signals.push(`they've started ${sc.initiated_count} of your recent conversations`);
     if (sc.left_on_read_count > 0) signals.push(`you've left them on read ${sc.left_on_read_count} times`);
     if (sc.late_night_count > 0) signals.push(`${sc.late_night_count} late-night exchanges`);
-    if (signals.length) lines.push(`\\nPATTERNS I’VE NOTICED:\\n${signals.map(s => `  • ${s}`).join('\\n')}`);
-    return '\\n\\n' + lines.join('');
+    if (signals.length) lines.push(`\nPATTERNS I’VE NOTICED:\n${signals.map(s => `  • ${s}`).join('\n')}`);
+    return '\n\n' + lines.join('');
   }
 
   // push a new narrative event and regenerate the narrative
@@ -938,7 +939,7 @@ const contactMemory = (() => {
     if (!apiKey) return;
 
     const oldNarrative = mem.narrative || 'No prior narrative — this is the first one.';
-    const eventsText = mem.events.join('\\n');
+    const eventsText = mem.events.join('\n');
     const sc = mem.signalCounts || {};
 
     // sanitize all user-derived data before it enters the ai prompt
@@ -985,7 +986,7 @@ Write an updated relationship narrative in 2-4 sentences. First person from Aria
     if (!store[contactId]) store[contactId] = { narrative: '', events: [], signalCounts: {}, lastUpdated: null };
     const mem = store[contactId];
     // Prepend the manual note to the narrative
-    mem.narrative = note + (mem.narrative ? '\\n\\n' + mem.narrative : '');
+    mem.narrative = note + (mem.narrative ? '\n\n' + mem.narrative : '');
     await saveContact(contactId);
   }
 
