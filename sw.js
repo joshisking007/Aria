@@ -5,7 +5,7 @@
 
 // Bump this version string whenever you deploy new JS/CSS/HTML.
 // The activate handler will automatically purge the old cache.
-const CACHE_VERSION = 'aria-v2';
+const CACHE_VERSION = 'aria-v3';
 
 // App-shell assets to pre-cache on install.
 // These load instantly on every subsequent visit — no network needed.
@@ -26,6 +26,26 @@ const NEVER_CACHE_ORIGINS = [
   'mmtdtcmhvbruubrjgjrz.supabase.co',   // Supabase (auth + DB + edge functions)
   'api.anthropic.com',                    // Anthropic (if ever called direct)
   'api.elevenlabs.io',                    // ElevenLabs TTS
+];
+
+// ── 2b. Same-origin dynamic routes → network only ───────────
+//    FIX: AI chat responses were being cached and replayed here.
+if (
+  url.origin === ALLOWED_ORIGIN &&
+  NEVER_CACHE_PATHS.some(path => url.pathname.startsWith(path))
+) {
+  return;
+}
+
+// Same-origin path prefixes that must NEVER be cached.
+// Caching these was the root cause of Aria replaying old AI responses.
+const NEVER_CACHE_PATHS = [
+  '/api/',
+  '/functions/',
+  '/chat',
+  '/message',
+  '/completion',
+  '/stream',
 ];
 
 // ── security: only forward share data to same-origin windows ──
