@@ -1,5 +1,5 @@
-/* aria-games.css — redesigned */
-/* editorial dark, striking typography */
+/* aria-games.css — v2 */
+/* editorial dark · timer · shapes · anomaly · growing patterns */
 
 #gamesScreen {
   background: var(--bg);
@@ -16,7 +16,7 @@
   padding-bottom: 48px;
 }
 
-/* topbar */
+/* ── topbar ──────────────────────────────────────────────── */
 
 .g-topbar {
   display: flex;
@@ -63,17 +63,15 @@
   text-transform: uppercase;
 }
 
-/* lobby */
+/* ── lobby ───────────────────────────────────────────────── */
 
 .g-lobby {
   display: flex;
   flex-direction: column;
 }
 
-/* hero */
-
 .g-hero {
-  padding: 16px 24px 32px;
+  padding: 16px 24px 28px;
   position: relative;
   overflow: hidden;
 }
@@ -112,20 +110,41 @@
   color: var(--text);
   text-transform: uppercase;
   letter-spacing: -2px;
-  margin-bottom: 22px;
+  margin-bottom: 18px;
 }
 
 .g-hero-sub {
   font-family: 'DM Sans', sans-serif;
   font-size: 13px;
-  line-height: 1.75;
+  line-height: 1.8;
   color: var(--text2);
-  max-width: 290px;
+  max-width: 300px;
   border-left: 2px solid var(--rose-border);
   padding-left: 14px;
+  margin-bottom: 16px;
 }
 
-/* divider */
+/* feature tags row */
+.g-hero-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 4px;
+}
+
+.g-hero-tag {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 10px;
+}
+
+/* ── divider ─────────────────────────────────────────────── */
 
 .g-divider {
   display: flex;
@@ -146,7 +165,7 @@
   white-space: nowrap;
 }
 
-/* difficulty cards */
+/* ── difficulty cards ────────────────────────────────────── */
 
 .g-diff-grid {
   display: flex;
@@ -166,9 +185,10 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  text-align: left;         /* fix: prevent browser centering text in buttons */
 }
 
-.g-diff-card:hover { transform: translateY(-2px); }
+.g-diff-card:hover  { transform: translateY(-2px); }
 .g-diff-card:active { transform: translateY(0) scale(0.99); }
 
 .g-diff-card-inner {
@@ -200,6 +220,7 @@
   justify-content: center;
   padding: 16px 14px;
   border-left: 1px solid var(--border);
+  min-width: 0;             /* fix: prevent overflow clipping description */
 }
 
 .g-diff-name {
@@ -215,9 +236,10 @@
 
 .g-diff-desc {
   font-family: 'DM Sans', sans-serif;
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--muted);
-  line-height: 1.4;
+  line-height: 1.45;
+  white-space: normal;      /* fix: was getting clipped on medium card */
 }
 
 .g-diff-arrow {
@@ -242,11 +264,11 @@
 .g-diff-card[data-level="easy"]:hover .g-diff-arrow   { color: #34d399; }
 .g-diff-card[data-level="easy"]:hover .g-diff-num     { color: rgba(52,211,153,0.3); }
 
-/* medium = amber */
-.g-diff-card[data-level="medium"]:hover { border-color: rgba(251,191,36,0.3); }
+/* medium = amber — was missing accent/arrow colour fix */
+.g-diff-card[data-level="medium"]:hover { border-color: rgba(251,191,36,0.35); }
 .g-diff-card[data-level="medium"]:hover .g-diff-accent { background: #fbbf24; }
 .g-diff-card[data-level="medium"]:hover .g-diff-arrow  { color: #fbbf24; }
-.g-diff-card[data-level="medium"]:hover .g-diff-num    { color: rgba(251,191,36,0.3); }
+.g-diff-card[data-level="medium"]:hover .g-diff-num    { color: rgba(251,191,36,0.35); }
 
 /* hard = rose */
 .g-diff-card[data-level="hard"]:hover  { border-color: rgba(249,115,22,0.4); }
@@ -254,7 +276,7 @@
 .g-diff-card[data-level="hard"]:hover .g-diff-arrow   { color: var(--rose); }
 .g-diff-card[data-level="hard"]:hover .g-diff-num     { color: var(--rose-border2); }
 
-/* rules row */
+/* ── rules row ───────────────────────────────────────────── */
 
 .g-rules {
   display: flex;
@@ -277,14 +299,14 @@
 }
 .g-rule:last-child { border-right: none; }
 
-/* round body */
+/* ── round body ──────────────────────────────────────────── */
 
 .g-round-body {
   flex: 1;
-  padding: 24px 24px 0;
+  padding: 16px 24px 0;
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 16px;
 }
 
 .g-progress-bar {
@@ -301,16 +323,60 @@
   transition: width 0.4s ease;
 }
 
+/* ── timer ───────────────────────────────────────────────── */
+
+.g-timer-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.g-timer-bar-track {
+  flex: 1;
+  height: 4px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.g-timer-bar {
+  height: 100%;
+  width: 100%;
+  border-radius: 4px;
+  background: #22c55e;
+  transition: width 1s linear, background 0.5s ease;
+}
+
+.g-timer-label {
+  font-family: 'Barlow', sans-serif;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: -0.5px;
+  color: var(--muted);
+  min-width: 28px;
+  text-align: right;
+  transition: color 0.3s;
+}
+
+/* ── step ────────────────────────────────────────────────── */
+
 .g-step {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 20px;
   animation: g-fade-up 0.3s ease both;
 }
 
 @keyframes g-fade-up {
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+.g-step-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .g-step-count {
@@ -322,12 +388,29 @@
   text-transform: uppercase;
 }
 
+/* type badge (replaces plain hint row) */
+.g-type-badge {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  color: var(--rose);
+  background: var(--rose-dim);
+  border: 1px solid var(--rose-border);
+  border-radius: 20px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+
 .g-step-hint {
   font-family: 'Instrument Serif', serif;
   font-size: 13px;
-  color: var(--rose);
+  color: var(--muted);
   font-style: italic;
+  margin-top: -8px;
 }
+
+/* ── sequence row ────────────────────────────────────────── */
 
 .g-seq-row {
   display: flex;
@@ -357,6 +440,34 @@
   to   { opacity: 1; transform: scale(1); }
 }
 
+/* shape items — less padding, centred SVG */
+.g-seq-shape {
+  padding: 8px 12px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.g-shape-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+/* anomaly highlight — pulses to draw attention */
+.g-seq-anomaly {
+  border-color: rgba(249,115,22,0.55) !important;
+  background: rgba(249,115,22,0.07) !important;
+  animation: g-seq-in 0.22s ease both, g-anomaly-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes g-anomaly-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(249,115,22,0); }
+  50%       { box-shadow: 0 0 0 4px rgba(249,115,22,0.18); }
+}
+
 .g-seq-blank {
   background: transparent;
   border: 1.5px dashed var(--border-hover);
@@ -364,6 +475,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 44px;
 }
 
 .g-seq-answer-correct {
@@ -377,6 +489,8 @@
   background: rgba(239,68,68,0.07);
   color: #ef4444;
 }
+
+/* ── text input ──────────────────────────────────────────── */
 
 .g-input-row {
   display: flex;
@@ -415,6 +529,46 @@
 .g-submit-btn:hover  { background: rgba(249,115,22,0.22); }
 .g-submit-btn:active { transform: scale(0.95); }
 
+/* ── multiple-choice grid (shapes) ───────────────────────── */
+
+.g-choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.g-choice-btn {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 0.18s, background 0.15s, transform 0.1s;
+  text-align: center;
+}
+.g-choice-btn:hover  { border-color: var(--rose-border2); background: var(--card2, rgba(255,255,255,0.04)); }
+.g-choice-btn:active { transform: scale(0.97); }
+
+.g-choice-shape {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.g-choice-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+}
+
+/* ── result ──────────────────────────────────────────────── */
+
 .g-result {
   display: flex;
   flex-direction: column;
@@ -446,7 +600,7 @@
   font-style: italic;
 }
 
-/* transition */
+/* ── transition screen ───────────────────────────────────── */
 
 .g-transition-screen { justify-content: center; align-items: center; }
 
@@ -508,7 +662,7 @@
 .g-continue-btn:hover  { border-color: var(--rose-border); background: var(--card2); }
 .g-continue-btn:active { transform: scale(0.98); }
 
-/* read screen */
+/* ── read screen ─────────────────────────────────────────── */
 
 .g-read-body {
   flex: 1;
@@ -525,8 +679,6 @@
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border);
 }
-
-.g-read-score-row { display: flex; align-items: flex-end; }
 
 .g-read-score {
   font-family: 'Barlow', sans-serif;
@@ -645,3 +797,107 @@
   transition: border-color 0.15s, color 0.15s;
 }
 .g-done-btn:hover { border-color: var(--border-hover); color: var(--text2); }
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ARIA GAMES — UPGRADE STYLES
+   Feed-forward read · Quit signals · Emotional read · Trigger intro
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Contextual trigger intro in lobby ─────────────────────────────────── */
+.g-trigger-intro {
+  display: block;
+  color: var(--text, #e2e8f0);
+  font-style: italic;
+  opacity: 0.85;
+  font-size: 0.92em;
+  padding: 10px 14px;
+  background: rgba(168, 85, 247, 0.08);
+  border-left: 2px solid var(--purple, #a855f7);
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 4px;
+  animation: g-fade-in 0.5s ease forwards;
+}
+
+/* ── Read screen: loading state ────────────────────────────────────────── */
+.g-obs-loading {
+  position: relative;
+  overflow: hidden;
+}
+.g-obs-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+  animation: g-shimmer 1.4s infinite;
+}
+@keyframes g-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ── Read screen: quit signal observation ──────────────────────────────── */
+.g-obs-quit {
+  border-left: 2px solid var(--amber, #f59e0b) !important;
+  padding-left: 10px !important;
+  margin-left: 2px;
+  opacity: 0;
+  animation: g-obs-appear 0.4s ease forwards;
+}
+
+/* ── Read screen: trigger context note ─────────────────────────────────── */
+.g-obs-trigger {
+  opacity: 0;
+  font-style: italic;
+  animation: g-obs-appear 0.4s ease forwards;
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.88em;
+}
+
+/* ── Read footer: disposition saved state ──────────────────────────────── */
+.g-read-stored {
+  font-size: 0.78em;
+  color: var(--text-muted, #64748b);
+  text-align: center;
+  margin-bottom: 12px;
+  letter-spacing: 0.01em;
+  transition: color 0.4s ease;
+}
+
+/* "aria will carry this forward" — slightly warmer color */
+.g-read-stored:not(:empty) {
+  color: var(--purple, #a855f7);
+  opacity: 0.7;
+}
+
+/* ── Obs entrance animation (shared) ───────────────────────────────────── */
+@keyframes g-obs-appear {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Game profile tag in read (behavioral tags line) ───────────────────── */
+.g-profile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.g-profile-tag {
+  font-size: 0.72em;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: rgba(168, 85, 247, 0.1);
+  color: var(--purple, #a855f7);
+  letter-spacing: 0.02em;
+  opacity: 0.8;
+}
+
+/* ── Fade-in utility ───────────────────────────────────────────────────── */
+@keyframes g-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
