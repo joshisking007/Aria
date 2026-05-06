@@ -1,4 +1,3 @@
-
 //  ARIA SECURITY MODULE
 //  Sanitization · Rate limiting · Prompt guards · Key hygiene
 
@@ -183,6 +182,7 @@ const ariaVoice = (() => {
         'https://mmtdtcmhvbruubrjgjrz.supabase.co/functions/v1/aria-tts',
         {
           method: 'POST',
+          cache: 'no-store',   // FIX: prevent browser HTTP cache from replaying stale audio
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tdGR0Y21odmJydXVicmpnanJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMTU2MDUsImV4cCI6MjA5MjY5MTYwNX0.f2FXAA8GaUeXXE8V8dnwq4NXz3_22H7d5jVA9rAWsTo'
@@ -1478,4 +1478,3 @@ function saveToStorage() {
     saveToLocalStorage();
   }
 }
-
