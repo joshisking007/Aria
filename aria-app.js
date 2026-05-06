@@ -1115,13 +1115,13 @@ window.addEventListener('load', () \=\> {
   if (stabEl) { stabEl.value \= savedStab; document.getElementById('elStabilityVal').textContent \= savedStab.toFixed(2); }  
   if (simEl)  { simEl.value \= savedSim;   document.getElementById('elSimilarityVal').textContent \= savedSim.toFixed(2); }
 
-  // Initial voice list render  
-  ariaVoice.renderList('en');
+  // Initial voice list render
+  if (typeof ariaVoice !== 'undefined') ariaVoice.renderList('en');
 
-  // Sync muted state  
-  if (ariaVoice.muted) ariaVoice.setMuted(true);
+  // Sync muted state
+  if (typeof ariaVoice !== 'undefined' && ariaVoice.muted) ariaVoice.setMuted(true);
 
-  document.getElementById('hamburgerBtn').classList.add('visible');  
+  document.getElementById('hamburgerBtn').classList.add('visible');
 });
 
 // clarify  
