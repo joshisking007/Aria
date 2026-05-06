@@ -1166,30 +1166,60 @@ function gateTab(mode) {
   const tabSignup = document.getElementById('gateTabSignup');
   tabSignin.classList.toggle('gate-tab--active', isSignin);
   tabSignup.classList.toggle('gate-tab--active', !isSignin);
-  document.getElementById('gateConfirmWrap').style.display = isSignin ? 'none' : '';
+
+  // Show/hide the relevant field groups
+  const signinFields = document.getElementById('gateSigninFields');
+  const signupFields = document.getElementById('gateSignupFields');
+  if (signinFields) signinFields.style.display = isSignin ? '' : 'none';
+  if (signupFields) signupFields.style.display = isSignin ? 'none' : '';
+
+  // Legacy confirm wrap (kept for compat, always hidden now)
+  const legacyWrap = document.getElementById('gateConfirmWrap');
+  if (legacyWrap) legacyWrap.style.display = 'none';
+
   const labelEl = document.getElementById('gateBtnLabel');
   if (labelEl) labelEl.textContent = isSignin ? 'sign in' : 'create account';
-  document.getElementById('gatePassword').placeholder = isSignin ? 'password' : 'password (min 6 chars)';
-  document.getElementById('gatePassword').autocomplete = isSignin ? 'current-password' : 'new-password';
   document.getElementById('gateError').textContent = '';
 }
 
 async function gateSubmit() {
-  const email    = (document.getElementById('gateEmail').value || '').trim();
-  const password = document.getElementById('gatePassword').value || '';
-  const errEl    = document.getElementById('gateError');
+  const errEl = document.getElementById('gateError');
   errEl.textContent = '';
 
   // rate limit check
   const lockMsg = ariaSecurity.checkAuthAllowed();
   if (lockMsg) { errEl.textContent = lockMsg; return; }
 
-  if (!email || !email.includes('@')) { errEl.textContent = 'enter a valid email'; return; }
-  if (password.length < 6) { errEl.textContent = 'password must be at least 6 characters'; return; }
+  let email, password;
 
-  if (gateMode === 'signup') {
-    const confirm = document.getElementById('gateConfirm').value || '';
+  if (gateMode === 'signin') {
+    email    = (document.getElementById('gateEmail').value || '').trim();
+    password = document.getElementById('gatePassword').value || '';
+    if (!email || !email.includes('@')) { errEl.textContent = 'enter a valid email'; return; }
+    if (password.length < 6) { errEl.textContent = 'password must be at least 6 characters'; return; }
+  } else {
+    // Signup — collect & validate all fields
+    const firstName = (document.getElementById('gateFirstName').value || '').trim();
+    const lastName  = (document.getElementById('gateLastName').value  || '').trim();
+    const age       = parseInt(document.getElementById('gateAge').value || '0', 10);
+    const gender    = document.getElementById('gateGender').value || '';
+    email           = (document.getElementById('gateSignupEmail').value || '').trim();
+    password        = document.getElementById('gateSignupPassword').value || '';
+    const confirm   = document.getElementById('gateConfirm').value || '';
+    const phone     = (document.getElementById('gatePhone').value || '').trim();
+
+    if (!firstName) { errEl.textContent = 'enter your first name'; return; }
+    if (!lastName)  { errEl.textContent = 'enter your last name'; return; }
+    if (!age || isNaN(age)) { errEl.textContent = 'enter your age'; return; }
+    if (age < 16) { errEl.textContent = 'you must be at least 16 to use Aria'; return; }
+    if (age > 120) { errEl.textContent = 'enter a valid age'; return; }
+    if (!gender) { errEl.textContent = 'select your gender'; return; }
+    if (!email || !email.includes('@')) { errEl.textContent = 'enter a valid email'; return; }
+    if (password.length < 6) { errEl.textContent = 'password must be at least 6 characters'; return; }
     if (password !== confirm) { errEl.textContent = 'passwords don\'t match'; return; }
+
+    // Store profile data to save after signup
+    window._gateSignupProfile = { firstName, lastName, age, gender, phone };
   }
 
   const btn = document.getElementById('gateBtn');
@@ -1199,11 +1229,24 @@ async function gateSubmit() {
   if (labelEl) labelEl.textContent = gateMode === 'signin' ? 'signing in…' : 'creating account…';
   else btn.textContent = gateMode === 'signin' ? 'signing in…' : 'creating account…';
 
-  let error;
+  let error, data;
   if (gateMode === 'signin') {
     ({ error } = await db.auth.signInWithPassword({ email, password }));
   } else {
-    ({ error } = await db.auth.signUp({ email, password }));
+    const profile = window._gateSignupProfile || {};
+    ({ data, error } = await db.auth.signUp({
+      email, password,
+      options: {
+        data: {
+          first_name: profile.firstName,
+          last_name:  profile.lastName,
+          full_name:  `${profile.firstName} ${profile.lastName}`,
+          age:        profile.age,
+          gender:     profile.gender,
+          phone:      profile.phone || null,
+        }
+      }
+    }));
   }
 
   btn.disabled = false;
@@ -1214,7 +1257,6 @@ async function gateSubmit() {
     if (error.message.includes('Invalid login')) errEl.textContent = 'wrong email or password';
     else if (error.message.includes('already registered')) errEl.textContent = 'account already exists — sign in instead';
     else errEl.textContent = error.message;
-    // Show attempt count warning if approaching lockout
     const state = ariaSecurity.checkAuthAllowed();
     if (state) errEl.textContent = state;
     return;

@@ -160,14 +160,15 @@
     <div class="gate-identity">
       <div class="gate-title">Aria</div>
       <div class="gate-tagline">AUTOMATED · REPLY · INTELLIGENCE · ASSISTANT</div>
-      <div class="gate-pl-brand">
-        <span class="gate-pl-text">by Paradigm Leveling</span>
-      </div>
+    </div>
+
+    <!-- Brand — moved above sub copy -->
+    <div class="gate-pl-brand">
+      <span class="gate-pl-text">by Paradigm Leveling</span>
     </div>
 
     <!-- Sub copy -->
-    <div class="gate-sub">your AI texting co-pilot — sign in to unlock memory.</div>
-    <div class="gate-memory-badge"><span>🧠</span> memory engine enabled</div>
+    <div class="gate-sub">your AI texting co-pilot<br><span class="gate-sub-unlock">sign in to unlock memory</span></div>
 
     <!-- Tab switcher -->
     <div class="gate-tabs">
@@ -175,17 +176,78 @@
       <button id="gateTabSignup" class="gate-tab" onclick="gateTab('signup')">create account</button>
     </div>
 
-    <div class="gate-field">
-      <input class="gate-input" id="gateEmail" type="email" placeholder="email address" autocomplete="email" maxlength="254"
-        onkeydown="if(event.key==='Enter')document.getElementById('gatePassword').focus()"/>
+    <!-- Sign-in fields -->
+    <div id="gateSigninFields">
+      <div class="gate-field">
+        <input class="gate-input" id="gateEmail" type="email" placeholder="email address" autocomplete="email" maxlength="254"
+          onkeydown="if(event.key==='Enter')document.getElementById('gatePassword').focus()"/>
+      </div>
+      <div class="gate-field">
+        <input class="gate-input" id="gatePassword" type="password" placeholder="password" autocomplete="current-password" maxlength="128"
+          onkeydown="if(event.key==='Enter')gateSubmit()"/>
+      </div>
     </div>
-    <div class="gate-field">
-      <input class="gate-input" id="gatePassword" type="password" placeholder="password" autocomplete="current-password" maxlength="128"
-        onkeydown="if(event.key==='Enter')gateSubmit()"/>
+
+    <!-- Sign-up fields (hidden by default) -->
+    <div id="gateSignupFields" style="display:none;">
+      <div class="gate-field-row">
+        <div class="gate-field">
+          <div class="gate-field-label">FIRST NAME</div>
+          <input class="gate-input" id="gateFirstName" type="text" placeholder="first name" autocomplete="given-name" maxlength="50"
+            onkeydown="if(event.key==='Enter')document.getElementById('gateLastName').focus()"/>
+        </div>
+        <div class="gate-field">
+          <div class="gate-field-label">LAST NAME</div>
+          <input class="gate-input" id="gateLastName" type="text" placeholder="last name" autocomplete="family-name" maxlength="50"
+            onkeydown="if(event.key==='Enter')document.getElementById('gateSignupEmail').focus()"/>
+        </div>
+      </div>
+      <div class="gate-field-row">
+        <div class="gate-field">
+          <div class="gate-field-label">AGE</div>
+          <input class="gate-input" id="gateAge" type="number" placeholder="your age" min="16" max="120"
+            onkeydown="if(event.key==='Enter')document.getElementById('gateGender').focus()"/>
+        </div>
+        <div class="gate-field">
+          <div class="gate-field-label">GENDER</div>
+          <select class="gate-input gate-select" id="gateGender">
+            <option value="" disabled selected>select</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="nonbinary">Non-binary</option>
+            <option value="other">Other</option>
+            <option value="prefer_not">Prefer not to say</option>
+          </select>
+        </div>
+      </div>
+      <div class="gate-field">
+        <div class="gate-field-label">EMAIL</div>
+        <input class="gate-input" id="gateSignupEmail" type="email" placeholder="email address" autocomplete="email" maxlength="254"
+          onkeydown="if(event.key==='Enter')document.getElementById('gateSignupPassword').focus()"/>
+      </div>
+      <div class="gate-field-row">
+        <div class="gate-field">
+          <div class="gate-field-label">PASSWORD</div>
+          <input class="gate-input" id="gateSignupPassword" type="password" placeholder="min 6 characters" autocomplete="new-password" maxlength="128"
+            onkeydown="if(event.key==='Enter')document.getElementById('gateConfirm').focus()"/>
+        </div>
+        <div class="gate-field">
+          <div class="gate-field-label">CONFIRM</div>
+          <input class="gate-input" id="gateConfirm" type="password" placeholder="repeat password" maxlength="128"
+            onkeydown="if(event.key==='Enter')gateSubmit()"/>
+        </div>
+      </div>
+      <div class="gate-field">
+        <div class="gate-field-label">PHONE <span class="gate-field-optional">(optional)</span></div>
+        <input class="gate-input" id="gatePhone" type="tel" placeholder="+1 (555) 000-0000" autocomplete="tel" maxlength="20"
+          onkeydown="if(event.key==='Enter')gateSubmit()"/>
+      </div>
+      <div class="gate-signup-notice">Aria uses this to personalise your experience and remember who you are.</div>
     </div>
-    <div class="gate-field" id="gateConfirmWrap" style="display:none;">
-      <input class="gate-input" id="gateConfirm" type="password" placeholder="confirm password" maxlength="128"
-        onkeydown="if(event.key==='Enter')gateSubmit()"/>
+
+    <!-- Shared hidden email field for signin (backward compat) -->
+    <div id="gateConfirmWrap" style="display:none;">
+      <input class="gate-input" id="gateConfirmLegacy" type="password" placeholder="confirm password" maxlength="128"/>
     </div>
 
     <div id="gateError" class="gate-error-msg"></div>
