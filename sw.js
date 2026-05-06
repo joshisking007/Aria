@@ -1,17 +1,17 @@
 // ─────────────────────────────────────────────────────────────
-//  ARIA SERVICE WORKER  v3.0
+//  ARIA SERVICE WORKER  v3.1
 //  SAFE asset caching (cache-first) + Web Share Target forwarding
-//  FIXED: prevents AI/chat/API responses from being cached/replayed
+//  FIXED v3.1: stale index.html bug — HTML is now network-first,
+//              not cached at install time. API path list expanded.
 // ─────────────────────────────────────────────────────────────
 
 // Bump this version string whenever you deploy new JS/CSS/HTML.
-const CACHE_VERSION = 'aria-v3';
+const CACHE_VERSION = 'aria-v3.1';
 
 // App-shell assets to pre-cache on install.
-// Keep this list small and stable.
+// ⚠️  index.html deliberately REMOVED — it is served network-first
+//     (see step 8 below) so users always get the latest shell.
 const SHELL_ASSETS = [
-  '/',
-  '/index.html',
   '/style.css',
   '/aria-games.css',
   '/aria-core.js',
@@ -35,6 +35,9 @@ const NEVER_CACHE_PATHS = [
   '/message',
   '/completion',
   '/stream',
+  // Supabase edge-function paths that appear as same-origin after rewrites:
+  '/aria-ai',
+  '/aria-tts',
 ];
 
 // ── security: only forward share data to same-origin windows ──
@@ -52,7 +55,7 @@ function sanitizeShareField(val, maxLen) {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  INSTALL — pre-cache the app shell
+//  INSTALL — pre-cache the app shell (no HTML)
 // ─────────────────────────────────────────────────────────────
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -123,8 +126,22 @@ self.addEventListener('fetch', e => {
   // ── 4. Non-GET requests must never be cached ────────────────
   if (e.request.method !== 'GET') return;
 
-  // ── 5. Only cache STATIC asset file types (safe caching) ────
-  // This prevents caching HTML/API responses that cause loops.
+  // ── 5. HTML documents → network-first (prevents stale shell) ─
+  //  This is the FIX for the stale-hit bug.
+  //  index.html (and any other HTML page) is always fetched fresh
+  //  from the network. The cached copy is only used as a fallback
+  //  when the network is completely unreachable (offline).
+  const isHtml =
+    url.pathname === '/' ||
+    url.pathname.endsWith('.html') ||
+    e.request.headers.get('Accept')?.includes('text/html');
+
+  if (isHtml && url.origin === ALLOWED_ORIGIN) {
+    e.respondWith(networkFirstHtml(e.request));
+    return;
+  }
+
+  // ── 6. Only cache STATIC asset file types (safe caching) ────
   const isStaticAsset =
     url.pathname.endsWith('.js') ||
     url.pathname.endsWith('.css') ||
@@ -146,18 +163,42 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // ── 6. Cross-origin static assets → stale-while-revalidate ───
+  // ── 7. Cross-origin static assets → stale-while-revalidate ───
   if (url.origin !== ALLOWED_ORIGIN) {
     e.respondWith(staleWhileRevalidate(e.request));
     return;
   }
 
-  // ── 7. Same-origin static assets → cache-first ──────────────
+  // ── 8. Same-origin static assets → cache-first ──────────────
   e.respondWith(cacheFirst(e.request));
 });
 
 // ─────────────────────────────────────────────────────────────
-//  STRATEGY: Cache-First
+//  STRATEGY: Network-First (for HTML)
+//  Always tries the network. Falls back to cache only offline.
+//  Updates the cache whenever a fresh response arrives.
+// ─────────────────────────────────────────────────────────────
+async function networkFirstHtml(request) {
+  try {
+    const response = await fetch(request);
+    if (response && response.ok) {
+      const cache = await caches.open(CACHE_VERSION);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    // Offline — serve cached shell if available
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    return new Response('Aria is offline. Please reconnect.', {
+      status: 503,
+      headers: { 'Content-Type': 'text/plain' }
+    });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  STRATEGY: Cache-First (for JS/CSS/fonts/images)
 // ─────────────────────────────────────────────────────────────
 async function cacheFirst(request) {
   const cached = await caches.match(request);
@@ -181,7 +222,7 @@ async function cacheFirst(request) {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  STRATEGY: Stale-While-Revalidate
+//  STRATEGY: Stale-While-Revalidate (for cross-origin assets)
 // ─────────────────────────────────────────────────────────────
 async function staleWhileRevalidate(request) {
   const cache = await caches.open(CACHE_VERSION);
