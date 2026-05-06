@@ -179,10 +179,14 @@ const ariaVoice = (() => {
     const voice = selected();
 
     try {
+      const ttsController = new AbortController();
+      const ttsTimeout = setTimeout(() => ttsController.abort(), 10000); // 10s hard timeout
+
       const res = await fetch(
         'https://mmtdtcmhvbruubrjgjrz.supabase.co/functions/v1/aria-tts',
         {
           method: 'POST',
+          signal: ttsController.signal,
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tdGR0Y21odmJydXVicmpnanJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMTU2MDUsImV4cCI6MjA5MjY5MTYwNX0.f2FXAA8GaUeXXE8V8dnwq4NXz3_22H7d5jVA9rAWsTo'
@@ -196,6 +200,7 @@ const ariaVoice = (() => {
           })
         }
       );
+      clearTimeout(ttsTimeout);
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -1489,4 +1494,55 @@ function saveToStorage() {
     saveToLocalStorage();
   }
 }
+
+
+//  ARIA NETWORK MONITOR
+//  Shows a banner when the user loses connection or has poor signal.
+//  Call ariaNetwork.init() once on app load.
+
+const ariaNetwork = (() => {
+  let _banner = null;
+  let _hideTimer = null;
+
+  function _getBanner() {
+    if (_banner) return _banner;
+    _banner = document.createElement('div');
+    _banner.id = 'ariaNetworkBanner';
+    document.body.appendChild(_banner);
+    return _banner;
+  }
+
+  function _show(msg, persist = false) {
+    clearTimeout(_hideTimer);
+    const b = _getBanner();
+    b.textContent = msg;
+    b.classList.remove('hide');
+    b.classList.add('show');
+    if (!persist) {
+      _hideTimer = setTimeout(_hide, 3000);
+    }
+  }
+
+  function _hide() {
+    const b = _getBanner();
+    if (!b) return;
+    b.classList.remove('show');
+    b.classList.add('hide');
+  }
+
+  function init() {
+    window.addEventListener('offline', () => {
+      _show('📡 no connection — replies are paused', true);
+    });
+    window.addEventListener('online', () => {
+      _show('✓ back online');
+    });
+    // Show immediately if already offline on load
+    if (!navigator.onLine) {
+      _show('📡 no connection — replies are paused', true);
+    }
+  }
+
+  return { init, show: _show, hide: _hide };
+})();
 
