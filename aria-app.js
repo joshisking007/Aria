@@ -5159,7 +5159,7 @@ const CREATOR_MODE = (() => {
   function activate() {  
     _active = true;  
     _sessionVerified = true;  
-    sessionStorage.setItem('aria_creator_session', '1');  
+    sessionStorage.setItem('aria_creator_session_' + (typeof currentUserId !== 'undefined' ? currentUserId : ''), '1');  
     _showCreatorIndicator();  
   }
 
@@ -5167,13 +5167,14 @@ const CREATOR_MODE = (() => {
   function deactivate() {  
     _active = false;  
     _sessionVerified = false;  
-    sessionStorage.removeItem('aria_creator_session');  
+    sessionStorage.removeItem('aria_creator_session_' + (typeof currentUserId !== 'undefined' ? currentUserId : ''));  
     _hideCreatorIndicator();  
   }
 
   // check session persistence on load  
   function checkSession() {  
-    if (sessionStorage.getItem('aria_creator_session') === '1') {  
+    if (!currentUserId) return;
+    if (sessionStorage.getItem('aria_creator_session_' + currentUserId) === '1') {  
       _active = true;  
       _sessionVerified = true;  
       setTimeout(_showCreatorIndicator, 1000);  
