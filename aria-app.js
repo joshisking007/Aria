@@ -2225,9 +2225,25 @@ function renderLgStepCard(step, i, game) {
               <button class="lg-step-btn lg-btn-edit" onclick="lgEditStep(${i})">edit</button>  
               <button class="lg-step-btn lg-btn-regen" onclick="lgRegenStep(${i})">↻ regen</button>  
             </div>` : ''}  
-          ${isDone && step.ariaNote ? `<div class="lg-aria-read" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">${step.ariaNote}</div>` : ''}  
-        </div>` : ''}  
-    </div>`;  
+          ${isDone ? `
+            <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+              ${step.ariaNote ? `<div class="lg-aria-read" style="margin-bottom:6px;">${step.ariaNote}</div>` : ''}
+              ${step.theirReply ? `<div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:1px;">THEIR REPLY</div><div style="font-size:12px;color:var(--text);line-height:1.5;font-style:italic;">"${s(step.theirReply)}"</div>` : ''}
+              ${step.outcome ? `<div style="font-size:11px;color:var(--muted);margin-top:6px;">outcome: ${step.outcome === 'good' ? '🔥 went well' : step.outcome === 'bad' ? '💀 backfired' : '😐 okay-ish'}</div>` : `<button onclick="lgLogRetroOutcome(${i})" style="margin-top:4px;padding:6px 12px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;">+ log how this landed</button>`}
+            </div>` : ''}
+        </div>` : ''}
+    </div>`;
+}
+
+// Retroactive outcome logging for already-done steps
+function lgLogRetroOutcome(stepIdx) {
+  _activeLgStepIdx = stepIdx;
+  const step = _activeLgGame.steps[stepIdx];
+  document.getElementById('lgOutcomeSub').textContent = `step ${stepIdx + 1}: "${step.title}"`;
+  document.getElementById('lgOutcomeReply').value = step.theirReply || '';
+  document.getElementById('lgOutcomeRateRow').querySelectorAll('.lg-outcome-btn').forEach(b => b.classList.remove('selected'));
+  window._lgPendingOutcome = null;
+  openModal('lgOutcomeModal');
 }
 
 // step actions  
@@ -2244,26 +2260,24 @@ function lgMarkSent(stepIdx) {
   openModal('lgOutcomeModal');  
 }
 
-function lgSelectOutcome(outcome, btn) {  
-  document.getElementById('lgOutcomeRateRow').querySelectorAll('.lg-outcome-btn').forEach(b => b.classList.remove('selected'));  
-  btn.classList.add('selected');  
-  window._lgPendingOutcome = outcome;  
-  const wrap = document.getElementById('lgOutcomeReplyWrap');  
-  wrap.style.display = 'block';  
-  wrap.style.animation = 'slide-up 0.25s ease both';  
+function lgSelectOutcome(outcome, btn) {
+  document.getElementById('lgOutcomeRateRow').querySelectorAll('.lg-outcome-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  window._lgPendingOutcome = outcome;
 }
 
-async function submitStepOutcome() {  
-  const outcome = window._lgPendingOutcome;  
-  if (!outcome) { showToast('pick how it went first'); return; }
+async function submitStepOutcome(skip = false) {
+  const outcome = window._lgPendingOutcome || (skip ? 'meh' : null);
+  if (!outcome && !skip) { showToast('rate how it went first, or tap skip'); return; }
+  const effectiveOutcome = outcome || 'meh';
 
   const game       = _activeLgGame;  
   const stepIdx    = _activeLgStepIdx;  
   const step       = game.steps[stepIdx];  
   const theirReply = document.getElementById('lgOutcomeReply').value.trim();
 
-  step.status     = 'done';  
-  step.outcome    = outcome;  
+  step.status     = 'done';
+  step.outcome    = effectiveOutcome;
   step.theirReply = theirReply || null;
 
   closeModal('lgOutcomeModal');
@@ -2286,14 +2300,27 @@ async function submitStepOutcome() {
   wrap.appendChild(adjustCard);  
   adjustCard.scrollIntoView({ behavior: 'smooth', block: 'end' });
 
-  try {  
-    const prompt = `  
-Game goal: ${game.goal}  
-Step just completed: "${step.title}"  
-Draft sent: "${step.draft}"  
-Outcome: ${outcome}  
-Their reply: ${theirReply || 'not provided'}  
-Remaining steps to adjust: ${JSON.stringify(remaining.map(s => ({ title: s.title, intent: s.intent, draft: s.draft })))}`;
+  try {
+    const completedSteps = game.steps
+      .slice(0, stepIdx + 1)
+      .filter(s => s.status === 'done')
+      .map((s, i) => ({
+        step: i + 1,
+        title: s.title,
+        draft: s.draft,
+        outcome: s.outcome || 'unknown',
+        theirReply: s.theirReply || null,
+        ariaNote: s.ariaNote || null
+      }));
+
+    const historyText = completedSteps.map(s => {
+      let line = 'Step ' + s.step + ' — "' + s.title + '"\n  Sent: "' + s.draft + '"\n  Outcome: ' + s.outcome;
+      if (s.theirReply) line += '\n  Their reply: "' + s.theirReply + '"';
+      if (s.ariaNote)   line += '\n  Aria\'s read: ' + s.ariaNote;
+      return line;
+    }).join('\n\n');
+
+    const prompt = 'Game goal: ' + game.goal + '\nSituation: ' + (game.situation || '') + '\n\nFULL CONVERSATION HISTORY SO FAR:\n' + historyText + '\n\nNOW ADJUST THE REMAINING STEPS based on the full arc above, not just the last step.\nRemaining steps to adjust: ' + JSON.stringify(remaining.map(s => ({ title: s.title, intent: s.intent, draft: s.draft })))
 
     const raw    = await fetchReply(LG_ADJUST_SYSTEM, prompt);  
     // Robust brace-counter — same fix as game plan setup parser  

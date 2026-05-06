@@ -1279,19 +1279,22 @@
     <button class="modal-close" onclick="closeModal('lgOutcomeModal')">×</button>
     <div class="modal-title">how did that land?</div>
     <div class="modal-sub" id="lgOutcomeSub">I'll adjust the next step based on what you tell me.</div>
-    <!-- Step 1: Rate it -->
+    <!-- Rate it -->
     <div id="lgOutcomeRateRow" class="lg-outcome-row">
       <button class="lg-outcome-btn good" onclick="lgSelectOutcome('good', this)">🔥 went well</button>
       <button class="lg-outcome-btn meh"  onclick="lgSelectOutcome('meh', this)">😐 okay-ish</button>
       <button class="lg-outcome-btn bad"  onclick="lgSelectOutcome('bad', this)">💀 backfired</button>
     </div>
 
-    <!-- Step 2: Paste reply (revealed after rating) -->
-    <div id="lgOutcomeReplyWrap" style="display:none;margin-top:14px;">
+    <!-- Paste reply — shown immediately, not gated behind rating -->
+    <div id="lgOutcomeReplyWrap" style="margin-top:14px;">
       <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;">THEIR REPLY (optional — helps me write the next move)</div>
       <textarea class="lg-setup-textarea" id="lgOutcomeReply" placeholder="paste what they said..." rows="3"></textarea>
       <button class="lg-setup-btn" style="margin-top:12px;" onclick="submitStepOutcome()">
         got it — adjust the plan →
+      </button>
+      <button style="width:100%;margin-top:8px;padding:11px;background:none;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;" onclick="submitStepOutcome(true)">
+        skip — just move to next step
       </button>
     </div>
   </div>
