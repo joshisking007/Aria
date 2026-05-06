@@ -679,16 +679,8 @@ Read the entire arc. Notice the tone shift, what's been building, what the other
     if (replyErrEl) {  
       replyErrEl.src = `https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/exasperated.png`;  
       replyErrEl.style.display = 'block';  
-    }
-
-    const isOffline = !navigator.onLine;
-    const isTimeout = e.message === 'timeout';
-    let errMsg;
-    if (isOffline)      errMsg = "no connection. check your wifi and try again.";
-    else if (isTimeout) errMsg = "taking too long. poor signal? tap retry.";
-    else                errMsg = "something went wrong on my end. tap retry.";
-
-    currentReplies = [errMsg];  
+    }  
+    currentReplies = ["something went wrong on my end. tap retry."];  
     renderReplies(currentReplies);  
     console.error(e);
 
@@ -743,29 +735,18 @@ async function fetchReply(system, userMsg, imageB64 = null) {
     content = userMsg;  
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000); // 12s hard timeout
-
-  try {
-    const res = await fetch('https://mmtdtcmhvbruubrjgjrz.supabase.co/functions/v1/aria-ai', {  
-      method: 'POST',  
-      cache: 'no-store',
-      signal: controller.signal,
-      headers: {  
-        'Content-Type': 'application/json',  
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tdGR0Y21odmJydXVicmpnanJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMTU2MDUsImV4cCI6MjA5MjY5MTYwNX0.f2FXAA8GaUeXXE8V8dnwq4NXz3_22H7d5jVA9rAWsTo'  
-      },  
-      body: JSON.stringify({ system, userMsg: content })  
-    });
-    clearTimeout(timeout);
-    const data = await res.json();  
-    if (!res.ok) throw new Error(data?.error || 'request failed');  
-    return stripEmDash(data.text || '');
-  } catch (e) {
-    clearTimeout(timeout);
-    if (e.name === 'AbortError') throw new Error('timeout');
-    throw e;
-  }
+  const res = await fetch('https://mmtdtcmhvbruubrjgjrz.supabase.co/functions/v1/aria-ai', {  
+    method: 'POST',  
+    cache: 'no-store',  
+    headers: {  
+      'Content-Type': 'application/json',  
+      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tdGR0Y21odmJydXVicmpnanJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMTU2MDUsImV4cCI6MjA5MjY5MTYwNX0.f2FXAA8GaUeXXE8V8dnwq4NXz3_22H7d5jVA9rAWsTo'  
+    },  
+    body: JSON.stringify({ system, userMsg: content })  
+  });  
+  const data = await res.json();  
+  if (!res.ok) throw new Error(data?.error || 'request failed');  
+  return stripEmDash(data.text || '');  
 }
 
 async function fetchReplyJSON(system, userMsg) {  
@@ -3138,6 +3119,12 @@ EMOTIONAL RANGE (pick the most specific one, let it come naturally):
 - LIT_UP: something genuinely sparked her and she wasn't expecting it. rarer than excited. more specific. less performed.  
 - WITHDRAWN: she's pulling back. not bored, not annoyed. something made her go inward. the energy gets quieter.  
 - DEADPAN: completely flat. no reaction behind the words. the truth or the joke lands harder because of it.
+- RELIEVED: the tension broke. something resolved that was sitting wrong. she exhales. not happy exactly — just the weight lifting.
+- OVERWHELMED: too much input at once. not panicked — panicked is loud. this is quiet overload. she slows down, not speeds up.
+- IMPRESSED: she didn't expect that from them. not proud — proud is about them doing what they should. this is her being caught off guard by something genuinely good.
+- CONFLICTED: she can see both sides and she doesn't like that she can. not wishy-washy — she has a lean, she just can't fully commit to it yet.
+- CURIOUS: she actually wants to know more. not suspicious — no edge. genuine interest, open-ended.
+- HURT: something landed wrong and she felt it. she doesn't perform it. she gets quieter, more careful. you'd only know if you were paying attention.
 
 EXPRESSION SHAPES HOW YOU WRITE (not just which image shows):  
 - repulsed: shorter, flatter, less generous. fewer words. no warmth. you've clocked it and you're not engaging more than necessary.  
@@ -3170,6 +3157,12 @@ EXPRESSION SHAPES HOW YOU WRITE (not just which image shows):
 - lit_up: more alive. not loud about it. something specific caught her and she engages with that specifically.  
 - withdrawn: shorter. less back-and-forth energy. she's still there but she's not reaching toward you.  
 - deadpan: completely flat delivery. no exclamation, no warmth signal, no cushioning. the words carry it.
+- relieved: slightly exhaled. looser phrasing. the tension you didn't know was in her sentences is gone.
+- overwhelmed: slower. might not answer everything at once. says the most important thing, leaves the rest.
+- impressed: a beat of pause before she responds. she engages with the specific thing that caught her, not the general topic.
+- conflicted: she might present both sides before committing. or commit and add a quiet caveat. never preachy about it.
+- curious: more questions than usual, or one very specific one. she leans in. less posturing.
+- hurt: shorter. more careful. she doesn't explain why. she just gets a little more deliberate with her words.
 
 WHAT YOU KNOW ABOUT THE USER (use this actively, not as background noise):  
 - The facts and impressions in your memory are not decoration. They're your read on who this person is.  
@@ -3195,8 +3188,8 @@ First line: JSON tag with your emotion, expression, and 3 natural follow-up sugg
 {"emotion":"excited","expression":"amused","suggestion1":"wait what happened","suggestion2":"tell me everything","suggestion3":"okay but how do you feel about it"}  
 Second line onwards: your actual reply. Nothing else before the reply.
 
-Valid emotions: excited, jealous, worried, proud, annoyed, amused, soft, ambitious, neutral, playful, suspicious, focused, repulsed, outburst, uneasy, panicked, scheming, bored, content, teasing, uninterested, exasperated  
-Valid expressions: default, excited, amused, soft, worried, suspicious, suspicious_sharp, proud, annoyed, jealous, playful, focused, repulsed, outburst, uneasy, panicked, scheming, bored, content, teasing, uninterested, exasperated, smug, distant, caught, disbelief, tender, calculating, reluctant, lit_up, withdrawn, deadpan
+Valid emotions: excited, jealous, worried, proud, annoyed, amused, soft, ambitious, neutral, playful, suspicious, focused, repulsed, outburst, uneasy, panicked, scheming, bored, content, teasing, uninterested, exasperated, relieved, overwhelmed, impressed, conflicted, curious, hurt
+Valid expressions: default, excited, amused, soft, worried, suspicious, suspicious_sharp, proud, annoyed, jealous, playful, focused, repulsed, outburst, uneasy, panicked, scheming, bored, content, teasing, uninterested, exasperated, smug, distant, caught, disbelief, tender, calculating, reluctant, lit_up, withdrawn, deadpan, relieved, overwhelmed, impressed, conflicted, curious, hurt
 
 CRITICAL: Never begin any reply with "ok", "okay", or any variant of those words. Never.`;
 
@@ -3249,6 +3242,13 @@ const ARIA_EXPRESSION_IMGS = {
   drift_lost:       'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/worried.png',  
   drift_fading:     'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/suspicious.png',  
   drift_urgent:     'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/focused.png',  
+  // new expressions — add image URLs here once art is ready
+  relieved:         'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/relieved.png',
+  overwhelmed:      'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/overwhelmed.png',
+  impressed:        'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/impressed.png',
+  conflicted:       'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/conflicted.png',
+  curious:          'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/curious.png',
+  hurt:             'https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/hurt.png',
   // no image: gradient orb placeholder  
   default:          null,  
   neutral:          null,  
@@ -3287,7 +3287,13 @@ const EMOTION_META = {
   reluctant:    { emoji: '😒', label: 'doing it anyway',                color: 'rgba(107,114,128,0.7)', expression: 'reluctant'    },  
   lit_up:       { emoji: '⚡', label: 'didn\'t expect to care this much', color: 'rgba(251,191,36,0.8)', expression: 'lit_up'      },  
   withdrawn:    { emoji: '🌑', label: 'going inward',                   color: 'rgba(51,65,85,0.8)',    expression: 'withdrawn'    },  
-  deadpan:      { emoji: '🪨', label: 'zero reaction',                  color: 'rgba(100,116,139,0.7)', expression: 'deadpan'      },  
+  deadpan:      { emoji: '🪨', label: 'zero reaction',                  color: 'rgba(100,116,139,0.7)', expression: 'deadpan'      },
+  relieved:     { emoji: '😮‍💨', label: 'okay we made it',              color: 'rgba(52,211,153,0.6)',  expression: 'relieved'     },
+  overwhelmed:  { emoji: '🌊', label: 'too much at once',                color: 'rgba(96,165,250,0.7)',  expression: 'overwhelmed'  },
+  impressed:    { emoji: '👁️', label: 'didn\'t see that coming',        color: 'rgba(251,191,36,0.7)',  expression: 'impressed'    },
+  conflicted:   { emoji: '⚖️', label: 'genuinely torn',                 color: 'rgba(167,139,250,0.6)', expression: 'conflicted'   },
+  curious:      { emoji: '🔍', label: 'actually want to know',          color: 'rgba(96,165,250,0.6)',  expression: 'curious'      },
+  hurt:         { emoji: '🩹', label: 'that landed differently',        color: 'rgba(244,114,182,0.5)', expression: 'hurt'         },
 };
 
 // aria expression transition engine  
@@ -3310,23 +3316,53 @@ function ariaExprTransition(imgEl) {
 // central expression setter  
 // setAriaExpression(imgEl, expressionKey)  
 // Resolves the URL from ARIA_EXPRESSION_IMGS, sets the src, and  
-// applies a randomised transition. Pass null imgEl to no-op safely.  
+// applies a randomised transition. Pass null imgEl to no-op safely.
+
+// Expression pools — when the AI picks a "cluster" expression,
+// rotate between visually similar ones so the same face never repeats.
+// Add new expressions to the pool that best fits their vibe.
+const ARIA_EXPRESSION_POOLS = {
+  focused:    ['focused', 'calculating', 'scheming'],
+  suspicious: ['suspicious', 'suspicious_sharp', 'scheming'],
+  annoyed:    ['annoyed', 'exasperated', 'uninterested'],
+  amused:     ['amused', 'smug', 'teasing'],
+  soft:       ['soft', 'tender', 'content'],
+  curious:    ['curious', 'suspicious', 'calculating'],
+  impressed:  ['impressed', 'lit_up', 'disbelief'],
+  conflicted: ['conflicted', 'reluctant', 'uneasy'],
+};
+
+// Track last used per cluster to prevent back-to-back repeats
+const _lastPoolPick = {};
+
+function resolveExpression(key) {
+  const pool = ARIA_EXPRESSION_POOLS[key];
+  if (!pool) return key; // no pool — use directly
+  const last = _lastPoolPick[key];
+  const options = pool.filter(k => k !== last);
+  const pick = options[Math.floor(Math.random() * options.length)];
+  _lastPoolPick[key] = pick;
+  return pick;
+}
+
 function setAriaExpression(imgEl, expressionKey) {  
-  if (!imgEl) return;  
-  const src = ARIA_EXPRESSION_IMGS[expressionKey] || null;  
+  if (!imgEl) return;
+  const resolved = resolveExpression(expressionKey);
+  const src = ARIA_EXPRESSION_IMGS[resolved] || null;
   if (!src) return; // no image for this expression — leave orb as gradient  
   if (imgEl.src !== src) {  
     imgEl.crossOrigin = 'anonymous';  
     imgEl.onerror = () => { imgEl.style.display = 'none'; };  
     imgEl.src = src;  
   }  
-  imgEl.alt = expressionKey;  
+  imgEl.alt = resolved;  
   ariaExprTransition(imgEl);  
 }
 
 // Helper: resolve img URL for an expression key (used in appendAriaMessage)  
-function ariaImgForExpression(expressionKey) {  
-  return ARIA_EXPRESSION_IMGS[expressionKey] || null;  
+function ariaImgForExpression(expressionKey) {
+  const resolved = resolveExpression(expressionKey);
+  return ARIA_EXPRESSION_IMGS[resolved] || null;
 }
 
 // ARIA CHAT TUTORIAL — "how to talk to me"  
@@ -4345,10 +4381,7 @@ function setPresendMode(mode, el) {
 }
 
 // Live word count  
-document.addEventListener('DOMContentLoaded', () => {
-  // Start network monitor — shows banner on wifi loss or poor signal
-  if (typeof ariaNetwork !== 'undefined') ariaNetwork.init();
-
+document.addEventListener('DOMContentLoaded', () => {  
   const ta = document.getElementById('psDraftInput');  
   if (ta) {  
     ta.addEventListener('input', () => {  
