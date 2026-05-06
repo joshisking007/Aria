@@ -2220,6 +2220,14 @@ textarea.presend-input::placeholder { color: var(--muted); }
 }
 
 .presend-context-wrap { padding: 0 20px; margin-bottom: 16px; }
+#psExtraContextRow select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+#psExtraContextRow select:focus { outline: none; border-color: rgba(244,114,182,0.35) !important; }
+#psExtraContextRow select option { background: #1a1a1a; color: #f0ece4; }
 textarea.presend-context-input {
   width: 100%; background: var(--card2); border: 1px solid var(--border);
   border-radius: var(--radius-md); padding: 12px 14px;
@@ -2528,11 +2536,11 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   margin: 12px 20px 20px;
   width: calc(100% - 40px);
   padding: 14px; border: none;
-  background: linear-gradient(135deg, #7c3aed, #a78bfa);
+  background: linear-gradient(135deg, #059669, #34d399);
   border-radius: 14px; color: #fff;
   font-size: 15px; font-family: 'DM Sans', sans-serif;
   font-weight: 600; cursor: pointer; display: block;
-  box-shadow: 0 4px 20px rgba(124,58,237,0.3);
+  box-shadow: 0 4px 20px rgba(52,211,153,0.3);
 }
 
 .lg-section-label {
@@ -2718,7 +2726,20 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   background: var(--card); border: 1px solid var(--rose-border);
   border-radius: 4px 14px 14px 14px;
   padding: 10px 14px; font-size: 13px; color: var(--text2);
-  line-height: 1.55; font-style: italic; flex: 1;
+  line-height: 1.55; flex: 1;
+}
+.tutorial-bubble-headline {
+  font-weight: 600; color: var(--text); font-size: 13px; display: block; margin-bottom: 2px;
+}
+.tutorial-bubble-sub {
+  font-size: 12px; color: var(--muted); font-style: italic;
+}
+.tutorial-method-num {
+  font-size: 15px !important; font-weight: 700 !important;
+  color: var(--text) !important; font-style: normal;
+  background: linear-gradient(135deg, rgba(56,189,248,0.15), rgba(52,211,153,0.15)) !important;
+  border: 1px solid rgba(56,189,248,0.3) !important;
+  font-family: 'Barlow', sans-serif;
 }
 .tutorial-title {
   font-family: 'Instrument Serif', serif;
@@ -3036,6 +3057,18 @@ textarea.presend-context-input::placeholder { color: var(--muted); }
   color: var(--muted);
   margin-bottom: 18px;
   user-select: none;
+}
+.pl-brand span {
+  font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  font-weight: 300;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  background: linear-gradient(90deg, #93c5fd 0%, #6ee7b7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 6px rgba(59,130,246,0.25));
 }
 .pl-logo {
   width: 18px;

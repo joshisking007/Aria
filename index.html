@@ -325,7 +325,6 @@
 
       <!-- Brand — right under tagline, no large gap -->
       <div class="pl-brand pl-brand--intro">
-        <img src="https://i.imgur.com/3IXfEl4.jpeg" class="pl-logo" alt="Paradigm Leveling"/>
         <span>by Paradigm Leveling</span>
       </div>
 
@@ -355,7 +354,7 @@
         <div class="stat-label">contacts</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num" id="statStreak">🔥0</div>
+        <div class="stat-num" id="statStreak">0</div>
         <div class="stat-label">day streak</div>
       </div>
     </div>
@@ -364,11 +363,11 @@
     <div class="mood-strip" id="moodStrip">
       <div class="mood-label">YOUR VIBE RIGHT NOW</div>
       <div class="mood-pills">
-        <button class="mood-pill" onclick="setMood('chill','😌 chill',this)">😌 chill</button>
-        <button class="mood-pill" onclick="setMood('hype','🔥 hyped',this)">🔥 hyped</button>
-        <button class="mood-pill" onclick="setMood('deep','🌊 in my feels',this)">🌊 in my feels</button>
-        <button class="mood-pill" onclick="setMood('funny','🫣 chaotic',this)">🫣 chaotic</button>
-        <button class="mood-pill" onclick="setMood('busy','⚡ busy',this)">⚡ busy</button>
+        <button class="mood-pill" onclick="setMood('chill','chill',this)">chill</button>
+        <button class="mood-pill" onclick="setMood('hype','hyped',this)">hyped</button>
+        <button class="mood-pill" onclick="setMood('deep','in my feels',this)">in my feels</button>
+        <button class="mood-pill" onclick="setMood('funny','chaotic',this)">chaotic</button>
+        <button class="mood-pill" onclick="setMood('busy','busy',this)">busy</button>
       </div>
     </div>
 
@@ -430,7 +429,7 @@
         </span>
         <div class="option-label">
           <div>the long game</div>
-          <div class="option-sub" style="color:rgba(167,139,250,0.8);">map out a multi-step conversation plan</div>
+          <div class="option-sub" style="color:var(--green);">map out a multi-step conversation plan</div>
         </div>
         <span class="option-arrow" style="color:#a78bfa;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
       </button>
@@ -448,14 +447,14 @@
       <div class="top-bar-name">Aria</div>
       <div class="top-bar-status" id="contactScreenStatus">● active</div>
     </div>
-    <button class="mute-btn" id="muteBtnContact" onclick="toggleMute()" title="mute / unmute">🔊</button>
+    <button class="mute-btn" id="muteBtnContact" onclick="toggleMute()" title="mute / unmute"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></button>
     <button class="back-btn" onclick="openModal('addContactModal')" title="Add contact" style="font-size:18px;">+</button>
   </div>
 
   <!-- Search -->
   <div class="search-wrap">
     <div class="search-input-wrap">
-      <span class="search-icon">🔍</span>
+      <span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
       <input class="search-input" id="contactSearch" placeholder="search contacts..." oninput="filterContacts(this.value)"/>
     </div>
   </div>
@@ -480,20 +479,20 @@
       <div class="top-bar-name" id="replyTopName">Aria</div>
       <div class="top-bar-status" id="replyTopStatus">● ready</div>
     </div>
-    <button class="mute-btn" id="muteBtnReply" onclick="toggleMute()" title="mute / unmute">🔊</button>
-    <button class="back-btn" onclick="openModal('toneModal')" title="Tone settings" style="font-size:14px;">🎛️</button>
+    <button class="mute-btn" id="muteBtnReply" onclick="toggleMute()" title="mute / unmute"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></button>
+    <button class="back-btn" onclick="openModal('toneModal')" title="Tone settings" style="font-size:14px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></button>
   </div>
 
   <!-- Tone quick-strip -->
   <div class="tone-strip" id="toneStrip">
-    <div class="tone-chip active" data-tone="natural" onclick="quickTone(this)">✨ natural</div>
-    <div class="tone-chip" data-tone="funny" onclick="quickTone(this)">💀 funny</div>
-    <div class="tone-chip" data-tone="warm" onclick="quickTone(this)">🤍 warm</div>
-    <div class="tone-chip" data-tone="brief" onclick="quickTone(this)">⚡ brief</div>
-    <div class="tone-chip" data-tone="sarcastic" onclick="quickTone(this)">😏 savage</div>
-    <div class="tone-chip" data-tone="soft" onclick="quickTone(this)">🌸 soft</div>
-    <div class="tone-chip" data-tone="hype" onclick="quickTone(this)">🔥 hype</div>
-    <div class="tone-chip" data-tone="formal" onclick="quickTone(this)">🎩 formal</div>
+    <div class="tone-chip active" data-tone="natural" onclick="quickTone(this)">natural</div>
+    <div class="tone-chip" data-tone="funny" onclick="quickTone(this)">funny</div>
+    <div class="tone-chip" data-tone="warm" onclick="quickTone(this)">warm</div>
+    <div class="tone-chip" data-tone="brief" onclick="quickTone(this)">brief</div>
+    <div class="tone-chip" data-tone="sarcastic" onclick="quickTone(this)">savage</div>
+    <div class="tone-chip" data-tone="soft" onclick="quickTone(this)">soft</div>
+    <div class="tone-chip" data-tone="hype" onclick="quickTone(this)">hype</div>
+    <div class="tone-chip" data-tone="formal" onclick="quickTone(this)">formal</div>
   </div>
 
   <!-- Platform selector -->
@@ -503,7 +502,7 @@
       <button class="platform-pill instagram active" data-platform="Instagram" onclick="setPlatform(this)">Instagram</button>
       <button class="platform-pill imessage" data-platform="iMessage" onclick="setPlatform(this)">iMessage</button>
       <button class="platform-pill whatsapp" data-platform="WhatsApp" onclick="setPlatform(this)">WhatsApp</button>
-      <button class="platform-pill twitter" data-platform="Twitter" onclick="setPlatform(this)">𝕏 Twitter</button>
+      <button class="platform-pill twitter" data-platform="Twitter" onclick="setPlatform(this)">X / Twitter</button>
       <button class="platform-pill snapchat" data-platform="Snapchat" onclick="setPlatform(this)">Snapchat</button>
     </div>
   </div>
@@ -544,7 +543,7 @@
         <div class="context-panel" id="ctxPanelScreenshot">
           <div class="screenshot-drop" id="screenshotDrop">
             <input type="file" accept="image/*" onchange="handleScreenshotUpload(this)" />
-            <div class="screenshot-drop-icon">📷</div>
+            <div class="screenshot-drop-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
             <div class="screenshot-drop-text">tap to upload a screenshot<br><span style="font-size:10px;opacity:0.6;">jpg, png — I'll read the convo</span></div>
           </div>
           <img class="screenshot-preview" id="screenshotPreview" />
@@ -599,23 +598,23 @@
     </div>
     <div style="padding:0 20px;margin-bottom:10px;">
       <button class="action-btn-sm" style="width:100%;padding:12px;border-color:var(--rose-border);color:var(--rose);" onclick="continueConvo()">
-        💬 they replied — continue the thread
+        they replied — continue the thread
       </button>
     </div>
 
     <!-- Action buttons row 2 -->
     <div class="action-row-2">
       <button class="action-btn-sm" onclick="makeFormalerOrCasual('formal')">
-        <span class="btn-icon">🎩</span>more formal
+        <span class="btn-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h20v-4H2v4z"/><path d="M4 16V10a8 8 0 0 1 16 0v6"/></svg></span>more formal
       </button>
       <button class="action-btn-sm" onclick="makeFormalerOrCasual('casual')">
-        <span class="btn-icon">😎</span>more casual
+        <span class="btn-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></span>more casual
       </button>
       <button class="action-btn-sm" onclick="makeShorterOrLonger('shorter')">
-        <span class="btn-icon">✂️</span>shorter
+        <span class="btn-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg></span>shorter
       </button>
       <button class="action-btn-sm" onclick="makeShorterOrLonger('longer')">
-        <span class="btn-icon">📝</span>longer
+        <span class="btn-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>longer
       </button>
     </div>
 
@@ -628,7 +627,7 @@
     <!-- Save button -->
     <div style="padding: 0 20px; margin-bottom: 16px;">
       <button class="action-btn-sm" style="width:100%;padding:12px;" onclick="saveToHistory()">
-        <span style="font-size:14px;">💾 save this reply to history</span>
+        <span style="font-size:14px;">save this reply to history</span>
       </button>
     </div>
 
@@ -672,7 +671,7 @@
 
   <!-- Streak banner -->
   <div class="streak-banner">
-    <span class="streak-flame">🔥</span>
+    <span class="streak-flame"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 2s2 3 2 6a2 2 0 0 1-4 0c0-3 2-6 2-6z"/></svg></span>
     <div class="streak-info">
       <div class="streak-num" id="profileStreakNum">0 days</div>
       <div class="streak-label">reply streak — keep it going</div>
@@ -685,7 +684,7 @@
     <div class="profile-section-title">YOUR TEXTING STYLE</div>
     <div class="profile-card">
       <div class="profile-row">
-        <span class="profile-row-icon">🔡</span>
+        <span class="profile-row-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg></span>
         <div class="profile-row-info">
           <div class="profile-row-label">Capitalisation</div>
           <div class="profile-row-sub">lowercase everything</div>
@@ -709,7 +708,7 @@
         </div>
       </div>
       <div class="profile-row">
-        <span class="profile-row-icon">😂</span>
+        <span class="profile-row-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></span>
         <div class="profile-row-info">
           <div class="profile-row-label">Emojis</div>
           <div class="profile-row-sub">sparse — only when it lands</div>
@@ -737,8 +736,8 @@
         <span class="trait-pill">idk</span>
         <span class="trait-pill">ngl</span>
         <span class="trait-pill">lmk</span>
-        <span class="trait-pill">💀</span>
-        <span class="trait-pill">🙏</span>
+        <span class="trait-pill"></span>
+        <span class="trait-pill"></span>
         <span class="trait-pill muted">+ add your own</span>
       </div>
       <input class="profile-input" id="slangInput" placeholder="add a word or phrase…" onkeydown="addSlang(event)"/>
@@ -763,12 +762,12 @@
     <div class="profile-section-title">DEFAULT TONE</div>
     <div style="padding:0 20px;">
       <div class="tone-pills">
-        <button class="tone-pill active" onclick="setDefaultTone('real',this)">💬 real talk</button>
-        <button class="tone-pill" onclick="setDefaultTone('funny',this)">😂 funny</button>
-        <button class="tone-pill" onclick="setDefaultTone('warm',this)">🤗 warm</button>
-        <button class="tone-pill" onclick="setDefaultTone('brief',this)">⚡ brief</button>
-        <button class="tone-pill" onclick="setDefaultTone('hype',this)">🔥 hype</button>
-        <button class="tone-pill" onclick="setDefaultTone('soft',this)">🕊️ soft</button>
+        <button class="tone-pill active" onclick="setDefaultTone('real',this)">real talk</button>
+        <button class="tone-pill" onclick="setDefaultTone('funny',this)">funny</button>
+        <button class="tone-pill" onclick="setDefaultTone('warm',this)">warm</button>
+        <button class="tone-pill" onclick="setDefaultTone('brief',this)">brief</button>
+        <button class="tone-pill" onclick="setDefaultTone('hype',this)">hype</button>
+        <button class="tone-pill" onclick="setDefaultTone('soft',this)">soft</button>
       </div>
     </div>
   </div>
@@ -819,8 +818,8 @@
 
         <!-- Language tabs -->
         <div style="display:flex;gap:6px;margin-top:16px;margin-bottom:10px;">
-          <button class="voice-lang-tab active" id="tabEN" onclick="setVoiceLang('en',this)">🇺🇸 English</button>
-          <button class="voice-lang-tab" id="tabJA" onclick="setVoiceLang('ja',this)">🇯🇵 Japanese</button>
+          <button class="voice-lang-tab active" id="tabEN" onclick="setVoiceLang('en',this)">English</button>
+          <button class="voice-lang-tab" id="tabJA" onclick="setVoiceLang('ja',this)">Japanese</button>
         </div>
 
         <!-- Voice list -->
@@ -852,32 +851,32 @@
 
   <div class="mood-grid">
     <div class="mood-card stagger-1" onclick="setMoodFull('chill','😌',this)">
-      <div class="mood-card-emoji">😌</div>
+      <div class="mood-card-emoji"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div>
       <div class="mood-card-label">chill</div>
       <div class="mood-card-sub">relaxed, low effort, easy vibes</div>
     </div>
     <div class="mood-card stagger-2" onclick="setMoodFull('hype','🔥',this)">
-      <div class="mood-card-emoji">🔥</div>
+      <div class="mood-card-emoji"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 2s2 3 2 6a2 2 0 0 1-4 0c0-3 2-6 2-6z"/></svg></div>
       <div class="mood-card-label">hyped</div>
       <div class="mood-card-sub">high energy, excited, enthusiastic</div>
     </div>
     <div class="mood-card stagger-3" onclick="setMoodFull('deep','🌊',this)">
-      <div class="mood-card-emoji">🌊</div>
+      <div class="mood-card-emoji"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12c1.5-2 3.5-2 5 0s3.5 2 5 0 3.5-2 5 0"/><path d="M2 17c1.5-2 3.5-2 5 0s3.5 2 5 0 3.5-2 5 0"/><path d="M2 7c1.5-2 3.5-2 5 0s3.5 2 5 0 3.5-2 5 0"/></svg></div>
       <div class="mood-card-label">in my feels</div>
       <div class="mood-card-sub">reflective, emotional, deep</div>
     </div>
     <div class="mood-card stagger-4" onclick="setMoodFull('funny','💀',this)">
-      <div class="mood-card-emoji">💀</div>
+      <div class="mood-card-emoji"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2a9 9 0 0 0-9 9v1a9 9 0 0 0 9 9 9 9 0 0 0 9-9v-1a9 9 0 0 0-9-9z"/><line x1="9" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="15" y2="12"/><path d="M9 16h6"/></svg></div>
       <div class="mood-card-label">chaotic</div>
       <div class="mood-card-sub">unhinged, funny, chaotic good</div>
     </div>
     <div class="mood-card stagger-5" onclick="setMoodFull('busy','⚡',this)">
-      <div class="mood-card-emoji">⚡</div>
+      <div class="mood-card-emoji"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
       <div class="mood-card-label">busy</div>
       <div class="mood-card-sub">short replies, straight to the point</div>
     </div>
     <div class="mood-card stagger-1" onclick="setMoodFull('sad','🥺',this)">
-      <div class="mood-card-emoji">🥺</div>
+      <div class="mood-card-emoji"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 15s1.5-1 4-1 4 1 4 1"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div>
       <div class="mood-card-label">soft</div>
       <div class="mood-card-sub">gentle, warm, careful with words</div>
     </div>
@@ -893,9 +892,9 @@
     <div class="aria-mini" style="background:radial-gradient(circle at 35% 35%,#f9a8d4,#ec4899);box-shadow:0 0 16px rgba(244,114,182,0.35);flex-shrink:0;border-radius:50%;"></div>
     <div class="top-bar-info">
       <div class="top-bar-name">Pre-Send Check</div>
-      <div class="top-bar-status">🛑 I read it before you do</div>
+      <div class="top-bar-status">I read it before you do</div>
     </div>
-    <button class="mute-btn" onclick="toggleMute()">🔊</button>
+    <button class="mute-btn" onclick="toggleMute()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></button>
   </div>
 
   <!-- Header banner -->
@@ -908,13 +907,13 @@
   <!-- Mode pills -->
   <div class="presend-mode-strip">
     <div class="presend-mode-pill active" id="psMode_check" onclick="setPresendMode('check',this)">
-      <span class="pill-icon">🔍</span>just check it
+      <span class="pill-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>just check it
     </div>
     <div class="presend-mode-pill" id="psMode_fix" onclick="setPresendMode('fix',this)">
-      <span class="pill-icon">✏️</span>also fix it
+      <span class="pill-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span>also fix it
     </div>
     <div class="presend-mode-pill" id="psMode_roast" onclick="setPresendMode('roast',this)">
-      <span class="pill-icon">🔥</span>be brutal
+      <span class="pill-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c0 0-5 4-5 9a5 5 0 0 0 10 0c0-5-5-9-5-9z"/><path d="M12 2s2 3 2 6a2 2 0 0 1-4 0c0-3 2-6 2-6z"/></svg></span>be brutal
     </div>
   </div>
 
@@ -928,6 +927,44 @@
   <div class="presend-who-row" id="psWhoFallbackRow" style="margin-top:6px;">
     <span class="presend-who-label" style="visibility:hidden;">TO:</span>
     <input class="presend-who-input" id="psWhoInput" placeholder='e.g. "my ex" or "someone i like"' style="flex:1;" />
+  </div>
+
+  <!-- Extra context for non-contact recipients -->
+  <div id="psExtraContextRow" style="padding:0 20px;margin-top:6px;display:flex;flex-direction:column;gap:8px;">
+    <div style="display:flex;gap:8px;">
+      <select class="presend-who-input" id="psRelType" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;">
+        <option value="">relationship type...</option>
+        <option value="crush">crush / someone i like</option>
+        <option value="ex">ex</option>
+        <option value="friend">friend</option>
+        <option value="bestfriend">best friend</option>
+        <option value="colleague">colleague / coworker</option>
+        <option value="boss">boss / manager</option>
+        <option value="family">family</option>
+        <option value="acquaintance">acquaintance</option>
+        <option value="stranger">someone i just met</option>
+        <option value="situationship">situationship</option>
+      </select>
+      <select class="presend-who-input" id="psIntentType" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;">
+        <option value="">my intent...</option>
+        <option value="reconnect">reconnecting</option>
+        <option value="apologise">apologising</option>
+        <option value="flirt">flirting</option>
+        <option value="confront">confronting something</option>
+        <option value="decline">declining / saying no</option>
+        <option value="checkup">checking in</option>
+        <option value="plan">making plans</option>
+        <option value="vent">venting / expressing feelings</option>
+        <option value="professional">professional / work-related</option>
+      </select>
+    </div>
+    <select class="presend-who-input" id="psUrgencyType" style="background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;width:100%;">
+      <option value="">how urgent is this?</option>
+      <option value="urgent">urgent — need to send now</option>
+      <option value="thinking">thinking it over — not urgent</option>
+      <option value="drafted">already drafted, just want a check</option>
+      <option value="overthinking">probably overthinking it</option>
+    </select>
   </div>
 
   <!-- Draft textarea -->
@@ -944,7 +981,7 @@
   </div>
 
   <!-- Run button -->
-  <button class="presend-run-btn" id="psRunBtn" onclick="runPresend()">🛑 let me check it →</button>
+  <button class="presend-run-btn" id="psRunBtn" onclick="runPresend()">let me check it →</button>
 
   <!-- Thinking -->
   <div class="aria-thinking" id="psThinking" style="display:none;">
@@ -957,7 +994,7 @@
   <div class="presend-result" id="psResult" style="display:none;">
     <!-- Verdict card -->
     <div class="presend-verdict-card" id="psVerdictCard">
-      <div class="presend-verdict-emoji" id="psVerdictEmoji">✅</div>
+      <div class="presend-verdict-emoji" id="psVerdictEmoji"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
       <div class="presend-verdict-label" id="psVerdictLabel">VERDICT</div>
       <div class="presend-verdict-headline" id="psVerdictHeadline">looks good</div>
       <div class="presend-verdict-sub" id="psVerdictSub"></div>
@@ -1002,7 +1039,7 @@
     <img src="" class="aria-mini" style="object-fit:cover;object-position:center top;border-radius:50%;" id="glowupAriaImg"/>
     <div class="top-bar-info">
       <div class="top-bar-name">Message Glow-Up</div>
-      <div class="top-bar-status">✨ aria rewrites it in your voice</div>
+      <div class="top-bar-status">aria rewrites it in your voice</div>
     </div>
   </div>
 
@@ -1011,7 +1048,7 @@
     <textarea class="convo-input" id="glowupInput" rows="4" placeholder="paste your rough draft here... doesn't matter how bad it sounds"></textarea>
     <div class="paste-label" style="margin-top:10px;">WHAT VIBE ARE YOU GOING FOR? (optional)</div>
     <textarea class="convo-input" id="glowupGoal" rows="2" placeholder='e.g. "sounds less desperate" or "more chill" or "funnier"'></textarea>
-    <button class="gen-reply-btn" id="glowupBtn" onclick="runGlowup()">✨ glow it up →</button>
+    <button class="gen-reply-btn" id="glowupBtn" onclick="runGlowup()">glow it up →</button>
   </div>
 
   <div class="aria-thinking" id="glowupThinking" style="display:none;">
@@ -1053,7 +1090,7 @@
     <img src="" class="aria-mini" style="object-fit:cover;object-position:center top;border-radius:50%;"/>
     <div class="top-bar-info">
       <div class="top-bar-name">Red Flag Detector</div>
-      <div class="top-bar-status">🚩 I read between the lines</div>
+      <div class="top-bar-status">I read between the lines</div>
     </div>
   </div>
 
@@ -1062,7 +1099,7 @@
     <textarea class="convo-input" id="redflagInput" rows="5" placeholder="paste what they said... I'll analyse the vibe, energy, and any sus patterns"></textarea>
     <div class="paste-label" style="margin-top:10px;">WHO IS THIS? (optional)</div>
     <input class="convo-input" id="redflagWho" style="resize:none;height:auto;padding:12px 16px;" placeholder='e.g. "someone i just started talking to" or "my ex"'/>
-    <button class="gen-reply-btn" id="redflagBtn" onclick="runRedflag()" style="margin-top:10px;">🚩 scan for red flags →</button>
+    <button class="gen-reply-btn" id="redflagBtn" onclick="runRedflag()" style="margin-top:10px;">scan for red flags →</button>
   </div>
 
   <div class="aria-thinking" id="redflagThinking" style="display:none;">
@@ -1073,7 +1110,7 @@
 
   <div class="redflag-result" id="redflagResult">
     <div class="redflag-score-card" id="redflagScoreCard">
-      <div class="redflag-emoji" id="redflagEmoji">🟢</div>
+      <div class="redflag-emoji" id="redflagEmoji"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="20 6 9 17 4 12"/></svg></div>
       <div class="redflag-verdict" id="redflagVerdict">All clear</div>
       <div class="redflag-score-sub" id="redflagScoreSub"></div>
     </div>
@@ -1092,7 +1129,7 @@
     <img src="" class="aria-mini" style="object-fit:cover;object-position:center top;border-radius:50%;"/>
     <div class="top-bar-info">
       <div class="top-bar-name">Vibe Report</div>
-      <div class="top-bar-status">📊 your texting patterns</div>
+      <div class="top-bar-status">your texting patterns</div>
     </div>
   </div>
 
@@ -1136,7 +1173,7 @@
 
     <!-- Step 1: Name -->
     <div class="onboard-step active" id="obStep1">
-      <div class="onboard-title">hey, i'm Aria 👋</div>
+      <div class="onboard-title">hey, i'm Aria</div>
       <div class="onboard-sub">i write your texts for you — in your voice, not mine. first, what should i call you?</div>
       <input class="onboard-input" id="obNameInput" placeholder="your name..." maxlength="30" />
       <button class="onboard-next-btn" onclick="obNext(1)">next →</button>
@@ -1149,22 +1186,22 @@
       <div class="onboard-sub">pick the vibe that fits. i'll match it.</div>
       <div class="onboard-style-grid" id="obStyleGrid">
         <div class="onboard-style-card selected" data-style="chill" onclick="obSelectStyle(this)">
-          <div class="onboard-style-icon">😌</div>
+          <div class="onboard-style-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/></svg></div>
           <div class="onboard-style-name">chill & brief</div>
           <div class="onboard-style-desc">short replies, lowercase, minimal punctuation</div>
         </div>
         <div class="onboard-style-card" data-style="funny" onclick="obSelectStyle(this)">
-          <div class="onboard-style-icon">💀</div>
+          <div class="onboard-style-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2a9 9 0 0 0-9 9v1a9 9 0 0 0 9 9h0a9 9 0 0 0 9-9v-1a9 9 0 0 0-9-9z"/><line x1="9" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="15" y2="12"/></svg></div>
           <div class="onboard-style-name">chaotic & funny</div>
           <div class="onboard-style-desc">unhinged energy, jokes, sarcasm</div>
         </div>
         <div class="onboard-style-card" data-style="warm" onclick="obSelectStyle(this)">
-          <div class="onboard-style-icon">🤍</div>
+          <div class="onboard-style-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
           <div class="onboard-style-name">warm & expressive</div>
           <div class="onboard-style-desc">thoughtful, caring, checks in on people</div>
         </div>
         <div class="onboard-style-card" data-style="formal" onclick="obSelectStyle(this)">
-          <div class="onboard-style-icon">🎩</div>
+          <div class="onboard-style-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 20h20v-4H2v4z"/><path d="M4 16V10a8 8 0 0 1 16 0v6"/></svg></div>
           <div class="onboard-style-name">clean & formal</div>
           <div class="onboard-style-desc">proper grammar, professional, clear</div>
         </div>
@@ -1178,7 +1215,7 @@
       <div class="onboard-sub">who do you text the most? i'll help you reply to them first.</div>
       <input class="onboard-input" id="obContactName" placeholder="their name..." maxlength="30" />
       <input class="onboard-input" id="obContactRel" placeholder="who are they? e.g. best friend, crush, mom..." maxlength="40" style="margin-top:0;" />
-      <button class="onboard-next-btn" onclick="obFinish()">let's go ✨</button>
+      <button class="onboard-next-btn" onclick="obFinish()">let's go</button>
       <div class="onboard-skip" onclick="obSkipAll()">skip for now</div>
     </div>
   </div>
@@ -1263,7 +1300,7 @@
   </div>
   <div class="queue-stack" id="queueStack"></div>
   <div class="queue-swipe-actions" id="queueActions">
-    <button class="queue-action-btn queue-action-snooze" onclick="queueSnooze()">😴 snooze</button>
+    <button class="queue-action-btn queue-action-snooze" onclick="queueSnooze()">snooze</button>
     <button class="queue-action-btn queue-action-reply" onclick="queueReply()">reply now →</button>
   </div>
 </div>
@@ -1343,9 +1380,9 @@
     <div class="modal-sub" id="lgOutcomeSub">I'll adjust the next step based on what you tell me.</div>
     <!-- Rate it -->
     <div id="lgOutcomeRateRow" class="lg-outcome-row">
-      <button class="lg-outcome-btn good" onclick="lgSelectOutcome('good', this)">🔥 went well</button>
-      <button class="lg-outcome-btn meh"  onclick="lgSelectOutcome('meh', this)">😐 okay-ish</button>
-      <button class="lg-outcome-btn bad"  onclick="lgSelectOutcome('bad', this)">💀 backfired</button>
+      <button class="lg-outcome-btn good" onclick="lgSelectOutcome('good', this)">went well</button>
+      <button class="lg-outcome-btn meh"  onclick="lgSelectOutcome('meh', this)">okay-ish</button>
+      <button class="lg-outcome-btn bad"  onclick="lgSelectOutcome('bad', this)">backfired</button>
     </div>
 
     <!-- Paste reply — shown immediately, not gated behind rating -->
@@ -1381,9 +1418,9 @@
     <div class="followup-nudge-text" id="followupText">hey — how'd that go?</div>
   </div>
   <div class="followup-nudge-btns">
-    <div class="followup-btn good" onclick="followupRate('good')">it worked 🔥</div>
+    <div class="followup-btn good" onclick="followupRate('good')">it worked</div>
     <div class="followup-btn meh" onclick="followupRate('meh')">meh</div>
-    <div class="followup-btn bad" onclick="followupRate('bad')">backfired 💀</div>
+    <div class="followup-btn bad" onclick="followupRate('bad')">backfired</div>
   </div>
 </div>
 
@@ -1401,9 +1438,9 @@
     <div class="drift-snooze-title" id="driftSnoozeTitle">gone quiet with someone?</div>
     <div class="drift-snooze-sub" id="driftSnoozeSub">what do you want to do about it?</div>
     <div class="drift-snooze-options">
-      <button class="drift-snooze-btn" onclick="driftSnooze(3)">😴 remind me in 3 days</button>
-      <button class="drift-snooze-btn" onclick="driftSnooze(7)">📅 remind me in a week</button>
-      <button class="drift-snooze-btn" onclick="driftReplyNow()">💬 reply to them now</button>
+      <button class="drift-snooze-btn" onclick="driftSnooze(3)">remind me in 3 days</button>
+      <button class="drift-snooze-btn" onclick="driftSnooze(7)">remind me in a week</button>
+      <button class="drift-snooze-btn" onclick="driftReplyNow()">reply to them now</button>
       <button class="drift-snooze-btn dismiss-btn" onclick="driftDismiss()">✕ stop tracking this drift</button>
     </div>
   </div>
@@ -1418,7 +1455,7 @@
     <!-- Aria speaking -->
     <div class="tutorial-aria-row">
       <div class="tutorial-aria-img"><img src="https://i.imgur.com/ji329r1.png" /></div>
-      <div class="tutorial-aria-bubble">here's how to let me see your messages — pick whatever works for you.</div>
+      <div class="tutorial-aria-bubble"><span class="tutorial-bubble-headline">here's how to let me see your messages</span><br><span class="tutorial-bubble-sub">pick whatever works for you.</span></div>
     </div>
 
     <div class="tutorial-title">how to show me your messages</div>
@@ -1428,7 +1465,7 @@
 
       <!-- Method 1: Copy & paste -->
       <div class="tutorial-method-card">
-        <div class="tutorial-method-icon">📋</div>
+        <div class="tutorial-method-icon tutorial-method-num">1</div>
         <div class="tutorial-method-body">
           <div class="tutorial-method-title">copy & paste</div>
           <div class="tutorial-method-desc">
@@ -1440,7 +1477,7 @@
 
       <!-- Method 2: Share sheet -->
       <div class="tutorial-method-card">
-        <div class="tutorial-method-icon">↗️</div>
+        <div class="tutorial-method-icon tutorial-method-num">2</div>
         <div class="tutorial-method-body">
           <div class="tutorial-method-title">share sheet (Android)</div>
           <div class="tutorial-method-desc">
@@ -1452,11 +1489,11 @@
 
       <!-- Method 3: Web Share Target -->
       <div class="tutorial-method-card">
-        <div class="tutorial-method-icon">⚡</div>
+        <div class="tutorial-method-icon tutorial-method-num">3</div>
         <div class="tutorial-method-body">
           <div class="tutorial-method-title">add Aria to home screen</div>
           <div class="tutorial-method-desc">
-            Tap your browser's <strong>⋮ menu → Add to Home Screen.</strong> Once installed, Aria appears in your share menu like a real app — share any message straight to her in one tap.
+            Tap your browser's <strong>menu → Add to Home Screen.</strong> Once installed, Aria appears in your share menu like a real app — share any message straight to her in one tap.
           </div>
           <span class="tutorial-method-badge power">fastest once set up</span>
         </div>
@@ -1589,15 +1626,15 @@
     <div class="modal-title">Reply Tone</div>
     <div class="modal-sub">Pick a tone for this specific reply. I'll adjust while keeping your voice.</div>
     <div class="tone-pills" id="toneModalPills">
-      <button class="tone-pill active" data-tone="natural" onclick="selectTone(this)">💬 natural</button>
-      <button class="tone-pill" data-tone="funny" onclick="selectTone(this)">😂 funny</button>
-      <button class="tone-pill" data-tone="warm" onclick="selectTone(this)">🤗 warm</button>
-      <button class="tone-pill" data-tone="brief" onclick="selectTone(this)">⚡ brief</button>
-      <button class="tone-pill" data-tone="deep" onclick="selectTone(this)">🌊 deep</button>
-      <button class="tone-pill" data-tone="hype" onclick="selectTone(this)">🔥 hype</button>
-      <button class="tone-pill" data-tone="soft" onclick="selectTone(this)">🕊️ soft</button>
-      <button class="tone-pill" data-tone="sarcastic" onclick="selectTone(this)">😏 sarcastic</button>
-      <button class="tone-pill" data-tone="formal" onclick="selectTone(this)">🎩 formal</button>
+      <button class="tone-pill active" data-tone="natural" onclick="selectTone(this)">natural</button>
+      <button class="tone-pill" data-tone="funny" onclick="selectTone(this)">funny</button>
+      <button class="tone-pill" data-tone="warm" onclick="selectTone(this)">warm</button>
+      <button class="tone-pill" data-tone="brief" onclick="selectTone(this)">brief</button>
+      <button class="tone-pill" data-tone="deep" onclick="selectTone(this)">deep</button>
+      <button class="tone-pill" data-tone="hype" onclick="selectTone(this)">hype</button>
+      <button class="tone-pill" data-tone="soft" onclick="selectTone(this)">soft</button>
+      <button class="tone-pill" data-tone="sarcastic" onclick="selectTone(this)">sarcastic</button>
+      <button class="tone-pill" data-tone="formal" onclick="selectTone(this)">formal</button>
     </div>
 
     <div style="margin-top:24px;">
@@ -1761,7 +1798,7 @@
 
     <div id="authSent" style="display:none;">
       <div class="auth-sent">
-        <div class="auth-sent-icon" style="background:var(--green-dim);border:1px solid rgba(52,211,153,0.25);font-size:28px;">✓</div>
+        <div class="auth-sent-icon" style="background:var(--green-dim);border:1px solid rgba(52,211,153,0.25);font-size:28px;display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
         <div class="auth-sent-title">you're in</div>
         <div class="auth-sent-sub">welcome to Aria.</div>
         <button class="auth-btn" onclick="closeModal('authModal')" style="margin-top:0;">let's go <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
@@ -1772,7 +1809,7 @@
 
 <!-- Floating copy button -->
 
-<button class="float-copy" id="floatCopy" onclick="copyReply()" title="Copy reply">📋</button>
+<button class="float-copy" id="floatCopy" onclick="copyReply()" title="Copy reply"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
 
 <!-- Toast -->
 <!-- Stop speech pill (appears when I’m talking) -->
