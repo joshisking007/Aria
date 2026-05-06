@@ -698,6 +698,24 @@ const ariaMemory = (() => {
     const emotional = store.emotional || {};
     const facts = store.facts || {};
 
+    // Profile identity — rendered first so Aria always knows who she's talking to
+    const profileKeys = ['user_first_name','user_full_name','user_age','user_gender','user_phone'];
+    const profileFacts = profileKeys.filter(k => facts[k]);
+    if (profileFacts.length) {
+      const labelMap = {
+        user_first_name: 'first name',
+        user_full_name:  'full name',
+        user_age:        'age',
+        user_gender:     'gender',
+        user_phone:      'phone',
+      };
+      lines.push('WHO THE USER IS:');
+      profileFacts.forEach(k => lines.push(`  - ${labelMap[k]}: ${facts[k].value}`));
+      // Natural instruction so Aria uses it organically
+      const name = facts.user_first_name?.value;
+      if (name) lines.push(`  (use their name — "${name}" — naturally when it fits, not every message)`);
+    }
+
     if (Object.keys(style).length) {
       lines.push('WRITING STYLE:');
       Object.entries(style).forEach(([k, v]) => lines.push(`  - ${k}: ${v.value}`));
@@ -710,9 +728,12 @@ const ariaMemory = (() => {
       lines.push('EMOTIONAL CONTEXT:');
       Object.entries(emotional).forEach(([k, v]) => lines.push(`  - ${k}: ${v.value}`));
     }
-    if (Object.keys(facts).length) {
-      lines.push('KNOWN FACTS ABOUT USER:');
-      Object.entries(facts).forEach(([k, v]) => lines.push(`  - ${k}: ${v.value}`));
+
+    // Non-profile facts (anything Aria learned herself)
+    const learnedFacts = Object.entries(facts).filter(([k]) => !profileKeys.includes(k));
+    if (learnedFacts.length) {
+      lines.push('OTHER KNOWN FACTS:');
+      learnedFacts.forEach(([k, v]) => lines.push(`  - ${k}: ${v.value}`));
     }
 
     if (!lines.length) return '';
@@ -1021,6 +1042,7 @@ async function initAuth() {
       dismissAuthGate();
       await loadFromSupabase();
       await ariaMemory.load();
+      await seedProfileFacts(session.user);
       updateAuthMenuState();
     } else if (event === 'SIGNED_OUT') {
       // handled by confirmLogout
@@ -1033,7 +1055,41 @@ async function initAuth() {
     dismissAuthGate();
     await loadFromSupabase();
     await ariaMemory.load();
+    await seedProfileFacts(session.user);
     updateAuthMenuState();
+  }
+}
+
+// Seed Aria's memory with identity facts from the user's auth profile.
+// Only writes a fact if Aria doesn't already have it — so it never overwrites
+// something she's learned herself or the user has corrected.
+async function seedProfileFacts(user) {
+  try {
+    const meta = user?.user_metadata || {};
+    const firstName = meta.first_name || meta.given_name || null;
+    const lastName  = meta.last_name  || meta.family_name || null;
+    const fullName  = meta.full_name  || meta.name || (firstName && lastName ? `${firstName} ${lastName}` : null);
+    const age       = meta.age    ? String(meta.age)    : null;
+    const gender    = meta.gender ? String(meta.gender) : null;
+    const phone     = meta.phone  ? String(meta.phone)  : null;
+
+    // Map of memory key → value (only non-null values seeded)
+    const facts = {
+      ...(firstName && { user_first_name: firstName }),
+      ...(fullName  && { user_full_name:  fullName  }),
+      ...(age       && { user_age:        age       }),
+      ...(gender    && { user_gender:     gender    }),
+      ...(phone     && { user_phone:      phone     }),
+    };
+
+    for (const [key, value] of Object.entries(facts)) {
+      // Don't overwrite — if Aria already has this fact, leave it alone
+      if (!ariaMemory.get('facts', key)) {
+        await ariaMemory.remember('facts', key, value, 1.0, 'profile');
+      }
+    }
+  } catch(e) {
+    ariaSecurity.safeWarn('seedProfileFacts', e);
   }
 }
 
