@@ -3454,8 +3454,9 @@ function initChat() {
           let greeting;  
           if (memCtx) {  
             try {  
-              const openerPrompt \= \`You are Aria — a teenage girl who's been talking to this user before. They just came back. Based on your notes below, write ONE short opening line. If there's something specific worth checking in on, reference it naturally. If not, just check in simply. Lowercase. Casual. No em dashes. Max 1 sentence. No quotes, no preamble.\\n\\n${memCtx}\`;  
-              const raw = await fetchReply('You are Aria. Write exactly one short casual opening line. Lowercase. No em dashes. No quotes. Max 1 sentence.', openerPrompt);  
+              const GREETING_SYSTEM = 'You are Aria, a sharp and perceptive teenage girl. Write ONE short casual opening line to greet the user. Lowercase only. No em dashes. No quotes. Max 1 sentence. Output only the line, nothing else.';
+              const userPrompt = `The user just came back. Based on these notes, write a greeting. Reference something specific if worth it, otherwise just check in.\n\n${memCtx}`;
+              const raw = await fetchReply(GREETING_SYSTEM, userPrompt);
               greeting \= raw?.trim().replace(/^\["'\`\]|\["'\`\]$/g, '') || "you're back. what's going on.";  
             } catch {  
               greeting \= "you're back. what's going on.";  
@@ -3483,8 +3484,9 @@ function \_chatGreet() {
     let opener;  
     if (memCtx) {  
       try {  
-        const openerPrompt \= \`You are Aria — a teenage girl who has notes on this user but hasn't chatted with them yet today. Based on what you know below, write ONE short opening line. Reference something specific if it's worth it. If not, just check in simply. Lowercase. Casual. No em dashes. Max 1 sentence. No quotes, no preamble.\\n\\n${memCtx}\`;  
-        const raw = await fetchReply('You are Aria. Write exactly one short casual opening line. Lowercase. No em dashes. No quotes. Max 1 sentence.', openerPrompt);  
+        const GREETING_SYSTEM = 'You are Aria, a sharp and perceptive teenage girl. Write ONE short casual opening line to greet the user. Lowercase only. No em dashes. No quotes. Max 1 sentence. Output only the line, nothing else.';
+        const userPrompt = `You have notes on this user. Write a short opening line. Reference something specific if worth it, otherwise just check in.\n\n${memCtx}`;
+        const raw = await fetchReply(GREETING_SYSTEM, userPrompt);
         opener \= raw?.trim().replace(/^\["'\`\]|\["'\`\]$/g, '') || "okay i'm here. what's going on with you.";  
       } catch {  
         opener \= "okay i'm here. what's going on with you.";  
@@ -3704,9 +3706,11 @@ async function getAriaMemoryContext() {
 
   if (\!parts.length) return '';
 
-  // Cap at \~1000 chars  
-  const merged \= parts.join('\\n\\n').trim();  
-  return merged.length \> 1000 ? merged.slice(-1000) : merged;  
+  // Cap raised from 1000 to 3000 chars.
+  // 1000 was cutting off recent session summaries and personal facts before they
+  // reached the model, making Aria feel like she forgot things between sessions.
+  const merged = parts.join('\n\n').trim();
+  return merged.length > 3000 ? merged.slice(-3000) : merged;
 }
 
 async function sendChatMessage() {  
@@ -3786,11 +3790,19 @@ async function sendChatMessage() {
       systemWithMem \= CREATOR\_MODE.buildCreatorSystemPrompt(systemWithMem);  
     }
 
-    const transcript \= chatHistory.map(m \=\>  
-      (m.role \=== 'user' ? 'USER' : 'ARIA') \+ ': ' \+ m.content  
-    ).join('\\n\\n');
+    // Trim from FRONT to preserve most recent messages within the 4,000 char edge limit.
+    const MAX_TRANSCRIPT_CHARS = 3800;
+    const allLines = chatHistory.map(m =>
+      (m.role === 'user' ? 'USER' : 'ARIA') + ': ' + m.content
+    );
+    let transcript = allLines.join('\n\n');
+    if (transcript.length > MAX_TRANSCRIPT_CHARS) {
+      let trimmed = [...allLines];
+      while (trimmed.join('\n\n').length > MAX_TRANSCRIPT_CHARS && trimmed.length > 1) trimmed.shift();
+      transcript = trimmed.join('\n\n');
+    }
 
-    const rawText \= await fetchReply(systemWithMem, transcript);
+    const rawText = await fetchReply(systemWithMem, transcript);
 
     let emotion \= 'neutral';  
     let suggestions \= \[\];  
@@ -3879,13 +3891,22 @@ async function sendChatMessage() {
 async function writeChatToMemory(recentMessages) {  
   // Summarise recent chat into ariaMemory store  
   try {  
-    const transcript \= recentMessages.map(m \=\>  
-      (m.role \=== 'user' ? 'USER' : 'ARIA') \+ ': ' \+ m.content  
-    ).join('\\n');
+    // Trim transcript from the FRONT to stay within edge function's 4,000 char limit.
+    // Chopping from the end loses the most recent messages, which matter most.
+    const MAX_MEM_CHARS = 3800;
+    const memLines = recentMessages.map(m =>
+      (m.role === 'user' ? 'USER' : 'ARIA') + ': ' + m.content
+    );
+    let transcript = memLines.join('\n');
+    if (transcript.length > MAX_MEM_CHARS) {
+      let trimmed = [...memLines];
+      while (trimmed.join('\n').length > MAX_MEM_CHARS && trimmed.length > 1) trimmed.shift();
+      transcript = trimmed.join('\n');
+    }
 
-    const summary \= await fetchReply(  
-      'You extract two things from this conversation snippet about the user. Output 2-4 short bullet points total. Start each with "–". No preamble. Mix durable facts (what they\\'re dealing with, who\\'s in their life, what happened) with honest impressions of how they operate as a person — patterns you notice, how they handle things emotionally, what they seem to need. Examples of good impressions: "tends to overthink before acting", "asks for validation more than advice", "avoidant when things get emotional", "comes back to the same situation repeatedly". Be specific and candid. These are private notes.',  
-      transcript  
+    const summary = await fetchReply(
+      'You extract facts from this conversation about the user. Output 2-4 short bullet points. Start each with "-". No preamble. Mix durable facts with honest impressions of how they operate. Be specific and candid. These are private notes.',
+      transcript
     );
 
     if (summary && typeof ariaMemory.addChatFacts \=== 'function') {  
@@ -3917,10 +3938,18 @@ async function writeConversationSummary() {
   \_sessionSummarised \= true;
 
   try {  
-    const transcript \= chatHistory  
-      .filter(m \=\> m.role \=== 'user' || m.role \=== 'assistant')  
-      .map(m \=\> (m.role \=== 'user' ? 'USER' : 'ARIA') \+ ': ' \+ m.content)  
-      .join('\\n');
+    // Trim from FRONT to stay within edge function's 4,000 char limit.
+    // Full chatHistory can be very long; keep the most recent context.
+    const MAX_SUMMARY_CHARS = 3800;
+    const summaryLines = chatHistory
+      .filter(m => m.role === 'user' || m.role === 'assistant')
+      .map(m => (m.role === 'user' ? 'USER' : 'ARIA') + ': ' + m.content);
+    let transcript = summaryLines.join('\n');
+    if (transcript.length > MAX_SUMMARY_CHARS) {
+      let trimmed = [...summaryLines];
+      while (trimmed.join('\n').length > MAX_SUMMARY_CHARS && trimmed.length > 1) trimmed.shift();
+      transcript = trimmed.join('\n');
+    }
 
     const summary \= await fetchReply(  
       \`You summarise a conversation between a user and Aria (an AI). Write 2-3 sentences max.  
