@@ -585,6 +585,16 @@
     <button class="back-btn" onclick="clearHistory()" style="margin-left:auto;font-size:11px;color:var(--muted);">clear</button>
   </div>
 
+  <!-- Pattern insight card — populated by analyseHistoryPatterns() -->
+  <div id="historyInsightCard" style="display:none;margin:12px 16px 0;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 16px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <div style="width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#f9a8d4,#ec4899);flex-shrink:0;"></div>
+      <div style="font-size:10px;letter-spacing:1.5px;color:var(--muted);">ARIA NOTICED</div>
+    </div>
+    <div id="historyInsightText" style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:10px;"></div>
+    <div id="historyPatternList" style="display:flex;flex-direction:column;gap:6px;"></div>
+  </div>
+
   <div id="historyList"></div>
 </div>
 
@@ -849,7 +859,13 @@
   <!-- Who's it for -->
   <div class="presend-who-row">
     <span class="presend-who-label">TO:</span>
-    <input class="presend-who-input" id="psWhoInput" placeholder='e.g. "my ex" or "someone i like"' />
+    <select class="presend-who-input" id="psContactSelect" onchange="onPresendContactChange(this)" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;">
+      <option value="">someone not in my contacts</option>
+    </select>
+  </div>
+  <div class="presend-who-row" id="psWhoFallbackRow" style="margin-top:6px;">
+    <span class="presend-who-label" style="visibility:hidden;">TO:</span>
+    <input class="presend-who-input" id="psWhoInput" placeholder='e.g. "my ex" or "someone i like"' style="flex:1;" />
   </div>
 
   <!-- Draft textarea -->

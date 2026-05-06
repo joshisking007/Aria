@@ -53,7 +53,7 @@ function showScreen(id) {
 
   // Update active menu item  
   if (id === 'introScreen') setNavActive('navHome');  
-  else if (id === 'historyScreen') { setNavActive('navHistory'); renderHistory(); }  
+  else if (id === 'historyScreen') { setNavActive('navHistory'); renderHistory(); analyseHistoryPatterns(); }  
   else if (id === 'moodScreen') setNavActive('navMood');  
   else if (id === 'profileScreen') { setNavActive('navProfile'); ariaVoice.renderList(); }  
   else if (id === 'vibeScreen') { renderVibeContactGrid(); }  
@@ -62,6 +62,7 @@ function showScreen(id) {
   else if (id === 'memoryScreen') { setNavActive('navMemory'); renderMemoryScreen(); }  
   else if (id === 'longGameScreen') { renderLongGameScreen(); }  
   else if (id === 'lgArcPreviewScreen') { /* rendered by showArcPreview() */ }
+  else if (id === 'presendScreen') { initPresendScreen(); }
 
   window.scrollTo(0, 0);  
 }
@@ -142,13 +143,32 @@ function goToContacts(mode) {
       : "you're caught up. for now.";  
     list = contacts.filter(c => c.silent);  
     ariaVoice.speak(commentStr);  
-  } else if (mode === 'start') {  
-    label.textContent = 'START A CONVO WITH';  
-    status.textContent = '● ready';  
-    comment.style.display = 'block';  
-    commentText.textContent = "pick someone. i'll say something that sounds like you just thought of them.";  
-    list = contacts;  
-    ariaVoice.speak("pick someone. i'll say something that sounds like you just thought of them.");  
+  } else if (mode === 'start') {
+    label.textContent = 'START A CONVO WITH';
+    status.textContent = '● ready';
+    comment.style.display = 'block';
+
+    // Sort: drifting contacts first (lost > fading > cold), then the rest
+    const driftOrder = { lost: 0, fading: 1, cold: 2 };
+    const drifting = contacts
+      .filter(c => c._drift && !c.drift_dismissed)
+      .sort((a, b) => (driftOrder[a._drift.level] ?? 9) - (driftOrder[b._drift.level] ?? 9));
+    const notDrifting = contacts.filter(c => !c._drift || c.drift_dismissed);
+    list = [...drifting, ...notDrifting];
+
+    // Build a context-aware Aria comment
+    if (drifting.length > 0) {
+      const top = drifting[0];
+      const driftLabel = top._drift.level === 'lost' ? 'gone quiet'
+                       : top._drift.level === 'fading' ? 'fading'
+                       : 'gone cold';
+      const commentStr = `${top.name} is ${driftLabel} — ${top._drift.daysSinceLast} days of silence. now's a good time.`;
+      commentText.innerHTML = `<b style="color:var(--rose)">${s(top.name)}</b> is ${driftLabel} — ${s(String(top._drift.daysSinceLast))} days of silence. now's a good time.`;
+      ariaVoice.speak(commentStr);
+    } else {
+      commentText.textContent = "pick someone. i'll say something that sounds like you just thought of them.";
+      ariaVoice.speak("pick someone. i'll say something that sounds like you just thought of them.");
+    }
   } else {  
     label.textContent = 'WHO MESSAGED YOU?';  
     status.textContent = '● listening';  
@@ -185,16 +205,17 @@ function renderContacts(list) {
     const drift = c._drift;  
     let driftCardClass = '';  
     let driftBadgeHtml = '';  
-    if (drift && !c.drift_dismissed) {  
-      if (drift.level === 'lost') {  
-        driftCardClass = 'drifting-lost';  
-        driftBadgeHtml = `<div class="drift-badge lost" onclick="openDriftSnooze(${c.id},event)">gone quiet</div>`;  
-      } else if (drift.level === 'fading') {  
-        driftCardClass = 'drifting-fading';  
-        driftBadgeHtml = `<div class="drift-badge fading" onclick="openDriftSnooze(${c.id},event)">fading</div>`;  
+    if (drift && !c.drift_dismissed) {
+      const daysLabel = drift.daysSinceLast > 0 ? ` · ${drift.daysSinceLast}d` : '';
+      if (drift.level === 'lost') {
+        driftCardClass = 'drifting-lost';
+        driftBadgeHtml = `<div class="drift-badge lost" onclick="openDriftSnooze(${c.id},event)">gone quiet${daysLabel}</div>`;
+      } else if (drift.level === 'fading') {
+        driftCardClass = 'drifting-fading';
+        driftBadgeHtml = `<div class="drift-badge fading" onclick="openDriftSnooze(${c.id},event)">fading${daysLabel}</div>`;
       } else if (drift.level === 'cold') {  
         driftCardClass = 'drifting-cold';  
-        driftBadgeHtml = `<div class="drift-badge cold" onclick="openDriftSnooze(${c.id},event)">gone cold</div>`;  
+        driftBadgeHtml = `<div class="drift-badge cold" onclick="openDriftSnooze(${c.id},event)">gone cold${daysLabel}</div>`;  
       }  
     }
 
@@ -234,29 +255,35 @@ async function addContact() {
   const relationship = document.getElementById('newRelationship').value.trim();  
   const platform     = document.getElementById('newPlatform').value;  
   const preview      = document.getElementById('newPreview').value.trim();  
-  const silentHours  = parseInt(document.getElementById('newSilent').value) || 0;
+  const silentHoursInput = parseInt(document.getElementById('newSilent').value) || 0;
 
-  const colors     = ['blue','purple','green','rose','amber'];  
-  const color      = colors[Math.floor(Math.random() * colors.length)];  
-  const initials   = name[0].toUpperCase();  
-  const silent     = silentHours > 0;  
-  const time       = silentHours > 0 ? silentHours + 'h ago' : 'just now';
+  const colors   = ['blue','purple','green','rose','amber'];
+  const color    = colors[Math.floor(Math.random() * colors.length)];
+  const initials = name[0].toUpperCase();
+  // Store last_talked_at as a real timestamp offset by the user-entered silent hours
+  const lastTalkedAt = silentHoursInput > 0
+    ? new Date(Date.now() - silentHoursInput * 60 * 60 * 1000).toISOString()
+    : new Date().toISOString();
+  const silentHours = silentHoursInput;
+  const silent      = silentHours > 0;
+  const time        = silentHours > 0 ? silentHours + 'h ago' : 'just now';
 
-  if (currentUserId) {  
-    const { data, error } = await db.from('contacts').insert({  
-      user_id:      currentUserId,  
-      name,  
-      initials,  
-      color,  
-      relationship: relationship || 'contact',  
-      platform,  
-      preview:      preview || 'no recent messages',  
-      silent,  
-      silent_hours: silentHours  
+  if (currentUserId) {
+    const { data, error } = await db.from('contacts').insert({
+      user_id:       currentUserId,
+      name,
+      initials,
+      color,
+      relationship:  relationship || 'contact',
+      platform,
+      preview:       preview || 'no recent messages',
+      silent,
+      silent_hours:  silentHours,
+      last_talked_at: lastTalkedAt
     }).select().single();
 
-    if (error) { showToast('could not save contact'); console.error(error); return; }  
-    contacts.push({ ...data, silentHours: data.silent_hours || 0, time: data.silent_hours > 0 ? data.silent_hours + 'h ago' : 'just now' });  
+    if (error) { showToast('could not save contact'); console.error(error); return; }
+    contacts.push({ ...data, silentHours, silent, time });  
   } else {  
     const newContact = {  
       id: nextContactId++,  
@@ -889,12 +916,23 @@ async function saveToHistory() {
       alternatives:    window._altReplies || null  
     });  
     if (error) { showToast('could not save to history'); console.error(error); return; }  
-    // Update last_talked_at on the contact  
-    if (currentContact?.id) {  
-      db.from('contacts').update({ last_talked_at: new Date().toISOString() }).eq('id', currentContact.id).then(() => {  
-        const idx = contacts.findIndex(c => c.id === currentContact.id);  
-        if (idx !== -1) contacts[idx].last_talked_at = new Date().toISOString();  
-      });  
+    // Update last_talked_at on the contact and reset silentHours in memory
+    if (currentContact?.id) {
+      const now = new Date().toISOString();
+      db.from('contacts').update({ last_talked_at: now, silent_hours: 0, silent: false }).eq('id', currentContact.id).then(() => {
+        const idx = contacts.findIndex(c => c.id === currentContact.id);
+        if (idx !== -1) {
+          contacts[idx].last_talked_at = now;
+          contacts[idx].silentHours = 0;
+          contacts[idx].silent = false;
+          contacts[idx].time = 'just now';
+        }
+        if (currentContact) {
+          currentContact.last_talked_at = now;
+          currentContact.silentHours = 0;
+          currentContact.silent = false;
+        }
+      });
     }  
     // DB trigger handles streak / replySentCount — just refresh  
     await refreshStats();  
@@ -918,6 +956,75 @@ async function saveToHistory() {
   }
 
   showToast('saved to history ✓', 'green');  
+}
+
+let _historyInsightCache = null; // cache so it doesn't re-run on every nav
+
+async function analyseHistoryPatterns() {
+  const card = document.getElementById('historyInsightCard');
+  if (!card) return;
+  if (replyHistory.length < 5) { card.style.display = 'none'; return; }
+
+  // Use cache if history hasn't grown
+  if (_historyInsightCache && _historyInsightCache.count === replyHistory.length) {
+    renderHistoryInsight(_historyInsightCache.data);
+    return;
+  }
+
+  card.style.display = 'block';
+  document.getElementById('historyInsightText').textContent = 'reading your patterns...';
+  document.getElementById('historyPatternList').innerHTML = '';
+
+  // Build a compact summary of the last 30 entries for the prompt
+  const sample = replyHistory.slice(0, 30).map(e => ({
+    contact:  e.contact_name || e.contact || 'Unknown',
+    platform: e.platform || '',
+    tone:     e.tone || '',
+    mood:     e.mood || '',
+    delay:    e.silent_hours || 0,
+    length:   e.message_length || 0
+  }));
+
+  const prompt = `You are Aria. Here are a user's last ${sample.length} saved replies as JSON:
+${JSON.stringify(sample)}
+
+Analyse this data and surface 2-4 real, specific patterns — things they'd actually find interesting or useful to know about themselves. Look for: who they reply to most vs least, tones they default to, platforms they use most, whether they tend to reply late, message length trends, mood patterns.
+
+Be direct and a little sharp — this is Aria talking, not a corporate report.
+
+Respond ONLY in this exact JSON (no markdown):
+{
+  "insight": "1-2 sentence sharp overall read on their texting patterns",
+  "patterns": [
+    { "icon": "emoji", "text": "specific observation" }
+  ]
+}`;
+
+  try {
+    const data = await fetchReplyJSON('You are Aria. Respond ONLY in valid JSON.', prompt);
+    if (data) {
+      _historyInsightCache = { count: replyHistory.length, data };
+      renderHistoryInsight(data);
+    } else {
+      card.style.display = 'none';
+    }
+  } catch(e) {
+    card.style.display = 'none';
+  }
+}
+
+function renderHistoryInsight(data) {
+  const card = document.getElementById('historyInsightCard');
+  if (!data || !card) return;
+  card.style.display = 'block';
+  document.getElementById('historyInsightText').textContent = data.insight || '';
+  const list = document.getElementById('historyPatternList');
+  list.innerHTML = (data.patterns || []).map(p => `
+    <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text);line-height:1.5;">
+      <span style="flex-shrink:0;">${p.icon || '•'}</span>
+      <span>${s(p.text)}</span>
+    </div>
+  `).join('');
 }
 
 function renderHistory() {  
@@ -4153,7 +4260,56 @@ async function followupRate(rating) {
 
 // PRE-SEND MODE — "Don't send that"
 
-let presendMode = 'check'; // 'check' | 'fix' | 'roast'  
+let presendMode = 'check'; // 'check' | 'fix' | 'roast'
+let presendContact = null; // selected contact object, or null
+
+function initPresendScreen() {
+  // Populate contact dropdown
+  const sel = document.getElementById('psContactSelect');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">someone not in my contacts</option>';
+  contacts.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name + (c.relationship ? ' (' + c.relationship + ')' : '');
+    sel.appendChild(opt);
+  });
+  presendContact = null;
+  sel.value = '';
+  const fallback = document.getElementById('psWhoFallbackRow');
+  if (fallback) fallback.style.display = 'flex';
+}
+
+function onPresendContactChange(sel) {
+  const id = parseInt(sel.value);
+  const fallback = document.getElementById('psWhoFallbackRow');
+  if (id) {
+    presendContact = contacts.find(c => c.id === id) || null;
+    if (fallback) fallback.style.display = 'none';
+  } else {
+    presendContact = null;
+    if (fallback) fallback.style.display = 'flex';
+  }
+}
+
+function buildPresendContactContext() {
+  if (!presendContact) return '';
+  const c = presendContact;
+  let ctx = `\n\nCONTACT CONTEXT for "${c.name}":`;
+  if (c.relationship)  ctx += `\n- Relationship: ${c.relationship}`;
+  if (c.platform)      ctx += `\n- Platform: ${c.platform}`;
+  if (c.silentHours > 0) ctx += `\n- The user has left them on read for ${c.silentHours} hours`;
+  if (c.how_we_met)    ctx += `\n- How they met: ${c.how_we_met}`;
+  if (c.topics?.length) ctx += `\n- Their interests: ${c.topics.join(', ')}`;
+  if (c.notes)         ctx += `\n- Notes: ${c.notes}`;
+  // Pull contact memory if available
+  if (typeof contactMemory !== 'undefined' && c.id) {
+    const memCtx = contactMemory.buildContext(c.id);
+    if (memCtx) ctx += memCtx;
+  }
+  ctx += '\n\nUse this context to make your flags SPECIFIC to this relationship dynamic, not generic.';
+  return ctx;
+}  
 let presendRewriteItems = [];  
 let presendActiveRewrite = 0;  
 let presendOriginalDraft = '';
@@ -4181,30 +4337,32 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function runPresend() {  
-  const draft = document.getElementById('psDraftInput').value.trim();  
-  const who = document.getElementById('psWhoInput').value.trim();  
+  const draft = document.getElementById('psDraftInput').value.trim();
+  const whoFallback = document.getElementById('psWhoInput')?.value.trim() || '';
+  const who = presendContact ? presendContact.name : whoFallback;
   const context = document.getElementById('psContextInput').value.trim();
 
-  if (!draft) {  
-    showToast('paste your draft first');  
-    document.getElementById('psDraftInput').focus();  
-    return;  
+  if (!draft) {
+    showToast('paste your draft first');
+    document.getElementById('psDraftInput').focus();
+    return;
   }
 
   presendOriginalDraft = draft;
 
-  const btn = document.getElementById('psRunBtn');  
-  btn.disabled = true;  
-  document.getElementById('psResult').style.display = 'none';  
+  const btn = document.getElementById('psRunBtn');
+  btn.disabled = true;
+  document.getElementById('psResult').style.display = 'none';
   document.getElementById('psThinking').style.display = 'flex';
 
-  const modeInstructions = {  
-    check: 'Be honest but balanced. Flag issues, but also note what works.',  
-    fix:   'Be honest. Flag issues AND provide 3 rewritten versions that fix them.',  
-    roast: 'Be brutally honest. No softening. Call out every problem. Still provide 3 fixes.'  
+  const modeInstructions = {
+    check: 'Be honest but balanced. Flag issues, but also note what works.',
+    fix:   'Be honest. Flag issues AND provide 3 rewritten versions that fix them.',
+    roast: 'Be brutally honest. No softening. Call out every problem. Still provide 3 fixes.'
   }[presendMode];
 
   const includeRewrites = presendMode !== 'check';
+  const contactContext = buildPresendContactContext();
 
   const prompt = `You are Aria, a sharp social AI. A user is about to send this message${who ? ' to ' + who : ''}:
 
@@ -4231,7 +4389,7 @@ Respond ONLY in this exact JSON (no markdown):
   ]` : ''}  
 }
 
-Flags should be 2-5 items. Be specific to THIS draft, not generic.`;
+Flags should be 2-5 items. Be specific to THIS draft, not generic.${contactContext}`;
 
   try {  
     const data = await fetchReplyJSON('You are Aria, a sharp social analyst. Respond ONLY in valid JSON. No markdown.', prompt);  

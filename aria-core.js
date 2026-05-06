@@ -1373,7 +1373,17 @@ async function loadFromSupabase() {
     }
 
     if (contactsRes.data && contactsRes.data.length) {
-      contacts      = contactsRes.data.map(c => ({ ...c, silentHours: c.silent_hours || 0, time: c.silent_hours > 0 ? c.silent_hours + 'h ago' : 'just now', topics: c.topics || [], how_we_met: c.how_we_met || null, birthday: c.birthday || null, notes: c.notes || null }));
+      contacts = contactsRes.data.map(c => {
+        // Real silentHours from last_talked_at timestamp; falls back to static silent_hours
+        let silentHours = c.silent_hours || 0;
+        if (c.last_talked_at) {
+          const hoursSince = Math.floor((Date.now() - new Date(c.last_talked_at)) / (1000 * 60 * 60));
+          silentHours = Math.max(0, hoursSince);
+        }
+        const silent = silentHours > 0;
+        const time   = silentHours > 0 ? silentHours + 'h ago' : 'just now';
+        return { ...c, silentHours, silent, time, topics: c.topics || [], how_we_met: c.how_we_met || null, birthday: c.birthday || null, notes: c.notes || null };
+      });
       nextContactId = Math.max(...contacts.map(c => c.id)) + 1;
     }
     replyHistory = historyRes.data || [];
