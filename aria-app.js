@@ -4365,12 +4365,15 @@ function initPresendScreen() {
 function onPresendContactChange(sel) {
   const id = parseInt(sel.value);
   const fallback = document.getElementById('psWhoFallbackRow');
+  const extraCtx = document.getElementById('psExtraContextRow');
   if (id) {
     presendContact = contacts.find(c => c.id === id) || null;
     if (fallback) fallback.style.display = 'none';
+    if (extraCtx) extraCtx.style.display = 'none';
   } else {
     presendContact = null;
     if (fallback) fallback.style.display = 'flex';
+    if (extraCtx) extraCtx.style.display = 'flex';
   }
 }
 
@@ -4402,9 +4405,9 @@ function setPresendMode(mode, el) {
   el.classList.add('active');  
   // Update button label  
   const btn = document.getElementById('psRunBtn');  
-  if (mode === 'check') btn.innerHTML = '🛑 let me check it <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';  
-  else if (mode === 'fix') btn.innerHTML = '✏️ check & rewrite it <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';  
-  else btn.innerHTML = '🔥 be brutal <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';  
+  if (mode === 'check') btn.innerHTML = 'let me check it <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';  
+  else if (mode === 'fix') btn.innerHTML = 'check & rewrite it <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';  
+  else btn.innerHTML = 'be brutal <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';  
 }
 
 // Live word count  
@@ -4423,6 +4426,14 @@ async function runPresend() {
   const whoFallback = document.getElementById('psWhoInput')?.value.trim() || '';
   const who = presendContact ? presendContact.name : whoFallback;
   const context = document.getElementById('psContextInput').value.trim();
+  const relType = document.getElementById('psRelType')?.value || '';
+  const intentType = document.getElementById('psIntentType')?.value || '';
+  const urgencyType = document.getElementById('psUrgencyType')?.value || '';
+  const extraContext = [
+    relType ? `Relationship type: ${relType}` : '',
+    intentType ? `User's intent: ${intentType}` : '',
+    urgencyType ? `Urgency: ${urgencyType}` : ''
+  ].filter(Boolean).join('\n');
 
   if (!draft) {
     showToast('paste your draft first');
@@ -4448,7 +4459,7 @@ async function runPresend() {
 
   const prompt = `You are Aria, a sharp social AI. A user is about to send this message${who ? ' to ' + who : ''}:
 
-DRAFT: "${draft}"${context ? '\nCONTEXT: ' + context : ''}
+DRAFT: "${draft}"${context ? '\nCONTEXT: ' + context : ''}${extraContext ? '\nADDITIONAL CONTEXT:\n' + extraContext : ''}
 
 Analyse this draft for: passive aggression they didn't notice, coming across as too available or desperate, an apology that buries their actual point, a joke that might not land, anything that could backfire or be misread.
 
