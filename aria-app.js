@@ -138,7 +138,7 @@ function goToContacts(mode) {
       ? `${longest.name} has been waiting ${longest.silentHours} hours. they probably noticed.`  
       : "you're caught up. for now.";  
     commentText.innerHTML = longest  
-      ? `<b style="color:var(--rose)">${longest.name}</b> has been waiting ${longest.silentHours}h. probably noticed.`  
+      ? `<b style="color:var(--rose)">${s(longest.name)}</b> has been waiting ${s(String(longest.silentHours))}h. probably noticed.`  
       : "you're caught up. for now.";  
     list = contacts.filter(c => c.silent);  
     ariaVoice.speak(commentStr);  
@@ -735,7 +735,7 @@ function renderReplies(lines) {
   const container = document.getElementById('replyBubbles');  
   container.innerHTML = lines.map((line, i) => {  
     let cls = lines.length === 1 ? 'only' : i === 0 ? 'first' : i === lines.length-1 ? 'last' : 'middle';  
-    return `<div class="reply-bubble ${cls} editable" contenteditable="true" style="animation-delay:${i*0.08}s" data-idx="${i}">${line}</div>`;  
+    return `<div class="reply-bubble ${cls} editable" contenteditable="true" style="animation-delay:${i*0.08}s" data-idx="${i}">${s(line)}</div>`;  
   }).join('');
 
   // Edit hint  
@@ -960,11 +960,11 @@ function openHistoryDetail(id) {
   document.getElementById('histDetailBody').innerHTML = `  
     ${entry.original ? `<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--muted);line-height:1.6;">  
       <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-bottom:6px;">THEY SAID</div>  
-      ${entry.original}  
+      ${s(entry.original)}  
     </div>` : ''}  
     <div style="margin-bottom:8px;">  
       ${entry.reply.split('\n').map((line, i) => `  
-        <div style="background:var(--rose-dim);border:1px solid var(--rose-border);border-radius:${i===0?'4px 18px 18px 18px':'4px 18px 4px 18px'};padding:12px 14px;font-size:14px;color:\#fce7f3;line-height:1.6;margin-bottom:8px;">${line}</div>  
+        <div style="background:var(--rose-dim);border:1px solid var(--rose-border);border-radius:${i===0?'4px 18px 18px 18px':'4px 18px 4px 18px'};padding:12px 14px;font-size:14px;color:\#fce7f3;line-height:1.6;margin-bottom:8px;">${s(line)}</div>  
       `).join('')}  
     </div>  
   `;  
@@ -1011,9 +1011,12 @@ function addSlang(e) {
 
 function renderSlangPills() {  
   const wrap = document.getElementById('traitPills');  
-  wrap.innerHTML = slangWords.map(w =>  
-    `<span class="trait-pill" onclick="removeSlang('${w}')" title="tap to remove">${w}</span>`  
-  ).join('') + `<span class="trait-pill muted" onclick="document.getElementById('slangInput').focus()">+ add your own</span>`;  
+  wrap.innerHTML = slangWords.map((w, i) =>  
+    `<span class="trait-pill" data-slang-idx="${i}" title="tap to remove">${s(w)}</span>`  
+  ).join('') + `<span class="trait-pill muted" onclick="document.getElementById('slangInput').focus()">+ add your own</span>`;
+  wrap.querySelectorAll('[data-slang-idx]').forEach(el => {
+    el.addEventListener('click', () => removeSlang(slangWords[parseInt(el.dataset.slangIdx)]));
+  });
 }
 
 function removeSlang(word) {  
@@ -1509,13 +1512,19 @@ function openContactProfile(id) {
   if (!contactReplies.length) {  
     listEl.innerHTML = '<div class="contact-history-empty">no replies saved yet for ' + s(profileContact.name) + '</div>';  
   } else {  
-    listEl.innerHTML = contactReplies.map(r => `  
-      <div class="contact-reply-card" onclick="navigator.clipboard.writeText('${r.reply.replace(/'/g,"\\\\\'")}').then(()=>showToast('copied!','green'))">  
-        <div class="contact-reply-original">them: ${r.original ? r.original.slice(0,80) + (r.original.length > 80 ? '...' : '') : '—'}</div>  
-        <div class="contact-reply-text">${r.reply.replace(/\n/g,'<br>')}</div>  
-        <div class="contact-reply-meta"><span>${r.time || ''}</span><span>${r.tone || ''} · ${r.platform || ''}</span></div>  
+    listEl.innerHTML = contactReplies.map((r, i) => `  
+      <div class="contact-reply-card" data-reply-idx="${i}">  
+        <div class="contact-reply-original">them: ${r.original ? s(r.original.slice(0,80)) + (r.original.length > 80 ? '...' : '') : '—'}</div>  
+        <div class="contact-reply-text">${s(r.reply).replace(/\n/g,'<br>')}</div>  
+        <div class="contact-reply-meta"><span>${s(r.time || '')}</span><span>${s(r.tone || '')} · ${s(r.platform || '')}</span></div>  
       </div>  
-    `).join('');  
+    `).join('');
+    listEl.querySelectorAll('[data-reply-idx]').forEach(el => {
+      el.addEventListener('click', () => {
+        const r = contactReplies[parseInt(el.dataset.replyIdx)];
+        if (r) navigator.clipboard.writeText(r.reply).then(() => showToast('copied!', 'green'));
+      });
+    });
   }
 
   populateCrmFields(profileContact);  
@@ -4447,13 +4456,13 @@ function renderQueue() {
   stack.innerHTML = visible.map((c, i) => `  
     <div class="queue-card ${i === 0 ? 'top' : ''}" id="qcard-${c.id}" data-id="${c.id}">  
       <div class="queue-card-contact">  
-        <div class="queue-card-avatar" style="background:${colorMap[c.color] || '\#f472b6'}22;color:${colorMap[c.color] || '\#f472b6'};border:2px solid ${colorMap[c.color] || '\#f472b6'}44;">${c.initials || c.name[0]}</div>  
+        <div class="queue-card-avatar" style="background:${colorMap[c.color] || '\#f472b6'}22;color:${colorMap[c.color] || '\#f472b6'};border:2px solid ${colorMap[c.color] || '\#f472b6'}44;">${s(c.initials || c.name[0])}</div>  
         <div>  
-          <div class="queue-card-name">${c.name}</div>  
-          <div class="queue-card-time">${c.relationship || 'contact'} · ${c.silentHours > 0 ? c.silentHours + 'h ago' : 'just now'}</div>  
+          <div class="queue-card-name">${s(c.name)}</div>  
+          <div class="queue-card-time">${s(c.relationship || 'contact')} · ${s(String(c.silentHours > 0 ? c.silentHours + 'h ago' : 'just now'))}</div>  
         </div>  
       </div>  
-      <div class="queue-card-msg">"${c.preview || 'no preview'}"</div>  
+      <div class="queue-card-msg">"${s(c.preview || 'no preview')}"</div>  
       <div class="queue-card-platform">${c.platform || 'unknown platform'}</div>  
     </div>  
   `).join('');
