@@ -679,8 +679,16 @@ Read the entire arc. Notice the tone shift, what's been building, what the other
     if (replyErrEl) {  
       replyErrEl.src = `https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/exasperated.png`;  
       replyErrEl.style.display = 'block';  
-    }  
-    currentReplies = ["something went wrong on my end. tap retry."];  
+    }
+
+    const isOffline = !navigator.onLine;
+    const isTimeout = e.message === 'timeout';
+    let errMsg;
+    if (isOffline)      errMsg = "no connection. check your wifi and try again.";
+    else if (isTimeout) errMsg = "taking too long. poor signal? tap retry.";
+    else                errMsg = "something went wrong on my end. tap retry.";
+
+    currentReplies = [errMsg];  
     renderReplies(currentReplies);  
     console.error(e);
 
@@ -735,18 +743,29 @@ async function fetchReply(system, userMsg, imageB64 = null) {
     content = userMsg;  
   }
 
-  const res = await fetch('https://mmtdtcmhvbruubrjgjrz.supabase.co/functions/v1/aria-ai', {  
-    method: 'POST',  
-    cache: 'no-store',  
-    headers: {  
-      'Content-Type': 'application/json',  
-      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tdGR0Y21odmJydXVicmpnanJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMTU2MDUsImV4cCI6MjA5MjY5MTYwNX0.f2FXAA8GaUeXXE8V8dnwq4NXz3_22H7d5jVA9rAWsTo'  
-    },  
-    body: JSON.stringify({ system, userMsg: content })  
-  });  
-  const data = await res.json();  
-  if (!res.ok) throw new Error(data?.error || 'request failed');  
-  return stripEmDash(data.text || '');  
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000); // 12s hard timeout
+
+  try {
+    const res = await fetch('https://mmtdtcmhvbruubrjgjrz.supabase.co/functions/v1/aria-ai', {  
+      method: 'POST',  
+      cache: 'no-store',
+      signal: controller.signal,
+      headers: {  
+        'Content-Type': 'application/json',  
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tdGR0Y21odmJydXVicmpnanJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMTU2MDUsImV4cCI6MjA5MjY5MTYwNX0.f2FXAA8GaUeXXE8V8dnwq4NXz3_22H7d5jVA9rAWsTo'  
+      },  
+      body: JSON.stringify({ system, userMsg: content })  
+    });
+    clearTimeout(timeout);
+    const data = await res.json();  
+    if (!res.ok) throw new Error(data?.error || 'request failed');  
+    return stripEmDash(data.text || '');
+  } catch (e) {
+    clearTimeout(timeout);
+    if (e.name === 'AbortError') throw new Error('timeout');
+    throw e;
+  }
 }
 
 async function fetchReplyJSON(system, userMsg) {  
@@ -4326,7 +4345,10 @@ function setPresendMode(mode, el) {
 }
 
 // Live word count  
-document.addEventListener('DOMContentLoaded', () => {  
+document.addEventListener('DOMContentLoaded', () => {
+  // Start network monitor — shows banner on wifi loss or poor signal
+  if (typeof ariaNetwork !== 'undefined') ariaNetwork.init();
+
   const ta = document.getElementById('psDraftInput');  
   if (ta) {  
     ta.addEventListener('input', () => {  

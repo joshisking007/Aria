@@ -3293,3 +3293,32 @@ input[type="date"].cp-field-input { color-scheme: dark; }
   transition: opacity 0.2s;
 }
 .cp-crm-save:active { opacity: 0.75; }
+
+/* ── ARIA NETWORK BANNER ────────────────────────────────────────────────── */
+#ariaNetworkBanner {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 9999;
+  background: var(--card2);
+  border-bottom: 1px solid rgba(248, 113, 113, 0.3);
+  color: #f87171;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-align: center;
+  padding: 10px 16px;
+  transform: translateY(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+#ariaNetworkBanner.show {
+  transform: translateY(0);
+}
+
+#ariaNetworkBanner.hide {
+  transform: translateY(-100%);
+}
