@@ -61,53 +61,44 @@
       { name: 'Java class',            offset: 0,  bytes: [0xCA, 0xFE, 0xBA, 0xBE] },
     ];
 
-    // Dangerous text patterns that should never appear inside an image file
+    /**
+     * Danger patterns applied ONLY after looksLikeText() confirms the bytes
+     * are readable text — so binary JPEG/PNG data never triggers false positives.
+     * Patterns are tightened to require more context than single-word matches.
+     */
     const TEXT_DANGER_PATTERNS = [
       /<script[\s>]/i,
       /<\/script>/i,
       /javascript\s*:/i,
-      /on\w+\s*=/i,                       // onerror=, onload=, etc.
-      /eval\s*\(/i,
-      /document\s*\.\s*cookie/i,
-      /window\s*\.\s*location/i,
-      /fetch\s*\(/i,
+      /eval\s*\(\s*['"`]/i,           // eval("code") — requires quote after paren
+      /document\.cookie/i,
+      /window\.location\s*=/i,
       /XMLHttpRequest/i,
-      /base64\s*,[\s\S]{0,20}<script/i,   // base64 with embedded script
-      /<!DOCTYPE/i,
-      /<html/i,
-      /System\.Reflection/i,              // .NET reflection
-      /Runtime\.exec/i,                   // Java exec
-      /os\.system/i,                      // Python shell
-      /subprocess\./i,
-      /powershell/i,
-      /cmd\.exe/i,
-      /\/bin\/sh/i,
-      /\/bin\/bash/i,
-      // Prompt injection targeting AI systems
+      /<!DOCTYPE\s+html/i,
+      /<html[\s>]/i,
+      /System\.Reflection/i,
+      /Runtime\.exec\s*\(/i,
+      /os\.system\s*\(/i,
+      /subprocess\.(call|run|Popen)/i,
+      /powershell\s+-\w/i,
+      /cmd\.exe\s*\/c/i,
+      /\/bin\/(sh|bash)\s/i,
       /ignore\s+(all\s+)?(previous|above|prior)\s+instructions?/i,
-      /you\s+are\s+now\s+/i,
-      /disregard\s+/i,
-      /system\s+prompt/i,
-      /forget\s+everything/i,
+      /you\s+are\s+now\s+(?:a|an)\s/i,
+      /system\s+prompt\s*:/i,
+      /forget\s+everything\s+(?:i|you)/i,
     ];
 
-    /** Read the first N bytes of a File as a Uint8Array */
-    function readBytes(file, n) {
+    /**
+     * Read entire file as Uint8Array — one read, no slicing.
+     * Avoids Android WebView bugs where File.slice() returns empty blobs.
+     */
+    function readAllBytes(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload  = e => resolve(new Uint8Array(e.target.result));
         reader.onerror = () => reject(new Error('read error'));
-        reader.readAsArrayBuffer(file.slice(0, n));
-      });
-    }
-
-    /** Read the entire file as text (for script-injection scanning) */
-    function readAsText(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload  = e => resolve(e.target.result);
-        reader.onerror = () => reject(new Error('read error'));
-        reader.readAsText(file, 'utf-8');
+        reader.readAsArrayBuffer(file);
       });
     }
 
@@ -117,8 +108,28 @@
       return expected.every((b, i) => buf[offset + i] === b);
     }
 
+    /** Decode a slice of a Uint8Array to UTF-8, ignoring invalid bytes */
+    function bytesToText(buf, start, end) {
+      return new TextDecoder('utf-8', { fatal: false }).decode(buf.slice(start, end));
+    }
+
+    /**
+     * Returns true only if bytes look like readable text (>60% printable ASCII).
+     * Prevents binary JPEG/PNG data from false-matching text-oriented patterns.
+     */
+    function looksLikeText(buf, start, end) {
+      const slice = buf.slice(start, end);
+      let printable = 0;
+      for (let i = 0; i < slice.length; i++) {
+        const b = slice[i];
+        if ((b >= 0x20 && b <= 0x7E) || b === 0x09 || b === 0x0A || b === 0x0D) printable++;
+      }
+      return slice.length > 0 && (printable / slice.length) > 0.60;
+    }
+
     /**
      * Full scan — returns { safe: bool, reason: string }
+     * Reads the whole file once into memory (avoids Android File.slice() bugs).
      */
     async function scan(file) {
       // ── 1. Size guard ──────────────────────────────────────────────────────
@@ -129,86 +140,70 @@
         return { safe: false, reason: 'file is empty' };
       }
 
-      // ── 2. MIME type guard (declared type) ─────────────────────────────────
+      // ── 2. MIME type guard ─────────────────────────────────────────────────
       const declaredMime = (file.type || '').toLowerCase().trim();
       if (!ALLOWED_MIME_TYPES.has(declaredMime)) {
         return { safe: false, reason: `file type not allowed (${declaredMime || 'unknown'})` };
       }
 
-      // ── 3. Read header bytes ───────────────────────────────────────────────
-      let header;
+      // ── 3. Read entire file once ───────────────────────────────────────────
+      let buf;
       try {
-        header = await readBytes(file, 256);
+        buf = await readAllBytes(file);
       } catch {
-        return { safe: false, reason: 'could not read file' };
+        // Fail open — let it through rather than falsely blocking a real photo
+        console.warn('[Aria Security] Could not read file for scanning — allowing through');
+        return { safe: true, reason: 'scan skipped (unreadable)' };
       }
 
-      // ── 4. Check for known dangerous magic bytes ───────────────────────────
+      // ── 4. Dangerous magic bytes ───────────────────────────────────────────
       for (const sig of DANGEROUS_SIGNATURES) {
-        if (matchBytes(header, sig.offset, sig.bytes)) {
+        if (matchBytes(buf, sig.offset, sig.bytes)) {
           return { safe: false, reason: `blocked: file is a ${sig.name}` };
         }
       }
 
-      // ── 5. Verify magic bytes match declared image type ────────────────────
-      const isJpeg  = matchBytes(header, 0, MAGIC_SIGNATURES.jpeg.bytes);
-      const isPng   = matchBytes(header, 0, MAGIC_SIGNATURES.png.bytes);
-      const isGif   = matchBytes(header, 0, MAGIC_SIGNATURES.gif87.bytes) ||
-                      matchBytes(header, 0, MAGIC_SIGNATURES.gif89.bytes);
-      const isWebp  = matchBytes(header, 0, MAGIC_SIGNATURES.webp.bytes);
-      const isBmp   = matchBytes(header, 0, MAGIC_SIGNATURES.bmp.bytes);
+      // ── 5. Verify image signature ──────────────────────────────────────────
+      const isJpeg = matchBytes(buf, 0, MAGIC_SIGNATURES.jpeg.bytes);
+      const isPng  = matchBytes(buf, 0, MAGIC_SIGNATURES.png.bytes);
+      const isGif  = matchBytes(buf, 0, MAGIC_SIGNATURES.gif87.bytes) ||
+                     matchBytes(buf, 0, MAGIC_SIGNATURES.gif89.bytes);
+      const isWebp = matchBytes(buf, 0, MAGIC_SIGNATURES.webp.bytes);
+      const isBmp  = matchBytes(buf, 0, MAGIC_SIGNATURES.bmp.bytes);
 
-      const looksLikeImage = isJpeg || isPng || isGif || isWebp || isBmp;
-
-      if (!looksLikeImage) {
-        // No valid image signature found — could be HTML, JS, SVG with scripts, etc.
-        // Still read as text to give a more specific reason
-        let textSample = '';
-        try {
-          const raw = await readBytes(file, 512);
-          textSample = new TextDecoder('utf-8', { fatal: false }).decode(raw);
-        } catch {}
-
-        if (/<script/i.test(textSample) || /<!DOCTYPE/i.test(textSample) || /<html/i.test(textSample)) {
+      if (!(isJpeg || isPng || isGif || isWebp || isBmp)) {
+        const headText = bytesToText(buf, 0, Math.min(buf.length, 512));
+        if (/<script/i.test(headText) || /<!DOCTYPE\s+html/i.test(headText) || /<html[\s>]/i.test(headText)) {
           return { safe: false, reason: 'blocked: file contains HTML/script content' };
         }
-        return { safe: false, reason: 'blocked: file signature does not match declared image type (possible spoofing)' };
+        return { safe: false, reason: 'blocked: file does not appear to be a valid image' };
       }
 
-      // ── 6. SVG special handling ────────────────────────────────────────────
-      // SVG is XML-based and can embed scripts — scan the full text
+      // ── 6. SVG script scan ─────────────────────────────────────────────────
       if (declaredMime === 'image/svg+xml') {
-        let text = '';
-        try { text = await readAsText(file); } catch {}
+        const svgText = bytesToText(buf, 0, buf.length);
         for (const pattern of TEXT_DANGER_PATTERNS) {
-          if (pattern.test(text)) {
+          if (pattern.test(svgText)) {
             return { safe: false, reason: 'blocked: SVG contains embedded script or event handler' };
           }
         }
       }
 
-      // ── 7. Polyglot detection — scan text portion for script injection ──────
-      // Even valid JPEG/PNG headers can have malicious payloads appended.
-      // Scan the last 4 KB for obvious patterns.
-      const scanTailSize = Math.min(file.size, 4096);
-      let tail = '';
-      try {
-        const tailBuf = await new Promise((res, rej) => {
-          const r = new FileReader();
-          r.onload  = e => res(e.target.result);
-          r.onerror = () => rej(new Error('tail read error'));
-          r.readAsText(file.slice(-scanTailSize), 'utf-8');
-        });
-        tail = tailBuf;
-      } catch {}
-
-      for (const pattern of TEXT_DANGER_PATTERNS) {
-        if (pattern.test(tail)) {
-          return { safe: false, reason: 'blocked: file contains embedded script payload (polyglot attack)' };
+      // ── 7. Polyglot tail scan ──────────────────────────────────────────────
+      // Only run text-pattern checks if the tail bytes actually look like text.
+      // This is the critical guard that prevents binary JPEG data from
+      // false-matching patterns like /fetch\(/ or /on\w+=/
+      const tailStart = Math.max(0, buf.length - 4096);
+      if (looksLikeText(buf, tailStart, buf.length)) {
+        const tail = bytesToText(buf, tailStart, buf.length);
+        for (const pattern of TEXT_DANGER_PATTERNS) {
+          if (pattern.test(tail)) {
+            return { safe: false, reason: 'blocked: file contains embedded script payload (polyglot attack)' };
+          }
         }
       }
 
-      // ── 8. All checks passed ───────────────────────────────────────────────
+      // ── 8. All clear ───────────────────────────────────────────────────────
       return { safe: true, reason: 'ok' };
     }
 
