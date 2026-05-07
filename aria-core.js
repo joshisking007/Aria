@@ -1092,6 +1092,8 @@ async function initAuth() {
       await ariaMemory.load();
       await seedProfileFacts(session.user);
       updateAuthMenuState();
+      // XP bar — init after auth and data are loaded
+      if (typeof ariaXP !== 'undefined') ariaXP.init();
     } else if (event === 'SIGNED_OUT') {
       // handled by confirmLogout
     }
@@ -1105,6 +1107,8 @@ async function initAuth() {
     await ariaMemory.load();
     await seedProfileFacts(session.user);
     updateAuthMenuState();
+    // XP bar — init after auth and data are loaded
+    if (typeof ariaXP !== 'undefined') ariaXP.init();
   }
 }
 

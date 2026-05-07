@@ -23,6 +23,7 @@
 </script>
 <link rel="stylesheet" href="style.css"/>
 <link rel="stylesheet" href="aria-games.css"/>
+<link rel="stylesheet" href="aria-memory-xp.css"/>
 <link rel="manifest" href="manifest.json"/>
 
 <!-- Service Worker (Web Share Target) -->
@@ -1826,6 +1827,8 @@
 <!-- scripts — load order matters: 1. aria-core.js (memory, auth, supabase, storage — no dom deps) 2. aria-app.js (all features — depends on core) -->
 <script src="aria-core.js"></script>
 <script src="aria-app.js"></script>
+<script src="aria-memory-screen.js"></script>
+<script src="aria-xp-bar.js"></script>
 <link rel="stylesheet" href="aria-nudge-banner.css"/>
 <script src="aria-notifications.js"></script>
 <script src="aria-games.js"></script>
