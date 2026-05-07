@@ -3647,10 +3647,19 @@ function initChat() {
 
         scrollChatToBottom();
 
-        // Greeting on return — AI-generated from memory context if available  
-        getAriaMemoryContext().then(async memCtx => {  
-          let greeting;  
-          if (memCtx) {  
+        // Greeting on return — thread-aware if an open thread exists, otherwise memory-based
+        const openThread = typeof ariaNudge !== 'undefined' ? ariaNudge.getOpenThreadForGreeting() : null;
+        getAriaMemoryContext().then(async memCtx => {
+          let greeting;
+          if (openThread) {
+            try {
+              const THREAD_SYSTEM = 'You are Aria, a sharp and perceptive teenage girl. Write ONE short casual opening line that references an unresolved situation the user mentioned before. Be specific. Lowercase only. No em dashes. No quotes. Max 1 sentence. Output only the line, nothing else.';
+              const raw = await fetchReply(THREAD_SYSTEM, `Unresolved situation: "${openThread}"\n\nWrite a natural opening line asking how it turned out or what happened.`);
+              greeting = raw?.trim().replace(/^["'`]|["'`]$/g, '') || `hey. whatever happened with "${openThread.slice(0, 40)}"?`;
+            } catch {
+              greeting = "you're back. what's going on.";
+            }
+          } else if (memCtx) {  
             try {  
               const GREETING_SYSTEM = 'You are Aria, a sharp and perceptive teenage girl. Write ONE short casual opening line to greet the user. Lowercase only. No em dashes. No quotes. Max 1 sentence. Output only the line, nothing else.';
               const userPrompt = `The user just came back. Based on these notes, write a greeting. Reference something specific if worth it, otherwise just check in.\n\n${memCtx}`;
@@ -3863,52 +3872,69 @@ function appendUserMessage(text, silent = false) {
 // Pulls from both ariaMemory store AND aria_chat_memory in user_profiles.  
 // Called before every reply so she always knows who she's talking to.
 
-async function getAriaMemoryContext() {  
+async function getAriaMemoryContext() {
   const parts = [];
 
-  // 1\. Structured memory store (writing style, patterns, emotional)  
-  const structured = ariaMemory.getSummary ? ariaMemory.getSummary() : '';  
+  // 1. Structured memory store (writing style, patterns, emotional) — now richly formatted
+  const structured = ariaMemory.getSummary ? ariaMemory.getSummary() : '';
   if (structured) parts.push(structured);
 
-  // 2\. Chat-derived personal facts + conversation log from user_profiles  
-  if (currentUserId) {  
-    try {  
-      const { data } = await db  
-        .from('user_profiles')  
-        .select('aria_chat_memory, aria_conversation_log')  
-        .eq('id', currentUserId)  
+  // 2. Chat-derived personal facts + conversation log from user_profiles
+  if (currentUserId) {
+    try {
+      const { data } = await db
+        .from('user_profiles')
+        .select('aria_chat_memory, aria_conversation_log')
+        .eq('id', currentUserId)
         .single();
 
-      // Personal facts  
-      if (data?.aria_chat_memory) {  
-        const lines = data.aria_chat_memory  
-          .split('\\n')  
-          .map(l => l.replace(/^[-–•]\s*/, '').trim())  
-          .filter(l => l.length > 4)  
-          .slice(-30);  
-        if (lines.length) parts.push('WHAT I KNOW ABOUT THIS USER (facts + impressions):\\n' + lines.join('\\n'));  
+      // Parse typed memory notes into organised sections
+      if (data?.aria_chat_memory) {
+        const raw = data.aria_chat_memory;
+        const facts   = [];
+        const feelings = [];
+        const threads  = [];
+        const people   = [];
+        const other    = [];
+
+        raw.split('\n').forEach(line => {
+          const l = line.replace(/^[-–•]\s*/, '').trim();
+          if (!l || l.length < 4) return;
+          if (/^FACT:/i.test(l))    facts.push(l.replace(/^FACT:\s*/i, '').trim());
+          else if (/^FEELING:/i.test(l)) feelings.push(l.replace(/^FEELING:\s*/i, '').trim());
+          else if (/^THREAD:/i.test(l))  threads.push(l.replace(/^THREAD:\s*/i, '').trim());
+          else if (/^PERSON:/i.test(l))  people.push(l.replace(/^PERSON:\s*/i, '').trim());
+          else other.push(l); // legacy untyped bullets
+        });
+
+        const memSections = [];
+        if (facts.length)    memSections.push('FACTS:\n' + facts.slice(-12).map(f=>`  - ${f}`).join('\n'));
+        if (feelings.length) memSections.push('CURRENT EMOTIONAL STATE:\n' + feelings.slice(-4).map(f=>`  - ${f}`).join('\n'));
+        if (threads.length)  memSections.push('OPEN THREADS (unresolved situations):\n' + threads.slice(-6).map(t=>`  - ${t}`).join('\n'));
+        if (people.length)   memSections.push('PEOPLE IN THEIR LIFE:\n' + people.slice(-8).map(p=>`  - ${p}`).join('\n'));
+        if (other.length)    memSections.push('OTHER NOTES:\n' + other.slice(-8).map(o=>`  - ${o}`).join('\n'));
+
+        if (memSections.length) parts.push('WHAT I KNOW ABOUT THIS USER:\n' + memSections.join('\n\n'));
       }
 
-      // Conversation history summaries  
-      if (data?.aria_conversation_log) {  
-        const entries = data.aria_conversation_log  
-          .split('\\n\\n')  
-          .map(e => e.trim())  
-          .filter(e => e.length > 10)  
-          .slice(0, 6); // last 6 sessions  
-        if (entries.length) parts.push('RECENT CONVERSATIONS:\\n' + entries.join('\\n'));  
+      // Conversation history summaries — last 8 sessions (raised from 6)
+      if (data?.aria_conversation_log) {
+        const entries = data.aria_conversation_log
+          .split('\n\n')
+          .map(e => e.trim())
+          .filter(e => e.length > 10)
+          .slice(0, 8);
+        if (entries.length) parts.push('RECENT SESSIONS:\n' + entries.map(e => `  ${e}`).join('\n'));
       }
 
-    } catch(e) {}  
+    } catch(e) {}
   }
 
   if (!parts.length) return '';
 
-  // Cap raised from 1000 to 3000 chars.
-  // 1000 was cutting off recent session summaries and personal facts before they
-  // reached the model, making Aria feel like she forgot things between sessions.
   const merged = parts.join('\n\n').trim();
-  return merged.length > 3000 ? merged.slice(-3000) : merged;
+  // Raised cap: 4000 chars gives room for structured sections without cutting
+  return merged.length > 4000 ? merged.slice(-4000) : merged;
 }
 
 async function sendChatMessage() {  
@@ -3952,14 +3978,17 @@ async function sendChatMessage() {
     return;  
   }
 
-  chatIsTyping = true;  
-  input.value = '';  
-  chatInputResize(input);  
-  document.getElementById('chatSendBtn').disabled = true;  
+  chatIsTyping = true;
+  input.value = '';
+  chatInputResize(input);
+  document.getElementById('chatSendBtn').disabled = true;
   document.getElementById('chatSuggestions').innerHTML = '';
 
-  appendUserMessage(text);  
+  appendUserMessage(text);
   chatHistory.push({ role: 'user', content: text });
+
+  // Track last chat message time for nudge engine
+  if (typeof ariaNudge !== 'undefined') ariaNudge.markChatMessage();
 
   // Persist user message  
   if (currentUserId) {  
@@ -4086,11 +4115,9 @@ async function sendChatMessage() {
   }  
 }
 
-async function writeChatToMemory(recentMessages) {  
-  // Summarise recent chat into ariaMemory store  
-  try {  
-    // Trim transcript from the FRONT to stay within edge function's 4,000 char limit.
-    // Chopping from the end loses the most recent messages, which matter most.
+async function writeChatToMemory(recentMessages) {
+  // Summarise recent chat into ariaMemory store
+  try {
     const MAX_MEM_CHARS = 3800;
     const memLines = recentMessages.map(m =>
       (m.role === 'user' ? 'USER' : 'ARIA') + ': ' + m.content
@@ -4102,23 +4129,34 @@ async function writeChatToMemory(recentMessages) {
       transcript = trimmed.join('\n');
     }
 
+    // Richer extraction prompt — facts + emotional state + open threads
     const summary = await fetchReply(
-      'You extract facts from this conversation about the user. Output 2-4 short bullet points. Start each with "-". No preamble. Mix durable facts with honest impressions of how they operate. Be specific and candid. These are private notes.',
+      `You extract memory notes from a conversation between a user and Aria (an AI companion).
+Output 3-6 bullet points using EXACTLY this format — one type per line:
+- FACT: [something durable and specific — name, job, city, relationship, age, hobby, etc.]
+- FEELING: [their current emotional state or something they're going through right now]
+- THREAD: [something unresolved, a situation still in progress, or a question left open]
+- PERSON: [a real person they mentioned — name + one-word context, e.g. "Jake — ex"]
+Only include a category if there's real signal for it. No filler. No preamble. Be brutally specific.
+These are Aria's private notes — she uses them to not forget things and to feel continuous.`,
       transcript
     );
 
-    if (summary && typeof ariaMemory.addChatFacts === 'function') {  
-      ariaMemory.addChatFacts(summary);  
+    if (summary && typeof ariaMemory.addChatFacts === 'function') {
+      ariaMemory.addChatFacts(summary);
     }
 
-    // Also upsert to Supabase user_profiles as aria_chat_memory  
-    if (currentUserId) {  
-      const { data } = await db.from('user_profiles').select('aria_chat_memory').eq('id', currentUserId).single();  
-      const existing = data?.aria_chat_memory || '';  
-      const updated  = (existing + '\\n' + summary).trim().slice(-3000);  
-      await db.from('user_profiles').update({ aria_chat_memory: updated }).eq('id', currentUserId);  
-    }  
-  } catch(e) {}  
+    // Notify nudge engine that memory was updated — triggers open thread detection
+    if (typeof ariaNudge !== 'undefined') ariaNudge.onMemoryWritten();
+
+    // Also upsert to Supabase user_profiles as aria_chat_memory
+    if (currentUserId) {
+      const { data } = await db.from('user_profiles').select('aria_chat_memory').eq('id', currentUserId).single();
+      const existing = data?.aria_chat_memory || '';
+      const updated  = (existing + '\n' + summary).trim().slice(-4000); // raised cap for richer notes
+      await db.from('user_profiles').update({ aria_chat_memory: updated }).eq('id', currentUserId);
+    }
+  } catch(e) {}
 }
 
 // conversation summary  
@@ -4149,13 +4187,13 @@ async function writeConversationSummary() {
       transcript = trimmed.join('\n');
     }
 
-    const summary = await fetchReply(  
-      `You summarise a conversation between a user and Aria (an AI). Write 2-3 sentences max.  
-Cover: what the user was dealing with, the emotional tone, what got resolved (if anything), and anything left open.  
-Write in past tense. Be specific — names, situations. No filler.  
-Format: "[date placeholder] — [summary]"  
-Example: "User was anxious about a job interview at Google. Aria helped them prep their answers. Outcome unknown — they hadn't heard back yet."`,  
-      transcript  
+    const summary = await fetchReply(
+      `You summarise a conversation between a user and Aria (an AI companion).
+Write 2-3 sentences. Cover: what the user was dealing with, their emotional state, what got resolved, and most importantly — anything left OPEN or unfinished (a pending outcome, a decision not made, a situation still in progress).
+Write in past tense. Use specific names and details. No filler.
+Start with the date format: "[date placeholder] — "
+Example: "User was anxious about a job interview at Google. Aria helped them prep answers. OPEN: they hadn't heard back yet."`,
+      transcript
     );
 
     if (!summary || summary.length < 10) return;

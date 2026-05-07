@@ -617,6 +617,9 @@ window.addEventListener('load', () => {
   // Restore creator mode session if key was verified this tab session
   setTimeout(() => { if (typeof CREATOR_MODE !== 'undefined') CREATOR_MODE.checkSession(); }, 400);
 
+  // Notifications — evaluate nudge state on every app open
+  setTimeout(() => { if (typeof ariaNudge !== 'undefined') ariaNudge.init(); }, 500);
+
   // Restore ElevenLabs settings
   const savedKey  = ariaSecurity.getApiKey('aria_el_key') || '';
   const savedStab = parseFloat(localStorage.getItem('aria_el_stability')  || '0.45');
@@ -826,16 +829,61 @@ const ariaMemory = (() => {
   }
 
   function getSummary() {
-    // Returns a compact string of all known facts for injecting into system prompt
+    // Returns a structured, human-readable memory snapshot for injecting into the system prompt.
+    // Organised by section so Aria can actually USE it — not just a flat dump of key-value pairs.
     const all = getAll();
     if (!all || !Object.keys(all).length) return '';
-    const lines = [];
-    for (const [cat, facts] of Object.entries(all)) {
-      for (const [key, entry] of Object.entries(facts)) {
-        if (entry?.value) lines.push(`${cat}: ${entry.value}`);
-      }
-    }
-    return lines.slice(0, 20).join('\n'); // cap at 20 facts
+
+    const sections = [];
+
+    // 1. WHO THEY ARE — profile identity facts first
+    const facts = all.facts || {};
+    const profileOrder = ['user_first_name','user_full_name','user_age','user_gender'];
+    const profileLines = profileOrder
+      .filter(k => facts[k]?.value)
+      .map(k => {
+        const labels = { user_first_name:'name', user_full_name:'full name', user_age:'age', user_gender:'gender' };
+        return `  ${labels[k]}: ${facts[k].value}`;
+      });
+    if (profileLines.length) sections.push('WHO THEY ARE:\n' + profileLines.join('\n'));
+
+    // 2. WRITING STYLE
+    const style = all.writing_style || {};
+    const styleLines = Object.entries(style)
+      .filter(([, v]) => v?.value)
+      .map(([k, v]) => `  ${k.replace(/_/g,' ')}: ${v.value}`);
+    if (styleLines.length) sections.push('HOW THEY TEXT:\n' + styleLines.join('\n'));
+
+    // 3. BEHAVIOURAL PATTERNS (skip raw counters — too noisy)
+    const patterns = all.patterns || {};
+    const patternLines = Object.entries(patterns)
+      .filter(([k, v]) => v?.value && !k.endsWith('_count'))
+      .map(([k, v]) => `  ${k.replace(/_/g,' ')}: ${v.value}`);
+    if (patternLines.length) sections.push('THEIR PATTERNS:\n' + patternLines.join('\n'));
+
+    // 4. EMOTIONAL CONTEXT
+    const emotional = all.emotional || {};
+    const emotionalLines = Object.entries(emotional)
+      .filter(([, v]) => v?.value)
+      .map(([, v]) => `  ${v.value}`);
+    if (emotionalLines.length) sections.push('EMOTIONAL NOTES:\n' + emotionalLines.join('\n'));
+
+    // 5. THINGS I KNOW — chat-derived facts (most recent 15, skip stale counters)
+    const chat = all.chat || {};
+    const learnedFacts = Object.entries(chat)
+      .filter(([, v]) => v?.value)
+      .sort(([a], [b]) => b.localeCompare(a)) // newest key first (timestamp-prefixed)
+      .slice(0, 15)
+      .map(([, v]) => `  - ${v.value}`);
+    // also include non-profile, non-pattern facts from the facts category
+    const otherFacts = Object.entries(facts)
+      .filter(([k, v]) => v?.value && !profileOrder.includes(k))
+      .map(([, v]) => `  - ${v.value}`);
+    const allLearned = [...learnedFacts, ...otherFacts];
+    if (allLearned.length) sections.push('THINGS I KNOW ABOUT THEM:\n' + allLearned.join('\n'));
+
+    if (!sections.length) return '';
+    return sections.join('\n\n');
   }
 
   return { load, remember, get, getCategory, buildContext, learnFromGeneration, learnWritingStyle, learnFromHistory, getAll, isTableAvailable, addChatFacts, getSummary };
