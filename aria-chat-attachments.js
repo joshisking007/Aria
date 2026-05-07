@@ -767,57 +767,30 @@
     if (msgs) msgs.appendChild(ariaWrap);
     if (typeof scrollChatToBottom === 'function') scrollChatToBottom();
 
-    // Call Claude vision API
+    // Use the existing fetchReply() — it routes through the Supabase edge function
+    // which already has the API key, auth headers, and vision support (imageB64 param).
     try {
       const base64Data = dataUrl.split(',')[1];
-      const mimeType   = file.type || 'image/jpeg';
 
-      const memCtx     = typeof getAriaMemoryContext === 'function'
+      const memCtx    = typeof getAriaMemoryContext === 'function'
         ? await getAriaMemoryContext()
         : '';
-      const sysPrompt  = (typeof ARIA_CHAT_SYSTEM !== 'undefined' ? ARIA_CHAT_SYSTEM : '') +
+      const sysPrompt = (typeof ARIA_CHAT_SYSTEM !== 'undefined' ? ARIA_CHAT_SYSTEM : '') +
         (memCtx ? `\n\nWHAT YOU KNOW ABOUT THIS USER:\n${memCtx}` : '');
 
-      const messages = [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: { type: 'base64', media_type: mimeType, data: base64Data }
-            },
-            {
-              type: 'text',
-              text: caption
-                ? `The user sent this image with the caption: "${caption}". Respond naturally as Aria.`
-                : 'The user sent you this image. Look at it carefully — understand what it is, what it shows (could be a screenshot of a conversation, a photo, anything). Respond naturally as Aria based on what you see.'
-            }
-          ]
-        }
-      ];
+      const promptText = caption
+        ? `The user sent this image with the caption: "${caption}". Look at it carefully — read any text you can see, understand what it shows — then respond naturally as Aria.`
+        : 'The user sent you this image. Look at it carefully — read any text, understand what it shows (screenshot of a conversation, photo, anything) — then respond naturally as Aria based on what you see.';
 
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model:      'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          system:     sysPrompt,
-          messages
-        })
-      });
-
-      const data   = await response.json();
-      const rawText = data.content
-        ? data.content.filter(b => b.type === 'text').map(b => b.text).join('')
-        : "i can see the image — what would you like me to help with?";
+      // fetchReply(system, userMsg, imageB64) — third param triggers vision mode
+      const rawText = await fetchReply(sysPrompt, promptText, base64Data);
 
       // Remove typing bubble and stream response
       ariaBubble.classList.remove('typing-bubble');
       ariaBubble.innerHTML = '';
 
       if (typeof streamTextWithVoice === 'function') {
-        streamTextWithVoice(ariaBubble, rawText, 'neutral', false);
+        streamTextWithVoice(ariaBubble, rawText, 'neutral', true);
       } else {
         ariaBubble.textContent = rawText;
         if (typeof scrollChatToBottom === 'function') scrollChatToBottom();
@@ -827,21 +800,21 @@
         window.chatHistory.push({ role: 'assistant', content: rawText });
       }
 
-      // Persist if signed in
+      // Persist
       if (window.currentUserId && window.db) {
         window.db.from('chat_messages').insert([
-          { user_id: window.currentUserId, role: 'user',  content: historyEntry },
-          { user_id: window.currentUserId, role: 'aria',  content: rawText }
+          { user_id: window.currentUserId, role: 'user', content: historyEntry },
+          { user_id: window.currentUserId, role: 'aria', content: rawText }
         ]).then(() => {}).catch(() => {});
       }
 
     } catch (err) {
       ariaBubble.classList.remove('typing-bubble');
-      ariaBubble.textContent = 'hmm, i had trouble reading that image. try sending it again?';
-      console.error('[Aria] Vision API error:', err);
+      ariaBubble.textContent = 'something went wrong sending that image — try again?';
+      console.error('[Aria] Vision error:', err);
     } finally {
       if (sendBtn) sendBtn.disabled = false;
-      if (typeof window !== 'undefined') window.chatIsTyping = false;
+      window.chatIsTyping = false;
       updateSendBtnState();
     }
   }
