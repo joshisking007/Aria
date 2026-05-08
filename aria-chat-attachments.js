@@ -300,7 +300,18 @@
     fileInput.style.display = 'none';
     fileInput.setAttribute('aria-hidden', 'true');
 
-    attachBtn.addEventListener('click', () => fileInput.click());
+    attachBtn.addEventListener('click', () => {
+      // Re-wire the file input every click in case the DOM was refreshed
+      let fi = document.getElementById('chatFileInput');
+      if (!fi) {
+        fi = fileInput;
+        // Attach to bar (outside inputRow) so inputRow.innerHTML = '' never kills it
+        const b = document.querySelector('#chatScreen .chat-input-bar') || document.querySelector('.chat-input-bar');
+        if (b) b.appendChild(fi);
+      }
+      fi.value = '';
+      fi.click();
+    });
     fileInput.addEventListener('change', handleFileSelected);
 
     // ── mic (speech-to-text) button ────────────────────────────────────────
@@ -314,6 +325,9 @@
       <path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/>
       <line x1="8" y1="23" x2="16" y2="23"/>
     </svg>`;
+    micBtn.setAttribute('data-idle-title',      'Tap to speak');
+    micBtn.setAttribute('data-recording-title', 'Tap to stop');
+    micBtn.title = 'Tap to speak';
     micBtn.style.cssText = `
       flex-shrink: 0;
       width: 34px; height: 34px;
@@ -350,11 +364,16 @@
     waveBtn.addEventListener('click', onWaveBtnClick);
 
     // Compose row: [+] [textarea] [mic] [waveform/send]
+    // fileInput goes on the bar directly (NOT inside inputRow) so that
+    // inputRow.innerHTML = '' on re-inject never destroys it or its listeners.
     inputRow.appendChild(attachBtn);
     inputRow.appendChild(textarea);
-    inputRow.appendChild(fileInput);
     inputRow.appendChild(micBtn);
     inputRow.appendChild(waveBtn);
+    // Append file input to bar (outside inputRow) if not already there
+    if (!bar.querySelector('#chatFileInput')) {
+      bar.appendChild(fileInput);
+    }
 
     // Listen for textarea input to switch waveform → send arrow
     textarea.addEventListener('input', updateSendBtnState);
@@ -561,8 +580,68 @@
         0%,100% { opacity: 0.3; transform: scale(0.8); }
         50%      { opacity: 1;   transform: scale(1.2); }
       }
+      /* ── mic recording indicator bar ── */
+      #ariaMicBar {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px 0;
+        font-size: 12px;
+        font-family: 'DM Sans', sans-serif;
+        color: #f43f5e;
+        letter-spacing: 0.3px;
+        animation: fadein 0.18s ease;
+      }
+      #ariaMicBar.active { display: flex; }
+      #ariaMicBar .mic-dot {
+        width: 7px; height: 7px; border-radius: 50%;
+        background: #f43f5e;
+        animation: mic-blink 1s ease-in-out infinite;
+        flex-shrink: 0;
+      }
+      @keyframes mic-blink {
+        0%,100% { opacity: 1; }
+        50%      { opacity: 0.2; }
+      }
+      #ariaMicBar .mic-stop-btn {
+        margin-left: auto;
+        background: rgba(244,63,94,0.15);
+        border: 1px solid rgba(244,63,94,0.3);
+        color: #f43f5e;
+        border-radius: 8px;
+        padding: 2px 10px;
+        font-size: 11px;
+        font-family: 'DM Sans', sans-serif;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
     `;
     document.head.appendChild(style);
+
+    // ── Recording indicator bar (inserted above the input row) ──
+    _ensureMicBar();
+  }
+
+  function _ensureMicBar() {
+    if (document.getElementById('ariaMicBar')) return;
+    const bar = document.querySelector('#chatScreen .chat-input-bar') || document.querySelector('.chat-input-bar');
+    if (!bar) return;
+    const micBar = document.createElement('div');
+    micBar.id = 'ariaMicBar';
+    micBar.innerHTML = `
+      <div class="mic-dot"></div>
+      <span id="ariaMicLabel">recording…</span>
+      <button class="mic-stop-btn" id="ariaMicStopBtn">stop</button>
+    `;
+    // Insert before the inputRow
+    const inputRow = bar.querySelector('.chat-input-row');
+    if (inputRow) bar.insertBefore(micBar, inputRow);
+    else bar.appendChild(micBar);
+
+    document.getElementById('ariaMicStopBtn').addEventListener('click', () => {
+      if (typeof toggleSpeechInput === 'function') toggleSpeechInput();
+      else if (window._ariaToggleSpeech) window._ariaToggleSpeech();
+    });
   }
 
 
@@ -767,11 +846,11 @@
     if (msgs) msgs.appendChild(ariaWrap);
     if (typeof scrollChatToBottom === 'function') scrollChatToBottom();
 
-    // Use the existing fetchReply() via window scope (this IIFE uses strict mode;
-    // bare fetchReply() throws ReferenceError if load order puts this file first).
+    // Route through the Supabase edge function via window.fetchReply.
+    // We build the vision content array here (with the correct mimeType) and
+    // pass it as userMsg with imageB64=null so fetchReply doesn't re-wrap it
+    // with its own hardcoded 'image/jpeg' source block.
     try {
-      // Extract real MIME from dataUrl — fetchReply hardcodes 'image/jpeg' which
-      // makes Anthropic reject PNG/WebP/GIF uploads with a 400 error.
       const mimeMatch  = dataUrl.match(/^data:([^;]+);base64,/);
       const mimeType   = (mimeMatch && mimeMatch[1]) || 'image/jpeg';
       const base64Data = dataUrl.split(',')[1];
@@ -786,13 +865,11 @@
         ? `The user sent this image with the caption: "${caption}". Look at it carefully — read any text you can see, understand what it shows — then respond naturally as Aria.`
         : 'The user sent you this image. Look at it carefully — read any text, understand what it shows (screenshot of a conversation, photo, anything) — then respond naturally as Aria based on what you see.';
 
-      // Build vision content array manually with the correct mimeType, then pass
-      // it as userMsg directly (imageB64 = null) so fetchReply doesn't re-wrap it
-      // with the hardcoded 'image/jpeg' source block.
       const visionContent = [
         { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64Data } },
         { type: 'text',  text: promptText }
       ];
+      // window. prefix guarantees scope inside this strict-mode IIFE
       const rawText = await window.fetchReply(sysPrompt, visionContent, null);
 
       // Remove typing bubble and stream response
@@ -900,82 +977,97 @@
 
   async function toggleSpeechInput() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const micBtn = document.querySelector('.chat-mic-btn');
+    const micBtn  = document.querySelector('.chat-mic-btn');
+    const micBar  = document.getElementById('ariaMicBar');
+    const micLbl  = document.getElementById('ariaMicLabel');
+
+    // ── If already listening → stop ────────────────────────────────────────
+    if (isListening) {
+      if (speechRecognition) speechRecognition.stop();
+      return;
+    }
 
     if (!SpeechRecognition) {
       if (typeof showToast === 'function') showToast('voice input not supported in this browser');
       return;
     }
 
-    if (isListening) {
-      if (speechRecognition) speechRecognition.stop();
-      return;
-    }
-
-    // Warm up getUserMedia first — Android WebView and iOS Safari will silently
-    // throw 'not-allowed' inside SpeechRecognition without an explicit permission grant.
+    // ── Request mic permission first (Android/iOS silent-fail fix) ─────────
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(t => t.stop()); // permission granted; release stream
-    } catch (permErr) {
-      isListening = false;
-      if (micBtn) micBtn.classList.remove('listening');
+      stream.getTracks().forEach(t => t.stop());
+    } catch (_) {
       if (typeof showToast === 'function') showToast('microphone access denied — check browser settings');
       return;
     }
 
     speechRecognition = new SpeechRecognition();
-    speechRecognition.lang             = navigator.language || 'en-US';
-    speechRecognition.interimResults   = true;
-    speechRecognition.maxAlternatives  = 1;
-    speechRecognition.continuous       = false; // more reliable on Android/Chrome mobile
+    speechRecognition.lang            = navigator.language || 'en-US';
+    speechRecognition.interimResults  = true;
+    speechRecognition.maxAlternatives = 1;
+    speechRecognition.continuous      = false;
+
+    function _setRecording(active) {
+      isListening = active;
+      if (micBtn) {
+        micBtn.classList.toggle('listening', active);
+        micBtn.title = active
+          ? (micBtn.getAttribute('data-recording-title') || 'Tap to stop')
+          : (micBtn.getAttribute('data-idle-title')      || 'Tap to speak');
+      }
+      if (micBar) micBar.classList.toggle('active', active);
+    }
 
     speechRecognition.onstart = () => {
-      isListening = true;
-      if (micBtn) micBtn.classList.add('listening');
-      if (typeof showToast === 'function') showToast('listening…');
+      _setRecording(true);
+      if (micLbl) micLbl.textContent = 'recording…';
     };
 
     speechRecognition.onresult = (e) => {
-      let transcript = '';
+      let interim = '', final = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        transcript += e.results[i][0].transcript;
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) final += t;
+        else interim += t;
       }
-      const input = document.getElementById('chatInput');
-      if (input && transcript) {
-        const existing = input.value.trimEnd();
-        input.value = existing ? existing + ' ' + transcript : transcript;
-        if (typeof chatInputResize === 'function') chatInputResize(input);
-        updateSendBtnState();
+      // Show interim transcript in the label so user knows it's working
+      if (micLbl && interim) micLbl.textContent = interim || 'recording…';
+      // Commit final words to the input
+      if (final) {
+        const input = document.getElementById('chatInput');
+        if (input) {
+          const existing = input.value.trimEnd();
+          input.value = existing ? existing + ' ' + final : final;
+          if (typeof chatInputResize === 'function') chatInputResize(input);
+          updateSendBtnState();
+        }
+        if (micLbl) micLbl.textContent = 'recording…';
       }
     };
 
     speechRecognition.onerror = (e) => {
-      isListening = false;
-      if (micBtn) micBtn.classList.remove('listening');
+      _setRecording(false);
       const msgs = {
         'not-allowed':   'microphone access denied',
-        'no-speech':     'no speech detected — try again',
-        'network':       'network error during voice input',
+        'no-speech':     'no speech detected',
+        'network':       'network error — try again',
         'audio-capture': 'no microphone found',
       };
       if (typeof showToast === 'function') showToast(msgs[e.error] || `voice error: ${e.error}`);
     };
 
-    speechRecognition.onend = () => {
-      isListening = false;
-      if (micBtn) micBtn.classList.remove('listening');
-    };
+    speechRecognition.onend = () => { _setRecording(false); };
 
     try {
       speechRecognition.start();
-    } catch (startErr) {
-      isListening = false;
-      if (micBtn) micBtn.classList.remove('listening');
-      if (typeof showToast === 'function') showToast('could not start voice input — try again');
-      console.error('[Aria] SpeechRecognition start error:', startErr);
+    } catch (err) {
+      _setRecording(false);
+      if (typeof showToast === 'function') showToast('could not start voice input');
+      console.error('[Aria] SpeechRecognition start error:', err);
     }
   }
+  // Expose so the stop button in the mic bar can call it
+  window._ariaToggleSpeech = toggleSpeechInput;
 
 
   /* ═══════════════════════════════════════════════════════════════════════════
