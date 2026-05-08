@@ -767,9 +767,13 @@
     if (msgs) msgs.appendChild(ariaWrap);
     if (typeof scrollChatToBottom === 'function') scrollChatToBottom();
 
-    // Use the existing fetchReply() — it routes through the Supabase edge function
-    // which already has the API key, auth headers, and vision support (imageB64 param).
+    // Use the existing fetchReply() via window scope (this IIFE uses strict mode;
+    // bare fetchReply() throws ReferenceError if load order puts this file first).
     try {
+      // Extract real MIME from dataUrl — fetchReply hardcodes 'image/jpeg' which
+      // makes Anthropic reject PNG/WebP/GIF uploads with a 400 error.
+      const mimeMatch  = dataUrl.match(/^data:([^;]+);base64,/);
+      const mimeType   = (mimeMatch && mimeMatch[1]) || 'image/jpeg';
       const base64Data = dataUrl.split(',')[1];
 
       const memCtx    = typeof getAriaMemoryContext === 'function'
@@ -782,8 +786,14 @@
         ? `The user sent this image with the caption: "${caption}". Look at it carefully — read any text you can see, understand what it shows — then respond naturally as Aria.`
         : 'The user sent you this image. Look at it carefully — read any text, understand what it shows (screenshot of a conversation, photo, anything) — then respond naturally as Aria based on what you see.';
 
-      // fetchReply(system, userMsg, imageB64) — third param triggers vision mode
-      const rawText = await fetchReply(sysPrompt, promptText, base64Data);
+      // Build vision content array manually with the correct mimeType, then pass
+      // it as userMsg directly (imageB64 = null) so fetchReply doesn't re-wrap it
+      // with the hardcoded 'image/jpeg' source block.
+      const visionContent = [
+        { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64Data } },
+        { type: 'text',  text: promptText }
+      ];
+      const rawText = await window.fetchReply(sysPrompt, visionContent, null);
 
       // Remove typing bubble and stream response
       ariaBubble.classList.remove('typing-bubble');
@@ -888,37 +898,53 @@
      9. SPEECH-TO-TEXT (Web Speech API)
      ═══════════════════════════════════════════════════════════════════════════ */
 
-  function toggleSpeechInput() {
+  async function toggleSpeechInput() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const micBtn = document.querySelector('.chat-mic-btn');
+
     if (!SpeechRecognition) {
-      if (typeof showToast === 'function') showToast('speech not supported in this browser');
+      if (typeof showToast === 'function') showToast('voice input not supported in this browser');
       return;
     }
 
     if (isListening) {
-      speechRecognition && speechRecognition.stop();
+      if (speechRecognition) speechRecognition.stop();
+      return;
+    }
+
+    // Warm up getUserMedia first — Android WebView and iOS Safari will silently
+    // throw 'not-allowed' inside SpeechRecognition without an explicit permission grant.
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(t => t.stop()); // permission granted; release stream
+    } catch (permErr) {
+      isListening = false;
+      if (micBtn) micBtn.classList.remove('listening');
+      if (typeof showToast === 'function') showToast('microphone access denied — check browser settings');
       return;
     }
 
     speechRecognition = new SpeechRecognition();
-    speechRecognition.lang = 'en-US';
-    speechRecognition.interimResults = true;
-    speechRecognition.maxAlternatives = 1;
-
-    const micBtn = document.querySelector('.chat-mic-btn');
+    speechRecognition.lang             = navigator.language || 'en-US';
+    speechRecognition.interimResults   = true;
+    speechRecognition.maxAlternatives  = 1;
+    speechRecognition.continuous       = false; // more reliable on Android/Chrome mobile
 
     speechRecognition.onstart = () => {
       isListening = true;
       if (micBtn) micBtn.classList.add('listening');
+      if (typeof showToast === 'function') showToast('listening…');
     };
 
     speechRecognition.onresult = (e) => {
-      const transcript = Array.from(e.results)
-        .map(r => r[0].transcript)
-        .join('');
+      let transcript = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        transcript += e.results[i][0].transcript;
+      }
       const input = document.getElementById('chatInput');
-      if (input) {
-        input.value = transcript;
+      if (input && transcript) {
+        const existing = input.value.trimEnd();
+        input.value = existing ? existing + ' ' + transcript : transcript;
         if (typeof chatInputResize === 'function') chatInputResize(input);
         updateSendBtnState();
       }
@@ -927,9 +953,13 @@
     speechRecognition.onerror = (e) => {
       isListening = false;
       if (micBtn) micBtn.classList.remove('listening');
-      if (e.error === 'not-allowed') {
-        if (typeof showToast === 'function') showToast('microphone access denied');
-      }
+      const msgs = {
+        'not-allowed':   'microphone access denied',
+        'no-speech':     'no speech detected — try again',
+        'network':       'network error during voice input',
+        'audio-capture': 'no microphone found',
+      };
+      if (typeof showToast === 'function') showToast(msgs[e.error] || `voice error: ${e.error}`);
     };
 
     speechRecognition.onend = () => {
@@ -937,7 +967,14 @@
       if (micBtn) micBtn.classList.remove('listening');
     };
 
-    speechRecognition.start();
+    try {
+      speechRecognition.start();
+    } catch (startErr) {
+      isListening = false;
+      if (micBtn) micBtn.classList.remove('listening');
+      if (typeof showToast === 'function') showToast('could not start voice input — try again');
+      console.error('[Aria] SpeechRecognition start error:', startErr);
+    }
   }
 
 
