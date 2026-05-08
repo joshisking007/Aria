@@ -20,7 +20,7 @@ function updateStats() {
 }
 
 // screen nav  
-const screensWithNav = ['introScreen','historyScreen','moodScreen','profileScreen','glowupScreen','redflagScreen','vibeScreen','queueScreen','contactProfileScreen','onboardScreen','presendScreen','memoryScreen','longGameScreen','lgDetailScreen','lgArcPreviewScreen'];
+const screensWithNav = ['introScreen','historyScreen','moodScreen','profileScreen','glowupScreen','redflagScreen','vibeScreen','queueScreen','contactProfileScreen','onboardScreen','presendScreen','memoryScreen','longGameScreen','lgDetailScreen','lgArcPreviewScreen','exploreScreen'];
 
 function showScreen(id) {  
   // If leaving chat screen, write conversation summary  
@@ -63,6 +63,7 @@ function showScreen(id) {
   else if (id === 'longGameScreen') { renderLongGameScreen(); }  
   else if (id === 'lgArcPreviewScreen') { /* rendered by showArcPreview() */ }
   else if (id === 'presendScreen') { initPresendScreen(); }
+  else if (id === 'exploreScreen') { setNavActive('navExplore'); }
 
   window.scrollTo(0, 0);  
 }
