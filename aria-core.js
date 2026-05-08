@@ -821,8 +821,77 @@ const ariaMemory = (() => {
   function isTableAvailable() { return tableExists; }
 
   function addChatFacts(factsText) {
-    // Store chat-derived facts in the 'chat' category
-    const lines = factsText.split('\n').map(l => l.replace(/^–\s*/, '').trim()).filter(Boolean);
+    // Store chat-derived facts in the 'chat' category.
+    // RESOLVED lines actively remove matching THREAD entries so stale questions
+    // don't resurface in session openers.
+    const lines = factsText.split('\n').map(l => l.replace(/^[-–]\s*/, '').trim()).filter(Boolean);
+    const resolvedTopics = lines
+      .filter(l => l.toUpperCase().startsWith('RESOLVED:'))
+      .map(l => l.slice(l.indexOf(':') + 1).trim().toLowerCase());
+
+    // If any RESOLVED entries exist, find and delete matching THREAD entries
+    if (resolvedTopics.length && store.chat) {
+      const chatEntries = Object.entries(store.chat);
+      chatEntries.forEach(([key, entry]) => {
+        if (!entry?.value) return;
+        const val = entry.value.toLowerCase();
+        if (!val.includes('thread:')) return;
+        // Check if any resolved topic overlaps with this thread (3+ word match)
+        const threadBody = val.replace('thread:', '').trim();
+        const threadWords = new Set(threadBody.split(/\s+/).filter(w => w.length > 3));
+        const isResolved = resolvedTopics.some(topic => {
+          const topicWords = topic.split(/\s+/).filter(w => w.length > 3);
+          const overlap = topicWords.filter(w => threadWords.has(w));
+          return overlap.length >= 2; // at least 2 meaningful words in common
+        });
+        if (isResolved) {
+          // Remove from in-memory store
+          delete store.chat[key];
+          // Remove from Supabase
+          if (currentUserId && tableExists) {
+            db.from('aria_memory')
+              .delete()
+              .eq('user_id', currentUserId)
+              .eq('category', 'chat')
+              .eq('key', key)
+              .then(() => {})
+              .catch(() => {});
+          }
+        }
+      });
+    }
+
+    // Also purge RESOLVED lines from the Supabase aria_chat_memory text blob
+    // so the greeting prompt never sees them as open threads
+    if (resolvedTopics.length && currentUserId) {
+      db.from('user_profiles')
+        .select('aria_chat_memory')
+        .eq('id', currentUserId)
+        .single()
+        .then(({ data }) => {
+          if (!data?.aria_chat_memory) return;
+          let mem = data.aria_chat_memory;
+          resolvedTopics.forEach(topic => {
+            const topicWords = topic.split(/\s+/).filter(w => w.length > 3);
+            if (!topicWords.length) return;
+            // Remove any THREAD: line that shares 2+ words with this resolved topic
+            mem = mem.split('\n').filter(line => {
+              if (!line.toLowerCase().includes('thread:')) return true;
+              const lineWords = new Set(line.toLowerCase().split(/\s+/).filter(w => w.length > 3));
+              const overlap = topicWords.filter(w => lineWords.has(w));
+              return overlap.length < 2; // keep if NOT a match
+            }).join('\n');
+          });
+          db.from('user_profiles')
+            .update({ aria_chat_memory: mem })
+            .eq('id', currentUserId)
+            .then(() => {})
+            .catch(() => {});
+        })
+        .catch(() => {});
+    }
+
+    // Store all lines (including RESOLVED — useful as context for future sessions)
     lines.forEach((fact, i) => {
       remember('chat', `fact_${Date.now()}_${i}`, fact, 0.8, 'chat');
     });
