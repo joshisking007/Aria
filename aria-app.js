@@ -4108,8 +4108,21 @@ async function sendChatMessage() {
     // NOTE: chatIsTyping is reset inside streamTextWithVoice once streaming completes
 
   } catch(e) {  
-    console.error('chat error:', e);  
-    appendAriaMessage("something went wrong on my end. give it a second and try again.", 'uneasy', false);  
+    console.error('chat error:', e);
+    const _m = e instanceof Error ? e.message.toLowerCase() : '';
+    let _t;
+    if (!navigator.onLine || _m.includes('failed to fetch') || _m.includes('networkerror') || _m.includes('network request failed')) {
+      _t = "you've lost your connection. check your wifi or data and try again.";
+    } else if (_m.includes('429') || _m.includes('rate')) {
+      _t = "too many messages at once — wait a few seconds and try again.";
+    } else if (_m.includes('timeout') || _m.includes('timed out')) {
+      _t = "that took too long — might be a slow connection. try again.";
+    } else if (_m.includes('413') || _m.includes('5 mb') || _m.includes('payload')) {
+      _t = "that file is too large to send. try a smaller one.";
+    } else {
+      _t = "something didn't go through — check your connection and try again.";
+    }
+    appendAriaMessage(_t, 'uneasy', false);  
     chatIsTyping = false;  
     document.getElementById('chatSendBtn').disabled = false;  
   }  
