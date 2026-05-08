@@ -194,23 +194,54 @@ const ariaExplore = (() => {
     });
   }
 
-  // ── Overpass OSM fetch ──────────────────────────────────────
+  // ── Overpass OSM fetch — multi-mirror with fallback ────────
+  const OVERPASS_MIRRORS = [
+    'https://overpass-api.de/api/interpreter',
+    'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://overpass.openstreetmap.ru/api/interpreter',
+  ];
+
+  async function fetchFromMirror(url, timeout = 18000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeout);
+    try {
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      return data.elements || [];
+    } catch(e) {
+      clearTimeout(timer);
+      throw e;
+    }
+  }
+
   async function fetchPlacesOSM(lat, lng, category) {
     const cat = CATEGORIES.find(c => c.id === category);
     if (!cat) return [];
 
-    const radius = 1500; // metres
+    const radius = 2000; // metres — bumped up for sparser areas
     const unionParts = cat.osm.map(tag => {
       const [k, v] = tag.split('=');
-      return `node["${k}"="${v}"](around:${radius},${lat},${lng});way["${k}"="${v}"](around:${radius},${lat},${lng});`;
+      return `node["${k}"="${v}"](around:${radius},${lat},${lng});way["${k}"="${v}"](around:${radius},${lat},${lng});relation["${k}"="${v}"](around:${radius},${lat},${lng});`;
     }).join('');
 
-    const query = `[out:json][timeout:15];(${unionParts});out center 30;`;
-    const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+    const query = `[out:json][timeout:25];(${unionParts});out center 40;`;
 
-    const res = await fetch(url);
-    const data = await res.json();
-    return data.elements || [];
+    // Try each mirror in order, return first success
+    for (const mirror of OVERPASS_MIRRORS) {
+      try {
+        const url = `${mirror}?data=${encodeURIComponent(query)}`;
+        const elements = await fetchFromMirror(url);
+        console.log(`[Explore] loaded ${elements.length} results from ${mirror}`);
+        return elements;
+      } catch(e) {
+        console.warn(`[Explore] mirror failed: ${mirror}`, e.message);
+      }
+    }
+    // All mirrors failed
+    throw new Error('All Overpass mirrors failed');
   }
 
   function calcDist(lat1, lng1, lat2, lng2) {
@@ -271,7 +302,10 @@ const ariaExplore = (() => {
       document.getElementById('explorePlacesList').innerHTML = `
         <div class="explore-empty">
           <div class="explore-empty-icon">📡</div>
-          <div class="explore-empty-text">couldn't load places — check your connection</div>
+          <div class="explore-empty-text">couldn't reach map data servers.<br><br>
+            <span style="font-size:11px;color:var(--muted);">this sometimes happens on mobile data — try WiFi or tap a category to retry.</span><br><br>
+            <span onclick="ariaExplore.loadPlaces()" style="color:var(--rose);font-size:13px;cursor:pointer;text-decoration:underline;">↻ tap to retry</span>
+          </div>
         </div>`;
     }
   }
