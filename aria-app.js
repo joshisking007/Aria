@@ -3653,16 +3653,16 @@ function initChat() {
           let greeting;
           if (openThread) {
             try {
-              const THREAD_SYSTEM = 'You are Aria, a sharp and perceptive teenage girl. Write ONE short casual opening line that references an unresolved situation the user mentioned before. Be specific. Lowercase only. No em dashes. No quotes. Max 1 sentence. Output only the line, nothing else.';
-              const raw = await fetchReply(THREAD_SYSTEM, `Unresolved situation: "${openThread}"\n\nWrite a natural opening line asking how it turned out or what happened.`);
+              const THREAD_SYSTEM = 'You are Aria, a sharp and perceptive teenage girl. Write ONE short casual opening line that references an unresolved situation the user mentioned before. Be specific. Lowercase only. No em dashes. No quotes. Max 1 sentence. Output only the line, nothing else. IMPORTANT: Only ask about it if it is genuinely still unresolved — if the user already answered this topic in a previous session, do not bring it up again.';
+              const raw = await fetchReply(THREAD_SYSTEM, `Unresolved situation: "${openThread}"\n\nWrite a natural opening line asking how it turned out or what happened. Only do this if the situation is still open — if the user already responded to this, just check in generally instead.`);
               greeting = raw?.trim().replace(/^["'`]|["'`]$/g, '') || `hey. whatever happened with "${openThread.slice(0, 40)}"?`;
             } catch {
               greeting = "you're back. what's going on.";
             }
           } else if (memCtx) {  
             try {  
-              const GREETING_SYSTEM = 'You are Aria, a sharp and perceptive teenage girl. Write ONE short casual opening line to greet the user. Lowercase only. No em dashes. No quotes. Max 1 sentence. Output only the line, nothing else.';
-              const userPrompt = `The user just came back. Based on these notes, write a greeting. Reference something specific if worth it, otherwise just check in.\n\n${memCtx}`;
+              const GREETING_SYSTEM = 'You are Aria, a sharp and perceptive teenage girl. Write ONE short casual opening line to greet the user. Lowercase only. No em dashes. No quotes. Max 1 sentence. Output only the line, nothing else. IMPORTANT: Do NOT ask about something the user has already answered or acknowledged in the notes — if the notes show they already responded to a question, that topic is closed. Pick something fresh or just check in generally.';
+              const userPrompt = `The user just came back. Based on these notes, write a greeting. Only reference a THREAD if it is genuinely still open. Never reference anything marked RESOLVED — those topics are closed and the user has already responded to them. If there is nothing fresh to reference, just check in naturally.\n\n${memCtx}`;
               const raw = await fetchReply(GREETING_SYSTEM, userPrompt);
               greeting = raw?.trim().replace(/^["'`]|["'`]$/g, '') || "you're back. what's going on.";  
             } catch {  
@@ -4108,21 +4108,8 @@ async function sendChatMessage() {
     // NOTE: chatIsTyping is reset inside streamTextWithVoice once streaming completes
 
   } catch(e) {  
-    console.error('chat error:', e);
-    const _m = e instanceof Error ? e.message.toLowerCase() : '';
-    let _t;
-    if (!navigator.onLine || _m.includes('failed to fetch') || _m.includes('networkerror') || _m.includes('network request failed')) {
-      _t = "you've lost your connection. check your wifi or data and try again.";
-    } else if (_m.includes('429') || _m.includes('rate')) {
-      _t = "too many messages at once — wait a few seconds and try again.";
-    } else if (_m.includes('timeout') || _m.includes('timed out')) {
-      _t = "that took too long — might be a slow connection. try again.";
-    } else if (_m.includes('413') || _m.includes('5 mb') || _m.includes('payload')) {
-      _t = "that file is too large to send. try a smaller one.";
-    } else {
-      _t = "something didn't go through — check your connection and try again.";
-    }
-    appendAriaMessage(_t, 'uneasy', false);  
+    console.error('chat error:', e);  
+    appendAriaMessage("something went wrong on my end. give it a second and try again.", 'uneasy', false);  
     chatIsTyping = false;  
     document.getElementById('chatSendBtn').disabled = false;  
   }  
@@ -4148,9 +4135,11 @@ async function writeChatToMemory(recentMessages) {
 Output 3-6 bullet points using EXACTLY this format — one type per line:
 - FACT: [something durable and specific — name, job, city, relationship, age, hobby, etc.]
 - FEELING: [their current emotional state or something they're going through right now]
-- THREAD: [something unresolved, a situation still in progress, or a question left open]
+- THREAD: [something genuinely unresolved — a situation still in progress or a question the user never answered]
+- RESOLVED: [a thread or question that was asked before and the user has now answered or acknowledged — write what was resolved]
 - PERSON: [a real person they mentioned — name + one-word context, e.g. "Jake — ex"]
 Only include a category if there's real signal for it. No filler. No preamble. Be brutally specific.
+IMPORTANT: If the user answered a question that Aria previously asked (e.g. about a bug, an event, a situation), mark it as RESOLVED — do NOT mark it as a THREAD.
 These are Aria's private notes — she uses them to not forget things and to feel continuous.`,
       transcript
     );
