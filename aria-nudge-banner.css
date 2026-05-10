@@ -1,22 +1,16 @@
-/* ─── ARIA NUDGE BANNER ─────────────────────────────────────────────────────
-   In-app proactive check-in banner.
-   Slides down from the top, sits above the home screen content.
-   ─────────────────────────────────────────────────────────────────────────── */
+/* aria-nudge-banner.css — cyberpunk redesign */
 
 .aria-nudge-banner {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   z-index: 500;
   padding: 0 16px;
   padding-top: env(safe-area-inset-top, 0px);
   transform: translateY(-110%);
   opacity: 0;
-  transition: transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease;
   pointer-events: none;
 }
-
 .aria-nudge-banner.visible {
   transform: translateY(0);
   opacity: 1;
@@ -27,32 +21,36 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--card, #1a1a2e);
-  border: 1px solid rgba(244, 114, 182, 0.25);
-  border-radius: 0 0 18px 18px;
-  padding: 14px 14px 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(244, 114, 182, 0.1);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--card);
+  border: 1px solid var(--rose-border);
+  border-top: none;
+  border-bottom: 2px solid var(--rose);
+  padding: 12px 14px 14px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), var(--rose-glow-sm);
+  position: relative;
+}
+.nudge-banner-inner::before {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--rose), transparent);
 }
 
 .nudge-banner-img {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+  width: 40px; height: 40px;
   object-fit: cover;
   object-position: center 15%;
   flex-shrink: 0;
-  border: 1.5px solid rgba(244, 114, 182, 0.3);
+  border: 1px solid var(--rose-border);
+  box-shadow: 0 0 10px rgba(249,115,22,0.25);
 }
-
 .nudge-banner-orb {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #be185d, #db2777);
+  width: 40px; height: 40px;
+  background: var(--rose-dim);
+  border: 1px solid var(--rose-border);
   flex-shrink: 0;
-  opacity: 0.85;
+  box-shadow: 0 0 10px rgba(249,115,22,0.2);
 }
 
 .nudge-banner-content {
@@ -60,50 +58,42 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 9px;
 }
-
 .nudge-banner-msg {
-  font-size: 13.5px;
-  color: var(--text, #f8fafc);
-  font-family: 'DM Sans', sans-serif;
-  line-height: 1.45;
-  font-weight: 400;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
 }
 
-.nudge-banner-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
+.nudge-banner-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
 .nudge-banner-btn {
-  padding: 6px 14px;
-  border-radius: 20px;
-  border: 1px solid rgba(244, 114, 182, 0.4);
-  background: rgba(244, 114, 182, 0.1);
-  color: #f472b6;
-  font-size: 12px;
-  font-family: 'DM Sans', sans-serif;
-  font-weight: 500;
+  padding: 5px 13px;
+  border: 1px solid var(--rose-border);
+  background: var(--rose-dim);
+  color: var(--rose);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
   cursor: pointer;
-  letter-spacing: 0.2px;
-  transition: background 0.2s ease, transform 0.15s ease;
+  letter-spacing: 0.08em;
+  transition: all 0.18s;
   white-space: nowrap;
 }
-
 .nudge-banner-btn:active {
-  transform: scale(0.95);
-  background: rgba(244, 114, 182, 0.2);
+  background: var(--rose-dim2);
+  box-shadow: var(--rose-glow-sm);
+  transform: scale(0.97);
 }
-
 .nudge-banner-btn.secondary {
   background: transparent;
-  border-color: var(--border, rgba(255,255,255,0.08));
-  color: var(--muted, #94a3b8);
-  padding: 6px 10px;
+  border-color: var(--border);
+  color: var(--muted);
+  padding: 5px 10px;
 }
-
 .nudge-banner-btn.secondary:active {
-  background: var(--card2, rgba(255,255,255,0.04));
+  background: var(--card2);
+  border-color: var(--border-2);
 }
