@@ -12,6 +12,7 @@
 <title>Aria · Paradigm Leveling</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@800&family=Barlow+Condensed:wght@300&family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -24,6 +25,7 @@
 <link rel="stylesheet" href="style.css"/>
 <link rel="stylesheet" href="aria-games.css"/>
 <link rel="stylesheet" href="aria-memory-xp.css"/>
+<link rel="stylesheet" href="aria-memory-xp-1.css"/>
 <link rel="stylesheet" href="aria-explore.css"/>
 <link rel="manifest" href="manifest.json"/>
 
@@ -144,9 +146,9 @@
 
 
 <!-- Ambient layers -->
-<div class="ambient ambient-1"></div>
-<div class="ambient ambient-2"></div>
-<div class="ambient ambient-3"></div>
+
+
+
 
 <!-- auth gate (full-screen lock) -->
 <div id="authGate">
@@ -161,7 +163,7 @@
     <!-- Identity block -->
     <div class="gate-identity">
       <div class="gate-title">Aria</div>
-      <div class="gate-tagline">AUTOMATED · REPLY · INTELLIGENCE · ASSISTANT</div>
+      <div class="gate-tagline">A · R · I · A</div>
     </div>
 
     <!-- Brand — moved above sub copy -->
@@ -280,11 +282,12 @@
 
 <!-- screen: my memory -->
 <div class="screen" id="memoryScreen" style="display:none;">
+  <div class="hud-corner hud-corner-tl"></div><div class="hud-corner hud-corner-tr"></div>
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <div class="aria-mini"></div>
     <div class="top-bar-info">
-      <div class="top-bar-name">My Memory</div>
+      <div class="top-bar-name">Memory</div>
       <div class="top-bar-status" id="memoryStatus">● loading…</div>
     </div>
   </div>
@@ -294,20 +297,21 @@
     </div>
     <div class="memory-header-info">
       <div class="memory-header-title">What I know about you</div>
-      <div class="memory-header-sub">I've been paying attention. The more we work together, the more I understand you.</div>
+      <div class="memory-header-sub">the more we work together, the more i understand you.</div>
     </div>
   </div>
 
   <div id="memoryBody" class="memory-body-scroll"></div>
-  <div id="memorySqlNotice" style="display:none;margin:0 20px 12px;padding:14px;background:var(--card2);border:1px solid var(--border);border-radius:12px;font-size:12px;color:var(--muted);line-height:1.6;">
+  <div id="memorySqlNotice" style="display:none;margin:0 16px 12px;padding:14px;background:var(--card2);border:1px solid var(--border);font-family:var(--font-mono);font-size:11px;color:var(--muted);line-height:1.6;">
     Run this in your Supabase SQL editor to enable memory storage:<br><br>
     <code style="font-size:11px;color:var(--rose);">CREATE TABLE IF NOT EXISTS aria_memory (id uuid DEFAULT gen_random_uuid() PRIMARY KEY, user_id uuid REFERENCES auth.users NOT NULL, category text, key text, value text, confidence float, source text, updated_at timestamptz, UNIQUE(user_id, category, key));</code>
   </div>
-  <button class="memory-learn-btn" onclick="forceMemoryLearn()">re-learn from my history</button>
+  <button class="memory-learn-btn" onclick="forceMemoryLearn()">re-learn from history</button>
 </div>
 
 <!-- screen: intro -->
 <div class="screen active" id="introScreen">
+  <div class="hud-corner hud-corner-tl"></div><div class="hud-corner hud-corner-tr"></div><div class="hud-corner hud-corner-bl"></div><div class="hud-corner hud-corner-br"></div>
   <div class="intro-scroll">
 
     <div class="aria-avatar-wrap">
@@ -323,11 +327,12 @@
 
       <!-- Name + tagline tight together -->
       <div class="aria-name">Aria</div>
-      <div class="aria-full-name">AUTOMATED · REPLY · INTELLIGENCE · ASSISTANT</div>
+      <div class="aria-full-name">A · R · I · A</div>
+      <div class="version-badge"><div class="version-dot"></div><span>online</span></div>
 
       <!-- Brand — right under tagline, no large gap -->
       <div class="pl-brand pl-brand--intro">
-        <span>by Paradigm Leveling</span>
+        <span class="pl-brand-text">Paradigm Leveling</span>
       </div>
 
     </div>
@@ -363,7 +368,7 @@
 
     <!-- Current mood -->
     <div class="mood-strip" id="moodStrip">
-      <div class="mood-label">YOUR VIBE RIGHT NOW</div>
+      <div class="mood-label">CURRENT VIBE</div>
       <div class="mood-pills">
         <button class="mood-pill" onclick="setMood('chill','chill',this)">chill</button>
         <button class="mood-pill" onclick="setMood('hype','hyped',this)">hyped</button>
@@ -381,7 +386,7 @@
         </span>
         <div class="option-label">
           <div>someone messaged me</div>
-          <div class="option-sub">i'll write back in your voice</div>
+          <div class="option-sub">reply in your voice</div>
         </div>
         <span class="option-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
       </button>
@@ -391,7 +396,7 @@
         </span>
         <div class="option-label">
           <div>start a conversation</div>
-          <div class="option-sub">i'll say something so you don't have to</div>
+          <div class="option-sub">i'll start it for you</div>
         </div>
         <span class="option-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
       </button>
@@ -400,18 +405,18 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
         </span>
         <div class="option-label">
-          <div>check who needs a reply</div>
-          <div class="option-sub">swipeable queue — who's been left on read</div>
+          <div>reply queue</div>
+          <div class="option-sub">who's waiting on a reply</div>
         </div>
         <span class="option-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
       </button>
-      <button class="option-btn" onclick="showScreen('presendScreen')" style="border-color:rgba(244,114,182,0.18);background:rgba(244,114,182,0.04);">
+      <button class="option-btn" onclick="showScreen('presendScreen')" style="border-color:var(--rose-border);background:var(--rose-dim);">
         <span class="option-icon" style="background:var(--rose-dim);border-color:var(--rose-border);color:var(--rose);">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </span>
         <div class="option-label">
-          <div>check before you send</div>
-          <div class="option-sub" style="color:var(--rose);opacity:0.75;">I read your draft — flag what could backfire</div>
+          <div>pre-send check</div>
+          <div class="option-sub" style="color:var(--rose);">flag what could backfire</div>
         </div>
         <span class="option-arrow" style="color:var(--rose);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
       </button>
@@ -420,8 +425,8 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
         </span>
         <div class="option-label">
-          <div>view reply history</div>
-          <div class="option-sub">what i've drafted before</div>
+          <div>reply history</div>
+          <div class="option-sub">past drafts</div>
         </div>
         <span class="option-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
       </button>
@@ -430,8 +435,8 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
         </span>
         <div class="option-label">
-          <div>the long game</div>
-          <div class="option-sub" style="color:var(--green);">map out a multi-step conversation plan</div>
+          <div>long game</div>
+          <div class="option-sub" style="color:#a78bfa;">multi-step conversation plan</div>
         </div>
         <span class="option-arrow" style="color:#a78bfa;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
       </button>
@@ -443,7 +448,7 @@
         </span>
         <div class="option-label">
           <div>explore nearby</div>
-          <div class="option-sub" style="color:var(--green);">cafes, food, hospitals, petrol &amp; more</div>
+          <div class="option-sub" style="color:var(--green);">cafes, food, hospitals, nearby</div>
         </div>
         <span class="option-arrow" style="color:var(--green);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
       </button>
@@ -454,6 +459,7 @@
 
 <!-- screen: contacts -->
 <div class="screen" id="contactScreen">
+  <div class="hud-corner hud-corner-tl"></div><div class="hud-corner hud-corner-tr"></div>
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
 
@@ -475,7 +481,7 @@
 
   <!-- Aria comment -->
   <div class="aria-comment" id="ariaComment">
-    <div class="aria-tag">ARIA</div>
+    <div class="aria-tag">// ARIA</div>
     <span id="ariaCommentText"></span>
   </div>
 
@@ -486,6 +492,7 @@
 
 <!-- screen: reply -->
 <div class="screen" id="replyScreen">
+  <div class="hud-corner hud-corner-tl"></div><div class="hud-corner hud-corner-tr"></div>
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('contactScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
 
@@ -535,7 +542,7 @@
       </button>
     </div>
     <div class="thread-mode-banner" id="threadModeBanner">
-      <strong>Thread mode on.</strong> Paste the full conversation below — include both sides. I'll read the whole arc, not just the last message.
+      thread mode on. paste the full conversation, both sides.
     </div>
     <textarea class="convo-input" id="theirMsgInput" rows="3" placeholder="paste what they said... or give context"></textarea>
 
@@ -544,7 +551,7 @@
       <div class="context-toggle" id="contextToggle" onclick="toggleContextPanel()">
         <span class="context-toggle-icon">▶</span>
         <span class="context-toggle-label">ADD CONVERSATION CONTEXT</span>
-        <span class="context-badge" id="contextBadge" style="display:none;">✓ added</span>
+        <span class="context-badge" id="contextBadge" style="display:none;">added</span>
       </div>
       <div class="context-body" id="contextBody">
         <div class="context-tabs">
@@ -552,22 +559,22 @@
           <button class="context-tab" onclick="switchContextTab('screenshot', this)">Screenshot</button>
         </div>
         <div class="context-panel active" id="ctxPanelPaste">
-          <textarea class="context-input" id="contextPasteInput" rows="4" placeholder="paste the previous messages here so I can read the whole vibe of the convo..."></textarea>
+          <textarea class="context-input" id="contextPasteInput" rows="4" placeholder="paste the previous messages..."></textarea>
         </div>
         <div class="context-panel" id="ctxPanelScreenshot">
           <div class="screenshot-drop" id="screenshotDrop">
             <input type="file" accept="image/*" onchange="handleScreenshotUpload(this)" />
             <div class="screenshot-drop-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
-            <div class="screenshot-drop-text">tap to upload a screenshot<br><span style="font-size:10px;opacity:0.6;">jpg, png — I'll read the convo</span></div>
+            <div class="screenshot-drop-text">tap to upload screenshot</div>
           </div>
           <img class="screenshot-preview" id="screenshotPreview" />
-          <div class="context-clear" id="screenshotClearBtn" onclick="clearScreenshot()">✕ remove screenshot</div>
+          <div class="context-clear" id="screenshotClearBtn" onclick="clearScreenshot()">remove screenshot</div>
         </div>
       </div>
     </div>
 
-    <button class="ask-aria-btn" onclick="openClarifyModal()">ask me to clarify first</button>
-    <button class="gen-reply-btn" id="genReplyBtn" onclick="generateReply()">let me respond →</button>
+    <button class="ask-aria-btn" onclick="openClarifyModal()">ask Aria to clarify</button>
+    <button class="gen-reply-btn" id="genReplyBtn" onclick="generateReply()">generate reply</button>
   </div>
 
   <!-- Thinking -->
@@ -576,7 +583,7 @@
     <div class="thinking-dots">
       <div class="dot"></div><div class="dot"></div><div class="dot"></div>
     </div>
-    <span class="thinking-text">thinking</span>
+    <span class="thinking-text">generating</span>
     <span class="thinking-status" id="thinkingStatus"></span>
   </div>
 
@@ -584,17 +591,17 @@
   <div class="aria-reaction" id="ariaReaction">
     <div class="aria-reaction-header">
 
-      <span class="aria-reaction-tag">ARIA</span>
+      <span class="aria-reaction-tag">// ARIA</span>
     </div>
     <div class="aria-reaction-text" id="ariaReactionText"></div>
-    <div class="aria-reaction-divider">HERE'S WHAT TO SEND</div>
+    <div class="aria-reaction-divider">DRAFT</div>
   </div>
 
   <!-- Reply section -->
   <div id="replySection" style="display:none;">
     <div class="reply-section">
-      <div class="reply-from-label">MY DRAFT</div>
-      <div class="edit-hint" id="editHint" style="display:none;">✏️ TAP ANY BUBBLE TO EDIT</div>
+      <div class="reply-from-label">DRAFT</div>
+      <div class="edit-hint" id="editHint" style="display:none;">tap any bubble to edit</div>
       <div id="replyBubbles"></div>
     </div>
 
@@ -607,11 +614,11 @@
 
     <!-- Action buttons row 1 -->
     <div class="action-row">
-      <button class="regen-btn" onclick="generateReply()">↺ retry</button>
+      <button class="regen-btn" onclick="generateReply()">retry</button>
       <button class="copy-btn" id="mainCopyBtn" onclick="copyReply()">copy & send →</button>
     </div>
     <div style="padding:0 20px;margin-bottom:10px;">
-      <button class="action-btn-sm" style="width:100%;padding:12px;border-color:var(--rose-border);color:var(--rose);" onclick="continueConvo()">
+      <button class="action-btn-sm" style="width:100%;padding:12px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;border-color:var(--rose-border);color:var(--rose);" onclick="continueConvo()">
         they replied — continue the thread
       </button>
     </div>
@@ -634,13 +641,13 @@
 
     <!-- Alternatives -->
     <div class="alternatives-section" id="altSection" style="display:none;">
-      <div class="alt-label">DIFFERENT VIBES</div>
+      <div class="alt-label">ALTERNATIVES</div>
       <div id="altBubbles"></div>
     </div>
 
     <!-- Save button -->
     <div style="padding: 0 20px; margin-bottom: 16px;">
-      <button class="action-btn-sm" style="width:100%;padding:12px;" onclick="saveToHistory()">
+      <button class="action-btn-sm" style="width:100%;padding:12px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;" onclick="saveToHistory()">
         <span style="font-size:14px;">save this reply to history</span>
       </button>
     </div>
@@ -650,24 +657,25 @@
 
 <!-- screen: history -->
 <div class="screen" id="historyScreen">
+  <div class="hud-corner hud-corner-tl"></div><div class="hud-corner hud-corner-tr"></div>
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
 
     <div class="top-bar-info">
-      <div class="top-bar-name">Reply History</div>
+      <div class="top-bar-name">History</div>
       <div class="top-bar-status">● <span id="historyCount">0</span> saved</div>
     </div>
-    <button class="back-btn" onclick="clearHistory()" style="margin-left:auto;font-size:11px;color:var(--muted);">clear</button>
+    <button class="back-btn" onclick="clearHistory()" style="margin-left:auto;font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;color:var(--muted);">clear</button>
   </div>
 
   <!-- Pattern insight card — populated by analyseHistoryPatterns() -->
-  <div id="historyInsightCard" style="display:none;margin:12px 16px 0;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 16px;">
+  <div id="historyInsightCard" style="display:none;margin:12px 16px 0;background:var(--card2);border:1px solid var(--border);padding:14px 16px;">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-      <div style="width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#f9a8d4,#ec4899);flex-shrink:0;"></div>
-      <div style="font-size:10px;letter-spacing:1.5px;color:var(--muted);">ARIA NOTICED</div>
+      <div style="width:28px;height:28px;background:var(--rose-dim);border:1px solid var(--rose-border);flex-shrink:0;"></div>
+      <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.15em;color:var(--rose);">ARIA NOTICED</div>
     </div>
     <div id="historyInsightText" style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:10px;"></div>
-    <div id="historyPatternList" style="display:flex;flex-direction:column;gap:6px;"></div>
+    <div id="historyPatternList" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;"></div>
   </div>
 
   <div id="historyList"></div>
@@ -675,11 +683,12 @@
 
 <!-- screen: profile / voice settings -->
 <div class="screen" id="profileScreen">
+  <div class="hud-corner hud-corner-tl"></div><div class="hud-corner hud-corner-tr"></div>
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <div class="top-bar-info">
-      <div class="top-bar-name">Your Voice Profile</div>
-      <div class="top-bar-status">● personalised</div>
+      <div class="top-bar-name">Voice Profile</div>
+      <div class="top-bar-status">● configured</div>
     </div>
   </div>
 
@@ -695,13 +704,13 @@
 
   <!-- Writing style section -->
   <div class="profile-section">
-    <div class="profile-section-title">YOUR TEXTING STYLE</div>
+    <div class="profile-section-title">STYLE</div>
     <div class="profile-card">
       <div class="profile-row">
         <span class="profile-row-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg></span>
         <div class="profile-row-info">
           <div class="profile-row-label">Capitalisation</div>
-          <div class="profile-row-sub">lowercase everything</div>
+          <div class="profile-row-sub">lowercase</div>
         </div>
         <div class="toggle-wrap">
           <div class="toggle" id="capsToggle" onclick="toggleSetting('caps',this)">
@@ -713,7 +722,7 @@
         <span class="profile-row-icon">.</span>
         <div class="profile-row-info">
           <div class="profile-row-label">Punctuation</div>
-          <div class="profile-row-sub">no periods at end of sentences</div>
+          <div class="profile-row-sub">no end punctuation</div>
         </div>
         <div class="toggle-wrap">
           <div class="toggle on" id="punctToggle" onclick="toggleSetting('punct',this)">
@@ -725,7 +734,7 @@
         <span class="profile-row-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></span>
         <div class="profile-row-info">
           <div class="profile-row-label">Emojis</div>
-          <div class="profile-row-sub">sparse — only when it lands</div>
+          <div class="profile-row-sub">sparse only</div>
         </div>
         <div class="toggle-wrap">
           <div class="toggle on" id="emojiToggle" onclick="toggleSetting('emoji',this)">
@@ -738,9 +747,9 @@
 
   <!-- Slang/vocab -->
   <div class="profile-section">
-    <div class="profile-section-title">YOUR SLANG & VOCAB</div>
+    <div class="profile-section-title">SLANG</div>
     <div class="profile-card">
-      <div style="margin-bottom:8px;font-size:13px;color:var(--muted);line-height:1.6;">
+      <div style="margin-bottom:8px;font-family:var(--font-body);font-size:13px;color:var(--muted);line-height:1.6;">
         Words & phrases I’ve learned from you:
       </div>
       <div class="trait-pills-wrap" id="traitPills">
@@ -754,26 +763,26 @@
         <span class="trait-pill"></span>
         <span class="trait-pill muted">+ add your own</span>
       </div>
-      <input class="profile-input" id="slangInput" placeholder="add a word or phrase…" onkeydown="addSlang(event)"/>
+      <input class="profile-input" id="slangInput" placeholder="add a word or phrase" onkeydown="addSlang(event)"/>
     </div>
   </div>
 
   <!-- Energy level -->
   <div class="profile-section">
-    <div class="profile-section-title">RESPONSE ENERGY</div>
+    <div class="profile-section-title">ENERGY</div>
     <div class="profile-card">
-      <div style="font-size:13px;color:var(--muted);margin-bottom:4px;">How much does Aria match their energy vs. stay in your vibe?</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:4px;">match their energy vs. stay in your voice</div>
       <div class="slider-wrap">
-        <div class="slider-labels"><span>always you</span><span>mirror them</span></div>
+        <div class="slider-labels"><span>your voice</span><span>mirror them</span></div>
         <input type="range" min="0" max="100" value="40" id="energySlider" oninput="updateEnergyLabel(this.value)"/>
       </div>
-      <div style="font-size:12px;color:var(--rose);margin-top:8px;" id="energyLabel">leaning toward your voice (40%)</div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--rose);margin-top:8px;letter-spacing:0.04em;" id="energyLabel">leaning toward your voice (40%)</div>
     </div>
   </div>
 
   <!-- Default tone -->
   <div class="profile-section">
-    <div class="profile-section-title">DEFAULT TONE</div>
+    <div class="profile-section-title">TONE</div>
     <div style="padding:0 20px;">
       <div class="tone-pills">
         <button class="tone-pill active" onclick="setDefaultTone('real',this)">real talk</button>
@@ -788,14 +797,14 @@
 
   <!-- my voice -->
   <div class="profile-section voice-section">
-    <div class="profile-section-title">MY VOICE</div>
+    <div class="profile-section-title">VOICE</div>
     <div class="profile-card">
 
       <!-- Mute / speak toggle -->
       <div class="voice-mute-row">
         <div>
-          <div class="voice-mute-label">Speak out loud</div>
-          <div class="voice-mute-sub">I read my words through your speakers</div>
+          <div class="voice-mute-label">Speak aloud</div>
+          <div class="voice-mute-sub">aria reads replies aloud</div>
         </div>
         <div class="toggle-wrap">
           <div class="toggle on" id="speakToggle" onclick="toggleSpeak(this)">
@@ -814,7 +823,7 @@
         <div class="voice-controls-row" style="margin-top:14px;">
           <div class="voice-ctrl-card">
             <div class="voice-ctrl-label">STABILITY</div>
-            <div style="font-size:9px;color:var(--muted);margin-bottom:6px;">lower = more expressive</div>
+            <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-bottom:6px;letter-spacing:0.04em;">lower = more expressive</div>
             <div class="voice-ctrl-row">
               <input type="range" min="0" max="1" step="0.05" value="0.45" id="elStability" oninput="updateStability(this.value)"/>
               <span class="voice-ctrl-val" id="elStabilityVal">0.45</span>
@@ -822,7 +831,7 @@
           </div>
           <div class="voice-ctrl-card">
             <div class="voice-ctrl-label">CLARITY</div>
-            <div style="font-size:9px;color:var(--muted);margin-bottom:6px;">higher = closer to original</div>
+            <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-bottom:6px;letter-spacing:0.04em;">higher = closer to original</div>
             <div class="voice-ctrl-row">
               <input type="range" min="0" max="1" step="0.05" value="0.75" id="elSimilarity" oninput="updateSimilarity(this.value)"/>
               <span class="voice-ctrl-val" id="elSimilarityVal">0.75</span>
@@ -844,8 +853,8 @@
   </div>
 
   <!-- Reset -->
-  <div style="padding: 0 20px 80px; margin-top: 8px;">
-    <button class="action-btn-sm" style="width:100%;padding:14px;color:rgba(240,60,60,0.6);border-color:rgba(240,60,60,0.15);" onclick="resetProfile()">
+  <div style="padding: 0 16px 80px; margin-top: 8px;">
+    <button class="action-btn-sm" style="width:100%;padding:14px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.08em;color:rgba(244,63,94,0.6);border-color:rgba(244,63,94,0.18);" onclick="resetProfile()">
       reset voice profile
     </button>
   </div>
@@ -856,12 +865,12 @@
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <div class="top-bar-info">
-      <div class="top-bar-name">Today's Vibe</div>
-      <div class="top-bar-status">● sets tone for all replies</div>
+      <div class="top-bar-name">Vibe</div>
+      <div class="top-bar-status">● tone active</div>
     </div>
   </div>
 
-  <div class="section-label" style="margin-bottom:16px;">HOW ARE YOU FEELING RIGHT NOW?</div>
+  <div class="section-label">CURRENT VIBE</div>
 
   <div class="mood-grid">
     <div class="mood-card stagger-1" onclick="setMoodFull('chill','😌',this)">
@@ -901,21 +910,22 @@
 
 <!-- screen: pre-send (don't send that) -->
 <div class="screen" id="presendScreen" style="display:none;">
+  <div class="hud-corner hud-corner-tl"></div><div class="hud-corner hud-corner-tr"></div>
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
-    <div class="aria-mini" style="background:radial-gradient(circle at 35% 35%,#f9a8d4,#ec4899);box-shadow:0 0 16px rgba(244,114,182,0.35);flex-shrink:0;border-radius:50%;"></div>
+    <div class="aria-mini" style="flex-shrink:0;"></div>
     <div class="top-bar-info">
-      <div class="top-bar-name">Pre-Send Check</div>
-      <div class="top-bar-status">I read it before you do</div>
+      <div class="top-bar-name">Pre-Send</div>
+      <div class="top-bar-status">● pre-send active</div>
     </div>
     <button class="mute-btn" onclick="toggleMute()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></button>
   </div>
 
   <!-- Header banner -->
   <div class="presend-header-banner">
-    <div class="presend-banner-label">DON'T SEND THAT (YET)</div>
-    <div class="presend-banner-title">Let me read it first.</div>
-    <div class="presend-banner-sub">I'll catch the passive aggression you didn't notice, flag if you're coming across as too available, and tell you if it's going to land the way you think it will.</div>
+    
+    
+    <div class="presend-banner-sub">i catch what could backfire before you hit send.</div>
   </div>
 
   <!-- Mode pills -->
@@ -933,8 +943,8 @@
 
   <!-- Who's it for -->
   <div class="presend-who-row">
-    <span class="presend-who-label">TO:</span>
-    <select class="presend-who-input" id="psContactSelect" onchange="onPresendContactChange(this)" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;">
+    <span class="presend-who-label">TO</span>
+    <select class="presend-who-input" id="psContactSelect" onchange="onPresendContactChange(this)" style="flex:1;background:var(--card2);border:1px solid var(--border);padding:10px 12px;color:var(--text);font-size:13px;font-family:var(--font-mono);letter-spacing:0.04em;">
       <option value="">someone not in my contacts</option>
     </select>
   </div>
@@ -946,7 +956,7 @@
   <!-- Extra context for non-contact recipients -->
   <div id="psExtraContextRow" style="padding:0 20px;margin-top:6px;display:flex;flex-direction:column;gap:8px;">
     <div style="display:flex;gap:8px;">
-      <select class="presend-who-input" id="psRelType" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;">
+      <select class="presend-who-input" id="psRelType" style="flex:1;background:var(--card2);border:1px solid var(--border);padding:10px 12px;color:var(--text);font-size:13px;font-family:var(--font-mono);letter-spacing:0.04em;">
         <option value="">relationship type...</option>
         <option value="crush">crush / someone i like</option>
         <option value="ex">ex</option>
@@ -959,7 +969,7 @@
         <option value="stranger">someone i just met</option>
         <option value="situationship">situationship</option>
       </select>
-      <select class="presend-who-input" id="psIntentType" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;">
+      <select class="presend-who-input" id="psIntentType" style="flex:1;background:var(--card2);border:1px solid var(--border);padding:10px 12px;color:var(--text);font-size:13px;font-family:var(--font-mono);letter-spacing:0.04em;">
         <option value="">my intent...</option>
         <option value="reconnect">reconnecting</option>
         <option value="apologise">apologising</option>
@@ -972,7 +982,7 @@
         <option value="professional">professional / work-related</option>
       </select>
     </div>
-    <select class="presend-who-input" id="psUrgencyType" style="background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;width:100%;">
+    <select class="presend-who-input" id="psUrgencyType" style="background:var(--card2);border:1px solid var(--border);padding:10px 12px;color:var(--text);font-size:13px;font-family:var(--font-mono);letter-spacing:0.04em;width:100%;">
       <option value="">how urgent is this?</option>
       <option value="urgent">urgent — need to send now</option>
       <option value="thinking">thinking it over — not urgent</option>
@@ -984,22 +994,22 @@
   <!-- Draft textarea -->
   <div class="presend-textarea-wrap">
     <div class="presend-textarea-label">YOUR DRAFT</div>
-    <textarea class="presend-input" id="psDraftInput" rows="4" placeholder="paste the message you're about to send... or type it out"></textarea>
+    <textarea class="presend-input" id="psDraftInput" rows="4" placeholder="paste your draft..."></textarea>
     <div class="presend-char-hint" id="psCharHint">0 words</div>
   </div>
 
   <!-- Optional context -->
   <div class="presend-context-wrap">
     <div class="presend-textarea-label">SITUATION CONTEXT (optional)</div>
-    <textarea class="presend-context-input" id="psContextInput" rows="2" placeholder='e.g. "we had a fight two days ago" or "they've been hot and cold"'></textarea>
+    <textarea class="presend-context-input" id="psContextInput" rows="2" placeholder="situation context..."></textarea>
   </div>
 
   <!-- Run button -->
-  <button class="presend-run-btn" id="psRunBtn" onclick="runPresend()">let me check it →</button>
+  <button class="presend-run-btn" id="psRunBtn" onclick="runPresend()">run check</button>
 
   <!-- Thinking -->
   <div class="aria-thinking" id="psThinking" style="display:none;">
-    <div class="thinking-orb" style="background:radial-gradient(circle at 35% 35%,#f9a8d4,#ec4899);box-shadow:0 0 16px rgba(244,114,182,0.3);"></div>
+    <div class="thinking-orb" style=""></div>
     <div class="thinking-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
     <span class="thinking-text">I’m reading between the lines...</span>
   </div>
@@ -1016,30 +1026,30 @@
 
     <!-- Flags list -->
     <div class="presend-flags-wrap" id="psFlagsWrap" style="display:none;">
-      <div class="presend-flags-title">WHAT ARIA CAUGHT</div>
+      <div class="presend-flags-title">FLAGS</div>
       <div id="psFlagsList"></div>
     </div>
 
     <!-- Aria's hot take -->
     <div class="presend-aria-take" id="psAriaTake" style="display:none;">
-      <div class="presend-aria-take-label">MY TAKE</div>
+      <div class="presend-aria-take-label">ARIA ANALYSIS</div>
       <div class="presend-aria-take-text" id="psAriaTakeText"></div>
     </div>
 
     <!-- Rewrites (shown when mode = fix or roast) -->
     <div class="presend-rewrite-wrap" id="psRewriteWrap" style="display:none;">
-      <div class="presend-rewrite-label">MY REWRITES</div>
+      <div class="presend-rewrite-label">REWRITES</div>
       <div class="presend-rewrite-toggle" id="psRewriteTabs"></div>
       <div id="psRewriteItems"></div>
       <div class="presend-action-row">
-        <button class="presend-retry-btn" onclick="runPresend()">↺ retry</button>
+        <button class="presend-retry-btn" onclick="runPresend()">retry</button>
         <button class="presend-copy-fixed" id="psCopyRewriteBtn" onclick="copyPresendRewrite()">copy rewrite →</button>
       </div>
     </div>
 
     <!-- Copy original (check mode) -->
     <div class="presend-action-row" id="psActionOriginal" style="display:none;">
-      <button class="presend-retry-btn" onclick="runPresend()">↺ check again</button>
+      <button class="presend-retry-btn" onclick="runPresend()">check again</button>
       <button class="presend-copy-fixed" onclick="copyPresendOriginal()">send it anyway →</button>
     </div>
   </div>
@@ -1050,10 +1060,10 @@
 <div class="screen" id="glowupScreen" style="display:none;">
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
-    <img src="" class="aria-mini" style="object-fit:cover;object-position:center top;border-radius:50%;" id="glowupAriaImg"/>
+    <img src="" class="aria-mini" id="glowupAriaImg" style="object-fit:cover;object-position:center top;"/>
     <div class="top-bar-info">
-      <div class="top-bar-name">Message Glow-Up</div>
-      <div class="top-bar-status">aria rewrites it in your voice</div>
+      <div class="top-bar-name">Glow-Up</div>
+      <div class="top-bar-status">● rewriting</div>
     </div>
   </div>
 
@@ -1061,12 +1071,12 @@
     <div class="paste-label">PASTE YOUR DRAFT</div>
     <textarea class="convo-input" id="glowupInput" rows="4" placeholder="paste your rough draft here... doesn't matter how bad it sounds"></textarea>
     <div class="paste-label" style="margin-top:10px;">WHAT VIBE ARE YOU GOING FOR? (optional)</div>
-    <textarea class="convo-input" id="glowupGoal" rows="2" placeholder='e.g. "sounds less desperate" or "more chill" or "funnier"'></textarea>
-    <button class="gen-reply-btn" id="glowupBtn" onclick="runGlowup()">glow it up →</button>
+    <textarea class="convo-input" id="glowupGoal" rows="2" placeholder="target vibe (optional)"></textarea>
+    <button class="gen-reply-btn" id="glowupBtn" onclick="runGlowup()">rewrite</button>
   </div>
 
   <div class="aria-thinking" id="glowupThinking" style="display:none;">
-    <div class="thinking-orb" style="background:transparent;overflow:hidden;" ></div>
+    <div class="thinking-orb" style="overflow:hidden;"></div>
     <div class="thinking-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
     <span class="thinking-text">I’m styling...</span>
   </div>
@@ -1074,25 +1084,25 @@
   <!-- Aria's reaction to the draft -->
   <div class="aria-reaction" id="glowupReaction" style="display:none;">
     <div class="aria-reaction-header">
-      <img src="" class="aria-reaction-orb" style="object-fit:cover;object-position:center top;border-radius:50%;"/>
-      <span class="aria-reaction-tag">ARIA</span>
+      <img src="" class="aria-reaction-orb" style="object-fit:cover;object-position:center top;"/>
+      <span class="aria-reaction-tag">// ARIA</span>
     </div>
     <div class="aria-reaction-text" id="glowupReactionText"></div>
-    <div class="aria-reaction-divider">HERE'S YOUR GLOW-UP</div>
+    <div class="aria-reaction-divider">REWRITE</div>
   </div>
 
   <div class="glowup-result" id="glowupResult">
-    <div class="glowup-result-label">MY REWRITE</div>
+    <div class="glowup-result-label">REWRITE</div>
     <div class="glowup-result-text" id="glowupResultText"></div>
   </div>
 
   <div class="glowup-copy-row" id="glowupCopyRow" style="display:none;">
-    <button class="regen-btn" style="flex:1;" onclick="runGlowup()">↺ retry</button>
-    <button class="copy-btn" style="flex:2;" id="glowupCopyBtn" onclick="copyGlowup()">copy it →</button>
+    <button class="regen-btn" style="flex:1;" onclick="runGlowup()">retry</button>
+    <button class="copy-btn" style="flex:2;" id="glowupCopyBtn" onclick="copyGlowup()">copy</button>
   </div>
 
   <div class="glowup-variants" id="glowupVariants">
-    <div class="glowup-var-label">OTHER WAYS TO SAY IT</div>
+    <div class="glowup-var-label">ALTERNATIVES</div>
     <div id="glowupVarList"></div>
   </div>
 </div>
@@ -1101,10 +1111,10 @@
 <div class="screen" id="redflagScreen" style="display:none;">
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
-    <img src="" class="aria-mini" style="object-fit:cover;object-position:center top;border-radius:50%;"/>
+    <img src="" class="aria-mini" style="object-fit:cover;object-position:center top;"/>
     <div class="top-bar-info">
-      <div class="top-bar-name">Red Flag Detector</div>
-      <div class="top-bar-status">I read between the lines</div>
+      <div class="top-bar-name">Red Flag</div>
+      <div class="top-bar-status">● analysing</div>
     </div>
   </div>
 
@@ -1112,12 +1122,12 @@
     <div class="paste-label">PASTE THEIR MESSAGE(S)</div>
     <textarea class="convo-input" id="redflagInput" rows="5" placeholder="paste what they said... I'll analyse the vibe, energy, and any sus patterns"></textarea>
     <div class="paste-label" style="margin-top:10px;">WHO IS THIS? (optional)</div>
-    <input class="convo-input" id="redflagWho" style="resize:none;height:auto;padding:12px 16px;" placeholder='e.g. "someone i just started talking to" or "my ex"'/>
-    <button class="gen-reply-btn" id="redflagBtn" onclick="runRedflag()" style="margin-top:10px;">scan for red flags →</button>
+    <input class="convo-input" id="redflagWho" style="padding:12px 16px;" placeholder="who is this? (optional)"/>
+    <button class="gen-reply-btn" id="redflagBtn" onclick="runRedflag()" style="margin-top:10px;">analyse</button>
   </div>
 
   <div class="aria-thinking" id="redflagThinking" style="display:none;">
-    <div class="thinking-orb" style="background:transparent;overflow:hidden;" ></div>
+    <div class="thinking-orb" style="overflow:hidden;"></div>
     <div class="thinking-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
     <span class="thinking-text">I’m reading them...</span>
   </div>
@@ -1130,7 +1140,7 @@
     </div>
     <div class="redflag-breakdown" id="redflagBreakdown"></div>
     <div class="redflag-suggestion" id="redflagSuggestion" style="display:none;">
-      <div class="redflag-suggestion-label">MY TAKE</div>
+      <div class="redflag-suggestion-label">ARIA TAKE</div>
       <div id="redflagSuggestionText"></div>
     </div>
   </div>
@@ -1140,20 +1150,20 @@
 <div class="screen" id="vibeScreen" style="display:none;">
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
-    <img src="" class="aria-mini" style="object-fit:cover;object-position:center top;border-radius:50%;"/>
+    <img src="" class="aria-mini" style="object-fit:cover;object-position:center top;"/>
     <div class="top-bar-info">
       <div class="top-bar-name">Vibe Report</div>
-      <div class="top-bar-status">your texting patterns</div>
+      <div class="top-bar-status">● patterns</div>
     </div>
   </div>
 
-  <div class="section-label" style="margin-bottom:10px;">PICK A CONTACT</div>
+  <div class="section-label">SELECT CONTACT</div>
   <div class="vibe-contact-select">
     <div class="vibe-contact-grid" id="vibeContactGrid"></div>
   </div>
 
   <div class="aria-thinking" id="vibeThinking" style="display:none;">
-    <div class="thinking-orb" style="background:transparent;overflow:hidden;" ></div>
+    <div class="thinking-orb" style="overflow:hidden;"></div>
     <div class="thinking-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
     <span class="thinking-text">I’m analysing your dynamic...</span>
   </div>
@@ -1171,7 +1181,7 @@
   </div>
 
   <div class="vibe-insight" id="vibeInsight">
-    <div class="vibe-insight-label">MY READ ON THIS</div>
+    <div class="vibe-insight-label">ARIA READ</div>
     <div id="vibeInsightText"></div>
   </div>
 </div>
@@ -1187,11 +1197,11 @@
 
     <!-- Step 1: Name -->
     <div class="onboard-step active" id="obStep1">
-      <div class="onboard-title">hey, i'm Aria</div>
-      <div class="onboard-sub">i write your texts for you — in your voice, not mine. first, what should i call you?</div>
+      <div class="onboard-title">Aria</div>
+      <div class="onboard-sub">what should i call you?</div>
       <input class="onboard-input" id="obNameInput" placeholder="your name..." maxlength="30" />
-      <button class="onboard-next-btn" onclick="obNext(1)">next →</button>
-      <div class="onboard-skip" onclick="obSkipAll()">skip setup</div>
+      <button class="onboard-next-btn" onclick="obNext(1)">next</button>
+      <div class="onboard-skip" onclick="obSkipAll()">skip</div>
     </div>
 
     <!-- Step 2: Style -->
@@ -1220,17 +1230,17 @@
           <div class="onboard-style-desc">proper grammar, professional, clear</div>
         </div>
       </div>
-      <button class="onboard-next-btn" onclick="obNext(2)">looks right →</button>
+      <button class="onboard-next-btn" onclick="obNext(2)">next</button>
     </div>
 
     <!-- Step 3: First contact -->
     <div class="onboard-step" id="obStep3">
-      <div class="onboard-title">add your first contact</div>
-      <div class="onboard-sub">who do you text the most? i'll help you reply to them first.</div>
+      <div class="onboard-title">first contact</div>
+      <div class="onboard-sub">who do you text most?</div>
       <input class="onboard-input" id="obContactName" placeholder="their name..." maxlength="30" />
       <input class="onboard-input" id="obContactRel" placeholder="who are they? e.g. best friend, crush, mom..." maxlength="40" style="margin-top:0;" />
-      <button class="onboard-next-btn" onclick="obFinish()">let's go</button>
-      <div class="onboard-skip" onclick="obSkipAll()">skip for now</div>
+      <button class="onboard-next-btn" onclick="obFinish()">finish</button>
+      <div class="onboard-skip" onclick="obSkipAll()">skip</div>
     </div>
   </div>
 </div>
@@ -1243,7 +1253,7 @@
       <div class="top-bar-name" id="cpName">Contact</div>
       <div class="top-bar-status" id="cpRel">● contact</div>
     </div>
-    <button class="back-btn" id="cpReplyBtn" onclick="replyFromProfile()" style="font-size:12px;color:var(--rose);">reply →</button>
+    <button class="back-btn" id="cpReplyBtn" onclick="replyFromProfile()" style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;color:var(--rose);">reply</button>
   </div>
   <div class="contact-profile-header">
     <div class="contact-profile-avatar" id="cpAvatar"></div>
@@ -1264,8 +1274,8 @@
   <div id="cpActiveGamesStrip"></div>
 
   <!-- CRM section -->
-  <div id="cpCrmSection" style="padding:0 20px;margin-bottom:4px;">
-    <div class="cp-section-label">ABOUT THEM</div>
+  <div id="cpCrmSection" style="padding:0 16px;margin-bottom:4px;">
+    <div class="cp-section-label">PROFILE</div>
     <div class="cp-crm-fields">
       <div class="cp-field-row">
         <label class="cp-field-label">BIRTHDAY</label>
@@ -1280,58 +1290,60 @@
         <input type="text" id="cpTopics" class="cp-field-input" placeholder="music, basketball, fashion..." oninput="markCrmDirty()"/>
       </div>
       <div class="cp-field-row">
-        <label class="cp-field-label">NOTES FOR ARIA</label>
+        <label class="cp-field-label">NOTES</label>
         <textarea id="cpNotes" class="cp-field-input cp-field-textarea" placeholder="anything Aria should know about this person..." oninput="markCrmDirty()"></textarea>
       </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:12px;">
-      <button class="cp-crm-save" id="cpCrmSaveBtn" onclick="saveCrmFields()" style="display:none;">save</button>
+      <button class="cp-crm-save" id="cpCrmSaveBtn" onclick="saveCrmFields()" style="display:none;font-family:var(--font-display);font-size:10px;letter-spacing:0.1em;">save</button>
     </div>
   </div>
 
   <div class="contact-profile-history">
-    <div class="contact-profile-history-label">REPLY HISTORY WITH THEM</div>
+    <div class="contact-profile-history-label">REPLY HISTORY</div>
     <div id="cpHistoryList"></div>
   </div>
 </div>
 
 <!-- screen: reply queue -->
 <div class="screen" id="queueScreen" style="display:none;">
+  <div class="hud-corner hud-corner-tl"></div><div class="hud-corner hud-corner-tr"></div>
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
      <div class="top-bar-info">
-      <div class="top-bar-name">Reply Queue</div>
-      <div class="top-bar-status">● swipe to act</div>
+      <div class="top-bar-name">Queue</div>
+      <div class="top-bar-status">● queue</div>
     </div>
   </div>
   <div class="queue-header">
-    <div class="queue-title">who needs a reply?</div>
-    <div class="queue-sub" id="queueSub">swipe right to reply · swipe left to snooze</div>
+    
+    <div class="queue-sub" id="queueSub">swipe to act</div>
   </div>
   <div class="queue-swipe-hint">
-    <span class="queue-swipe-label">← snooze</span>
-    <span class="queue-swipe-label">reply →</span>
+    <span class="queue-swipe-label">snooze</span>
+    <span class="queue-swipe-label">reply</span>
   </div>
   <div class="queue-stack" id="queueStack"></div>
   <div class="queue-swipe-actions" id="queueActions">
     <button class="queue-action-btn queue-action-snooze" onclick="queueSnooze()">snooze</button>
-    <button class="queue-action-btn queue-action-reply" onclick="queueReply()">reply now →</button>
+    <button class="queue-action-btn queue-action-reply" onclick="queueReply()">reply</button>
   </div>
 </div>
 
 <!-- screen: the long game -->
 <div class="screen" id="longGameScreen" style="display:none;">
+  <div class="hud-corner hud-corner-tl"></div><div class="hud-corner hud-corner-tr"></div>
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('introScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <div class="top-bar-info">
-      <div class="top-bar-name">The Long Game</div>
-      <div class="top-bar-status">● multi-step plans</div>
+      <div class="top-bar-name">Long Game</div>
+      <div class="top-bar-status">● strategy</div>
     </div>
   </div>
   <div class="lg-header">
-    <div class="lg-sub">describe the situation. I map the moves.</div>
+    <div class="lg-sub">describe the situation. i map the moves.</div>
   </div>
-  <button class="lg-new-btn" onclick="openLongGameSetup()">+ new game plan</button>
+  <button class="lg-new-btn" onclick="openLongGameSetup()">new game plan</button>
   <div class="lg-section-label" id="lgActiveLabel" style="display:none;">ACTIVE GAMES</div>
   <div id="lgGameList"></div>
 </div>
@@ -1341,8 +1353,8 @@
   <div class="top-bar">
     <button class="back-btn" onclick="showScreen('longGameScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <div class="top-bar-info">
-      <div class="top-bar-name">your game plan</div>
-      <div class="top-bar-status" id="lgPreviewStatus">● review before starting</div>
+      <div class="top-bar-name">Game Plan</div>
+      <div class="top-bar-status" id="lgPreviewStatus">● review</div>
     </div>
   </div>
   <div class="lg-detail-wrap" id="lgArcPreviewWrap"></div>
@@ -1354,7 +1366,7 @@
     <button class="back-btn" onclick="showScreen('longGameScreen')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <div class="top-bar-info">
       <div class="top-bar-name" id="lgDetailName">Game Plan</div>
-      <div class="top-bar-status" id="lgDetailStatus">● in progress</div>
+      <div class="top-bar-status" id="lgDetailStatus">● active</div>
     </div>
     <button onclick="openLgEditGoal()" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:4px 8px;">edit</button>
   </div>
@@ -1367,7 +1379,7 @@
     <div style="padding-top:14px;display:flex;justify-content:center;"><div class="modal-handle"></div></div>
     <button class="modal-close" onclick="closeModal('lgSetupModal')">×</button>
     <div style="padding:4px 20px 6px;">
-      <div class="modal-title" style="font-family:'Instrument Serif',serif;">new game plan</div>
+      <div class="modal-title">new game plan</div>
       <div class="modal-sub">tell me what's going on. the more detail, the sharper my plan.</div>
     </div>
     <div class="lg-setup-wrap">
@@ -1376,11 +1388,11 @@
         <option value="">no specific contact (general situation)</option>
       </select>
       <div class="lg-setup-label">WHAT'S THE SITUATION?</div>
-      <textarea class="lg-setup-textarea" id="lgSetupSituation" placeholder="e.g. we had a fight last week and haven't talked since. i said something i regret and i want to fix it without making it weird." rows="4"></textarea>
+      <textarea class="lg-setup-textarea" id="lgSetupSituation" placeholder="describe what's going on..." rows="4"></textarea>
       <div class="lg-setup-label">WHAT DO YOU WANT TO HAPPEN? (optional — I'll figure it out if you're not sure)</div>
-      <textarea class="lg-setup-textarea" id="lgSetupGoal" placeholder="e.g. i want us to be okay again. or: i want to ask them out. or: i'm not sure yet." rows="2"></textarea>
+      <textarea class="lg-setup-textarea" id="lgSetupGoal" placeholder="what do you want to happen? (optional)" rows="2"></textarea>
       <div id="lgSetupError" style="font-size:12px;color:#f87171;margin-top:8px;min-height:16px;"></div>
-      <button class="lg-setup-btn" onclick="submitLongGameSetup()">let me build the plan →</button>
+      <button class="lg-setup-btn" onclick="submitLongGameSetup()">build the plan</button>
     </div>
   </div>
 </div>
@@ -1401,12 +1413,12 @@
 
     <!-- Paste reply — shown immediately, not gated behind rating -->
     <div id="lgOutcomeReplyWrap" style="margin-top:14px;">
-      <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:8px;">THEIR REPLY (optional — helps me write the next move)</div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:0.16em;margin-bottom:8px;">THEIR REPLY (optional)</div>
       <textarea class="lg-setup-textarea" id="lgOutcomeReply" placeholder="paste what they said..." rows="3"></textarea>
       <button class="lg-setup-btn" style="margin-top:12px;" onclick="submitStepOutcome()">
-        got it — adjust the plan →
+        adjust the plan
       </button>
-      <button style="width:100%;margin-top:8px;padding:11px;background:none;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;" onclick="submitStepOutcome(true)">
+      <button style="width:100%;margin-top:8px;padding:11px;background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;cursor:pointer;" onclick="submitStepOutcome(true)">
         skip — just move to next step
       </button>
     </div>
@@ -1428,18 +1440,18 @@
 <!-- did it work? nudge -->
 <div class="followup-nudge" id="followupNudge">
   <div class="followup-nudge-top">
-    <div class="followup-nudge-orb"></div>
+    <div class="followup-nudge-orb"><img src="https://i.imgur.com/iaMqbYH.png" style="width:160%;height:160%;object-fit:cover;object-position:center 10%;margin-left:-30%;margin-top:-5%;" /></div>
     <div class="followup-nudge-text" id="followupText">hey — how'd that go?</div>
   </div>
   <div class="followup-nudge-btns">
-    <div class="followup-btn good" onclick="followupRate('good')">it worked</div>
+    <div class="followup-btn good" onclick="followupRate('good')">worked</div>
     <div class="followup-btn meh" onclick="followupRate('meh')">meh</div>
     <div class="followup-btn bad" onclick="followupRate('bad')">backfired</div>
   </div>
 </div>
 
 <!-- Hamburger button -->
-<button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMenu()">
+<button class="hamburger-btn" id="hamburgerBtn" onclick="toggleMenu()" aria-label="menu">
   <div class="hb-line"></div>
   <div class="hb-line"></div>
   <div class="hb-line"></div>
@@ -1450,12 +1462,12 @@
   <div class="drift-snooze-inner">
     <div class="drift-snooze-handle"></div>
     <div class="drift-snooze-title" id="driftSnoozeTitle">gone quiet with someone?</div>
-    <div class="drift-snooze-sub" id="driftSnoozeSub">what do you want to do about it?</div>
+    <div class="drift-snooze-sub" id="driftSnoozeSub">what do you want to do?</div>
     <div class="drift-snooze-options">
-      <button class="drift-snooze-btn" onclick="driftSnooze(3)">remind me in 3 days</button>
-      <button class="drift-snooze-btn" onclick="driftSnooze(7)">remind me in a week</button>
-      <button class="drift-snooze-btn" onclick="driftReplyNow()">reply to them now</button>
-      <button class="drift-snooze-btn dismiss-btn" onclick="driftDismiss()">✕ stop tracking this drift</button>
+      <button class="drift-snooze-btn" onclick="driftSnooze(3)">remind in 3 days</button>
+      <button class="drift-snooze-btn" onclick="driftSnooze(7)">remind in a week</button>
+      <button class="drift-snooze-btn" onclick="driftReplyNow()">reply now</button>
+      <button class="drift-snooze-btn dismiss-btn" onclick="driftDismiss()">stop tracking this drift</button>
     </div>
   </div>
 </div>
@@ -1469,11 +1481,11 @@
     <!-- Aria speaking -->
     <div class="tutorial-aria-row">
       <div class="tutorial-aria-img"><img src="https://i.imgur.com/ji329r1.png" /></div>
-      <div class="tutorial-aria-bubble"><span class="tutorial-bubble-headline">here's how to let me see your messages</span><br><span class="tutorial-bubble-sub">pick whatever works for you.</span></div>
+      <div class="tutorial-aria-bubble"><span class="tutorial-bubble-headline">how to show me your messages</span><br><span class="tutorial-bubble-sub">pick what works.</span></div>
     </div>
 
-    <div class="tutorial-title">how to show me your messages</div>
-    <div class="tutorial-sub">i can't read your apps directly — but here are three ways to fill me in.</div>
+    <div class="tutorial-title">how to share messages</div>
+    <div class="tutorial-sub">three ways to fill me in.</div>
 
     <div class="tutorial-methods">
 
@@ -1483,7 +1495,7 @@
         <div class="tutorial-method-body">
           <div class="tutorial-method-title">copy & paste</div>
           <div class="tutorial-method-desc">
-            Open WhatsApp, Instagram, or iMessage. Long-press the message, copy it, then come back to Aria and paste it into <strong>"someone messaged me."</strong>
+            long-press a message, copy it, come back and paste into <strong>someone messaged me</strong>.
           </div>
           <span class="tutorial-method-badge easiest">easiest</span>
         </div>
@@ -1495,7 +1507,7 @@
         <div class="tutorial-method-body">
           <div class="tutorial-method-title">share sheet (Android)</div>
           <div class="tutorial-method-desc">
-            In any chat, tap the message → <strong>Share</strong> → select <strong>Aria</strong> from the list. The message lands here automatically, ready to reply.
+            tap message → Share → select Aria. lands here automatically.
           </div>
           <span class="tutorial-method-badge quick">quick</span>
         </div>
@@ -1507,9 +1519,9 @@
         <div class="tutorial-method-body">
           <div class="tutorial-method-title">add Aria to home screen</div>
           <div class="tutorial-method-desc">
-            Tap your browser's <strong>menu → Add to Home Screen.</strong> Once installed, Aria appears in your share menu like a real app — share any message straight to her in one tap.
+            tap browser menu → Add to Home Screen. then share any message straight to Aria.
           </div>
-          <span class="tutorial-method-badge power">fastest once set up</span>
+          <span class="tutorial-method-badge power">fastest</span>
         </div>
       </div>
 
@@ -1518,10 +1530,10 @@
     <!-- Don't show again -->
     <div class="tutorial-dont-show" onclick="toggleTutorialDontShow()">
       <div class="tutorial-checkbox" id="tutorialCheckbox"></div>
-      <div class="tutorial-dont-show-label">don't show this again when i log in</div>
+      <div class="tutorial-dont-show-label">don't show again</div>
     </div>
 
-    <button class="tutorial-got-it-btn" onclick="closeTutorial()">got it →</button>
+    <button class="tutorial-got-it-btn" onclick="closeTutorial()">got it</button>
   </div>
 </div>
 
@@ -1529,13 +1541,13 @@
 <div class="modal-overlay" id="logoutModal" onclick="handleModalBgClick(event,'logoutModal')" style="z-index:3500;">
   <div class="modal-sheet" style="text-align:center;padding:32px 24px 28px;">
     <div class="modal-handle"></div>
-    <div style="width:80px;height:80px;border-radius:50%;overflow:hidden;margin:0 auto 18px;box-shadow:0 0 40px rgba(244,114,182,0.4);">
+    <div style="width:80px;height:80px;overflow:hidden;margin:0 auto 18px;border:1px solid var(--rose-border);box-shadow:0 0 24px rgba(249,115,22,0.25);">
       <img id="logoutAriaImg" src="https://i.imgur.com/OncPXzL.png" style="width:160%;height:160%;object-fit:cover;object-position:center 10%;margin-left:-30%;margin-top:-5%;" />
     </div>
-    <div style="font-family:'Instrument Serif',serif;font-size:22px;color:var(--text);margin-bottom:8px;">leaving already?</div>
-    <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:28px;font-style:italic;">i'll keep everything safe while you're gone.</div>
-    <button onclick="confirmLogout()" style="width:100%;padding:14px;background:linear-gradient(135deg,#ec4899,#f43f5e);border:none;border-radius:14px;color:#fff;font-size:15px;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;margin-bottom:10px;">yes, log me out</button>
-    <button onclick="closeModal('logoutModal')" style="width:100%;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:14px;color:var(--muted);font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;">nevermind</button>
+    <div style="font-family:var(--font-display);font-size:18px;letter-spacing:0.06em;color:var(--text);margin-bottom:8px;">confirm logout</div>
+    <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:24px;letter-spacing:0.04em;">your data stays encrypted while you're away.</div>
+    <button onclick="confirmLogout()" style="width:100%;padding:14px;background:transparent;border:1px solid var(--red);color:var(--red);font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:0.1em;cursor:pointer;margin-bottom:10px;">log out</button>
+    <button onclick="closeModal('logoutModal')" style="width:100%;padding:14px;background:var(--card);border:1px solid var(--border);color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;cursor:pointer;">cancel</button>
   </div>
 </div>
 
@@ -1805,7 +1817,7 @@
         <input class="clarify-q-input" id="clarifyQ3" placeholder="e.g. don't mention the party, don't apologise again..."/>
       </div>
     </div>
-    <button class="btn-primary" onclick="applyClarify()">got it, generate reply →</button>
+    <button class="btn-primary" onclick="applyClarify()">generate reply</button>
   </div>
 </div>
 
@@ -1833,9 +1845,9 @@
           <img src="https://i.imgur.com/NeQqqKG.png" class="auth-portrait-img" alt="Aria"/>
         </div>
       </div>
-      <div class="modal-title" style="text-align:center;">welcome to Aria</div>
+      <div class="modal-title" style="text-align:center;">Aria</div>
       <div class="pl-brand pl-brand--modal"><span class="pl-brand-text">by Paradigm Leveling</span></div>
-      <div class="modal-sub" style="text-align:center;">sign in to save contacts, history & settings.</div>
+      <div class="modal-sub" style="text-align:center;">save contacts, history and settings.</div>
 
       <div class="auth-tabs">
         <button class="auth-tab active" id="tabSignin" onclick="switchAuthTab('signin')">Sign in</button>
@@ -1884,9 +1896,9 @@
     <div id="authSent" style="display:none;">
       <div class="auth-sent">
         <div class="auth-sent-icon" style="background:var(--green-dim);border:1px solid rgba(52,211,153,0.25);font-size:28px;display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div class="auth-sent-title">you're in</div>
-        <div class="auth-sent-sub">welcome to Aria.</div>
-        <button class="auth-btn" onclick="closeModal('authModal')" style="margin-top:0;">let's go <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
+        <div class="auth-sent-title">access granted</div>
+        <div class="auth-sent-sub">welcome to Aria. system ready.</div>
+        <button class="auth-btn" onclick="closeModal('authModal')" style="margin-top:0;">enter <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px;"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>
       </div>
     </div>
   </div>
