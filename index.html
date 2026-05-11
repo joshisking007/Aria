@@ -1648,6 +1648,7 @@
 
 <!-- screen: explore nearby -->
 <div class="screen" id="exploreScreen" style="display:none;">
+  <div class="hud-corner hud-corner-tl"></div><div class="hud-corner hud-corner-tr"></div>
 
   <!-- Top bar -->
   <div class="top-bar">
@@ -1656,38 +1657,30 @@
     </button>
     <div class="aria-mini"></div>
     <div class="top-bar-info">
-      <div class="top-bar-name">Explore Nearby</div>
-      <div class="top-bar-status" id="exploreStatusBar">● finding places</div>
+      <div class="top-bar-name">Explore</div>
+      <div class="top-bar-status" id="exploreLocText">tap to share location</div>
     </div>
+    <div class="explore-loc-dot" id="exploreLocDot" style="flex-shrink:0;margin-right:4px;"></div>
   </div>
 
   <!-- Location permission banner -->
   <div class="explore-location-banner" id="exploreLocationBanner" style="display:none;">
-    <div class="explore-location-banner-icon">📍</div>
     <div class="explore-location-banner-text">
-      <strong>Location needed</strong>
-      share your location so i can find places near you
+      <strong>location needed</strong>
+      share your location to find places near you
     </div>
     <button class="explore-location-grant-btn" onclick="ariaExplore.requestLocation()">allow</button>
   </div>
 
-  <!-- Location status pill -->
-  <div class="explore-loc-status" onclick="ariaExplore.requestLocation()">
-    <div class="explore-loc-dot" id="exploreLocDot"></div>
-    <div class="explore-loc-text" id="exploreLocText">tap to share location</div>
-    <div class="explore-loc-refresh">↻</div>
-  </div>
-
-  <!-- Manual location input -->
+  <!-- Manual location input (shown on denial) -->
   <div class="explore-manual-wrap" id="exploreManualWrap" style="display:none;">
     <input class="explore-manual-input" id="exploreManualInput"
-      placeholder="type a city, neighbourhood or address…"
+      placeholder="city, neighbourhood or address"
       onkeydown="if(event.key==='Enter')ariaExplore.geocodeManual(document.getElementById('exploreManualInput').value.trim())"/>
-    <button class="explore-manual-go" onclick="ariaExplore.geocodeManual(document.getElementById('exploreManualInput').value.trim())">→</button>
+    <button class="explore-manual-go" onclick="ariaExplore.geocodeManual(document.getElementById('exploreManualInput').value.trim())">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
   </div>
-
-  <!-- Aria context Q&A card -->
-  <div id="exploreAriaCard" class="explore-aria-card" style="display:none;"></div>
 
   <!-- Category chips -->
   <div class="explore-cats" id="exploreCats"></div>
@@ -1696,20 +1689,18 @@
   <div class="explore-map-wrap">
     <div id="exploreMap">
       <div class="explore-map-placeholder">
-        <div class="explore-map-placeholder-icon">🗺</div>
-        <div class="explore-map-placeholder-text">share location to see the map</div>
+        <div class="explore-map-placeholder-text">waiting for location</div>
       </div>
     </div>
   </div>
 
-  <!-- Places list label -->
-  <div class="explore-section-label" id="explorePlacesLabel">NEARBY PLACES</div>
+  <!-- Aria line (populated after results load, hidden until then) -->
+  <div class="explore-aria-line" id="exploreAriaLine" style="display:none;"></div>
 
   <!-- Places list -->
   <div class="explore-places-list" id="explorePlacesList">
     <div class="explore-empty">
-      <div class="explore-empty-icon">🌍</div>
-      <div class="explore-empty-text">share your location and pick a category<br>to discover places around you.</div>
+      <div class="explore-empty-text">share your location to find places near you.</div>
     </div>
   </div>
 
