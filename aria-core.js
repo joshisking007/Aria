@@ -164,7 +164,11 @@ const ariaVoice = (() => {
     return VOICES.find(v => v.key === selectedKey) || VOICES[0];
   }
 
-  // core: speak via elevenlabs
+  // core: speak via Applio (local RVC voice server)
+  // Requires Applio running at http://127.0.0.1:6969
+  const APPLIO_URL = 'http://127.0.0.1:6969';
+  const APPLIO_MODEL = 'logs/weights/sansin_3try_480e_72000s.pth';
+
   async function speak(rawText, { onStart, onEnd } = {}) {
     if (muted || loading) { onEnd?.(); return; }
 
@@ -176,43 +180,69 @@ const ariaVoice = (() => {
     setSpeaking(true);
     onStart?.();
 
-    const voice = selected();
-
     try {
       const ttsController = new AbortController();
-      const ttsTimeout = setTimeout(() => ttsController.abort(), 10000); // 10s hard timeout
+      const ttsTimeout = setTimeout(() => ttsController.abort(), 30000); // 30s timeout (Applio is slower)
 
-      const res = await fetch(
-        'https://mmtdtcmhvbruubrjgjrz.supabase.co/functions/v1/aria-tts',
-        {
-          method: 'POST',
-          signal: ttsController.signal,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tdGR0Y21odmJydXVicmpnanJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMTU2MDUsImV4cCI6MjA5MjY5MTYwNX0.f2FXAA8GaUeXXE8V8dnwq4NXz3_22H7d5jVA9rAWsTo'
-          },
-          body: JSON.stringify({
-            text,
-            voiceId:    voice.id,
-            model:      voice.model,
-            stability,
-            similarity,
-          })
-        }
-      );
+      // Step 1: Generate speech audio from text using Applio's TTS endpoint
+      const ttsRes = await fetch(`${APPLIO_URL}/api/predict`, {
+        method: 'POST',
+        signal: ttsController.signal,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fn_index: 4, // TTS tab function index in Applio
+          data: [
+            text,          // TTS text
+            'en-US-AnaNeural-Female', // edge-tts voice for base audio
+            0,             // TTS rate
+            APPLIO_MODEL,  // RVC model path
+            '',            // index file (empty = none)
+            0.5,           // index rate
+            0,             // pitch
+            'rmvpe',       // pitch extraction algorithm
+            128,           // filter radius
+            1,             // resample sr
+            0.25,          // rms mix rate
+            0.33,          // protect
+          ]
+        })
+      });
       clearTimeout(ttsTimeout);
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        if (res.status === 429) showToast('❌ quota reached');
-        else showToast(`❌ error ${res.status}${err?.error ? ' — ' + err.error : ''}`);
+      if (!ttsRes.ok) {
+        showToast('❌ Applio error — is it running?');
         setSpeaking(false);
         loading = false;
         onEnd?.();
         return;
       }
 
-      const blob = await res.blob();
+      const ttsData = await ttsRes.json();
+      // Applio returns the output audio path in data[0] or data[1]
+      const audioPath = ttsData?.data?.[1] ?? ttsData?.data?.[0];
+      if (!audioPath) {
+        showToast('❌ Applio returned no audio');
+        setSpeaking(false);
+        loading = false;
+        onEnd?.();
+        return;
+      }
+
+      // Step 2: Fetch the generated audio file
+      const audioUrl = typeof audioPath === 'string' && audioPath.startsWith('http')
+        ? audioPath
+        : `${APPLIO_URL}/file=${audioPath?.name ?? audioPath}`;
+
+      const audioRes = await fetch(audioUrl);
+      if (!audioRes.ok) {
+        showToast('❌ could not load Applio audio');
+        setSpeaking(false);
+        loading = false;
+        onEnd?.();
+        return;
+      }
+
+      const blob = await audioRes.blob();
       const url  = URL.createObjectURL(blob);
 
       // Kill any previous audio completely before creating new one
