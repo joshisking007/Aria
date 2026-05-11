@@ -166,7 +166,7 @@ const ariaVoice = (() => {
 
   // core: speak via Applio (local RVC voice server)
   // Requires Applio running at http://127.0.0.1:6969
-  const APPLIO_URL = 'http://127.0.0.1:6969';
+  const APPLIO_URL = 'http://192.168.10.210:6969';
   const APPLIO_MODEL = 'logs/weights/sansin_3try_480e_72000s.pth';
 
   async function speak(rawText, { onStart, onEnd } = {}) {
