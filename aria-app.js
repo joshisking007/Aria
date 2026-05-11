@@ -6,17 +6,17 @@ const s = (v) => typeof ariaSecurity !== 'undefined' ? ariaSecurity.sanitize(v) 
 function updateStats() {  
   document.getElementById('statReplies').textContent = replySentCount;  
   document.getElementById('statContacts').textContent = contacts.length;  
-  document.getElementById('statStreak').textContent = '🔥' + streakDays;  
+  document.getElementById('statStreak').textContent = streakDays;  
   document.getElementById('profileStreakNum').textContent = streakDays + ' days';  
   document.getElementById('historyCount').textContent = replyHistory.length;
 
   // Streak badge  
   const badge = document.getElementById('streakBadge');  
   if (streakDays === 0) badge.textContent = 'just started';  
-  else if (streakDays < 3) badge.textContent = 'rising 🌱';  
-  else if (streakDays < 7) badge.textContent = 'on fire 🔥';  
-  else if (streakDays < 14) badge.textContent = 'unstoppable ⚡';  
-  else badge.textContent = 'legendary 👑';  
+  else if (streakDays < 3) badge.textContent = 'rising';  
+  else if (streakDays < 7) badge.textContent = 'on fire';  
+  else if (streakDays < 14) badge.textContent = 'unstoppable';  
+  else badge.textContent = 'legendary';  
 }
 
 // screen nav  
@@ -115,7 +115,7 @@ function setMoodFull(mood, emoji, el) {
   el.classList.add('active');  
   saveProfile();  
   setTimeout(() => showScreen('introScreen'), 400);  
-  showToast('vibe: ' + emoji + ' ' + mood);  
+  showToast('vibe: ' + mood);  
 }
 
 // contacts  
@@ -194,7 +194,7 @@ function renderContacts(list) {
   const container = document.getElementById('contactList');  
   if (!list.length) {  
     container.innerHTML = `<div class="empty-state">  
-      <img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/uninterested.png" alt="aria" style="width:80px;height:80px;object-fit:cover;object-position:top;border-radius:50%;margin:0 auto 12px;display:block;opacity:0.75;">  
+      <img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/uninterested.png" alt="aria" style="width:80px;height:80px;object-fit:cover;object-position:top;margin:0 auto 12px;display:block;opacity:0.75;border:1px solid var(--border);">  
       <div class="empty-state-text">no contacts found</div>  
     </div>`;  
     return;  
@@ -243,7 +243,7 @@ function renderContacts(list) {
       <div class="contact-avatar" style="background:var(--card2);border:1.5px dashed var(--border);font-size:20px;color:var(--muted);">+</div>  
       <div class="contact-info">  
         <div class="contact-name" style="color:var(--muted);">add a contact</div>  
-        <div class="contact-preview">I learn their context for better replies</div>  
+        <div class="contact-preview">context improves replies</div>  
       </div>  
     </div>  
   `;  
@@ -302,7 +302,7 @@ async function addContact() {
   updateStats();  
   closeModal('addContactModal');  
   renderContacts(contacts);  
-  showToast('✓ ' + name + ' added', 'green');
+  showToast(name + ' added', 'green');
 
   // Clear form  
   ['newName','newRelationship','newPreview'].forEach(id => document.getElementById(id).value = '');  
@@ -846,7 +846,7 @@ function copyReply() {
   scheduleFollowup(currentContact?.name || 'them');  
   navigator.clipboard.writeText(text).then(() => {  
     const btn = document.getElementById('mainCopyBtn');  
-    btn.textContent = '✓ copied';  
+    btn.textContent = 'copied';  
     btn.classList.add('copied');  
     showToast('copied! go paste it 🚀', 'green');  
     setTimeout(() => {  
@@ -1021,8 +1021,8 @@ function renderHistoryInsight(data) {
   document.getElementById('historyInsightText').textContent = data.insight || '';
   const list = document.getElementById('historyPatternList');
   list.innerHTML = (data.patterns || []).map(p => `
-    <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--card);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--text);line-height:1.5;">
-      <span style="flex-shrink:0;">${p.icon || '•'}</span>
+    <div style="display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--card);border:1px solid var(--border);border-left:2px solid var(--rose-border);font-family:var(--font-body);font-size:12px;color:var(--text);line-height:1.5;">
+      <span style="flex-shrink:0;color:var(--rose);font-family:var(--font-mono);">//</span>
       <span>${s(p.text)}</span>
     </div>
   `).join('');
@@ -1035,8 +1035,8 @@ function renderHistory() {
   if (!replyHistory.length) {  
     container.innerHTML = `  
       <div class="empty-state">  
-        <div class="empty-state-icon">📋</div>  
-        <div class="empty-state-text">no replies saved yet<br>tap "save to history" after Aria drafts one</div>  
+          
+        <div class="empty-state-text">no replies saved yet</div>  
       </div>`;  
     return;  
   }
@@ -1066,13 +1066,13 @@ function openHistoryDetail(id) {
   document.getElementById('histDetailTitle').textContent = 'Reply to ' + entry.contact;  
   document.getElementById('histDetailSub').textContent = entry.time + ' · ' + entry.platform;  
   document.getElementById('histDetailBody').innerHTML = `  
-    ${entry.original ? `<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--muted);line-height:1.6;">  
-      <div style="font-size:10px;color:var(--muted);letter-spacing:1.5px;margin-bottom:6px;">THEY SAID</div>  
+    ${entry.original ? `<div style="background:var(--card2);border:1px solid var(--border);border-left:2px solid var(--border-2);padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--muted);line-height:1.6;">  
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);letter-spacing:0.15em;margin-bottom:6px;">THEIR MESSAGE</div>  
       ${s(entry.original)}  
     </div>` : ''}  
     <div style="margin-bottom:8px;">  
       ${entry.reply.split('\n').map((line, i) => `  
-        <div style="background:var(--rose-dim);border:1px solid var(--rose-border);border-radius:${i===0?'4px 18px 18px 18px':'4px 18px 4px 18px'};padding:12px 14px;font-size:14px;color:\#fce7f3;line-height:1.6;margin-bottom:8px;">${s(line)}</div>  
+        <div style="background:var(--rose-dim);border:1px solid var(--rose-border);border-left:2px solid var(--rose);padding:12px 14px;font-family:var(--font-body);font-size:14px;color:#fff3e8;line-height:1.6;margin-bottom:8px;">${s(line)}</div>  
       `).join('')}  
     </div>  
   `;  
@@ -1347,7 +1347,7 @@ function copyGlowup() {
   if (!glowupCurrentText) return;  
   navigator.clipboard.writeText(glowupCurrentText).then(() => {  
     const btn = document.getElementById('glowupCopyBtn');  
-    btn.textContent = '✓ copied';  
+    btn.textContent = 'copied';  
     btn.classList.add('copied');  
     showToast('copied! go paste it 🚀', 'green');  
     setTimeout(() => { btn.innerHTML = 'copy it <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'; btn.classList.remove('copied'); }, 3000);  
@@ -1657,29 +1657,29 @@ function openContactProfile(id) {
     const mem = contactMemory.get(profileContact.id);  
     if (mem && mem.narrative) {  
       memSection.innerHTML = `  
-        <div class="contact-profile-history-label" style="margin-bottom:10px;">🧠 MY MEMORY</div>  
-        <div style="background:linear-gradient(135deg,rgba(244,114,182,0.07),rgba(96,165,250,0.04));border:1px solid var(--rose-border);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:10px;">  
-          <div style="font-size:13px;color:var(--text2);line-height:1.65;font-style:italic;margin-bottom:12px;">${mem.narrative}</div>  
+        <div class="contact-profile-history-label" style="margin-bottom:10px;">MEMORY</div>  
+        <div style="background:var(--card);border:1px solid var(--rose-border);border-left:2px solid var(--rose);padding:14px 16px;margin-bottom:10px;">  
+          <div style="font-family:var(--font-body);font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:12px;">${mem.narrative}</div>  
           ${mem.events && mem.events.length ? `  
             <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;">  
-              ${mem.events.slice(-3).map(e=>`<div style="font-size:11px;color:var(--muted);padding:5px 8px;background:var(--card2);border-radius:6px;border-left:2px solid var(--rose-border);">${e}</div>`).join('')}  
+              ${mem.events.slice(-3).map(e=>`<div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);padding:5px 8px;background:var(--card2);border-left:2px solid var(--rose-border);">${e}</div>`).join('')}  
             </div>` : ''}  
           <div style="display:flex;gap:8px;margin-bottom:10px;">  
             ${Object.entries(mem.signalCounts||{}).filter(([,v])=>v>0).map(([k,v])=>`  
-              <div style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;text-align:center;">  
-                <div style="font-size:16px;font-weight:600;color:var(--rose);">${v}</div>  
-                <div style="font-size:9px;color:var(--muted);margin-top:2px;">${k.replace(/_/g,' ')}</div>  
+              <div style="flex:1;background:var(--card2);border:1px solid var(--border);padding:8px;text-align:center;">  
+                <div style="font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--rose);">${v}</div>  
+                <div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-top:2px;letter-spacing:0.06em;">${k.replace(/_/g,' ')}</div>  
               </div>`).join('')}  
           </div>  
-          <button onclick="openAddMemoryNote(${profileContact.id})" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px;color:var(--muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--rose-border)';this.style.color='var(--rose)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">+ add a note for Aria</button>  
+          <button onclick="openAddMemoryNote(${profileContact.id})" style="width:100%;background:var(--card2);border:1px solid var(--border);padding:9px;color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.borderColor='var(--rose-border)';this.style.color='var(--rose)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">add a note</button>  
         </div>  
       `;  
     } else {  
       memSection.innerHTML = `  
-        <div class="contact-profile-history-label" style="margin-bottom:10px;">🧠 MY MEMORY</div>  
-        <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px 16px;text-align:center;">  
-          <div style="font-size:13px;color:var(--muted);margin-bottom:10px;">I haven't built a memory for ${profileContact.name} yet.<br>Generate a reply with them to start.</div>  
-          <button onclick="openAddMemoryNote(${profileContact.id})" style="background:var(--card2);border:1px solid var(--rose-border);border-radius:var(--radius-sm);padding:9px 18px;color:var(--rose);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;">+ tell me something about them</button>  
+        <div class="contact-profile-history-label" style="margin-bottom:10px;">MEMORY</div>  
+        <div style="background:var(--card);border:1px solid var(--border);padding:14px 16px;text-align:center;">  
+          <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.6;">no memory for ${profileContact.name} yet.<br>generate a reply to start.</div>  
+          <button onclick="openAddMemoryNote(${profileContact.id})" style="background:var(--card2);border:1px solid var(--rose-border);padding:9px 18px;color:var(--rose);font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;cursor:pointer;">add a note</button>  
         </div>  
       `;  
     }  
@@ -1701,14 +1701,14 @@ function openAddMemoryNote(contactId) {
   modal.id = 'memNoteModal';  
   modal.style.cssText = `position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;`;  
   modal.innerHTML = `  
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:24px 24px 0 0;padding:24px 20px 40px;width:100%;max-width:480px;">  
-      <div style="width:40px;height:4px;border-radius:2px;background:var(--border-hover);margin:0 auto 20px;"></div>  
-      <div style="font-family:'Instrument Serif',serif;font-size:20px;margin-bottom:6px;">Tell me something</div>  
-      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;">This gets added to my memory for ${contact.name} and shapes how I write their replies.</div>  
-      <textarea id="memNoteInput" rows="3" placeholder="e.g. we had a falling out in march. things have been weird since." style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;resize:none;outline:none;line-height:1.6;"></textarea>  
+    <div style="background:var(--card);border:1px solid var(--rose-border);border-top:2px solid var(--rose);padding:20px 16px 36px;width:100%;max-width:480px;">  
+      <div style="width:28px;height:2px;background:var(--rose);margin:0 auto 18px;box-shadow:0 0 8px rgba(249,115,22,0.4);"></div>  
+      <div style="font-family:var(--font-display);font-size:14px;font-weight:600;letter-spacing:0.06em;margin-bottom:6px;">Add a note</div>  
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-bottom:16px;line-height:1.6;letter-spacing:0.04em;">shapes how aria writes replies for ${contact.name}.</div>  
+      <textarea id="memNoteInput" rows="3" placeholder="context about this person..." style="width:100%;background:var(--card2);border:1px solid var(--border-2);padding:12px 14px;color:var(--text);font-family:var(--font-body);font-size:14px;resize:none;outline:none;line-height:1.6;"></textarea>  
       <div style="display:flex;gap:8px;margin-top:12px;">  
-        <button onclick="document.getElementById('memNoteModal').remove()" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:var(--radius-md);padding:13px;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">cancel</button>  
-        <button onclick="saveMemoryNote(${contactId})" style="flex:2;background:linear-gradient(135deg,\#be185d,\#db2777,\#f472b6);border:none;border-radius:var(--radius-md);padding:13px;color:\#fff;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;">save to my memory <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>  
+        <button onclick="document.getElementById('memNoteModal').remove()" style="flex:1;background:var(--card2);border:1px solid var(--border);padding:13px;color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;cursor:pointer;">cancel</button>  
+        <button onclick="saveMemoryNote(${contactId})" style="flex:2;background:transparent;border:1px solid var(--rose);padding:13px;color:var(--rose);font-family:var(--font-display);font-size:11px;font-weight:600;letter-spacing:0.1em;cursor:pointer;">save</button>  
       </div>  
     </div>  
   `;  
@@ -1841,7 +1841,7 @@ async function submitLongGameSetup() {
   showScreen('lgArcPreviewScreen');  
   document.getElementById('lgArcPreviewWrap').innerHTML = `  
     <div class="lg-aria-thinking-card" style="padding:0;overflow:hidden;">  
-      <img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/calculating.png" alt="aria" style="width:100%;max-height:220px;object-fit:cover;object-position:top;border-radius:12px 12px 0 0;display:block;">  
+      <img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/calculating.png" alt="aria" style="width:100%;max-height:180px;object-fit:cover;object-position:top;display:block;">  
       <div style="padding:18px;display:flex;align-items:center;gap:12px;">  
         <div class="lg-thinking-orb"></div>  
         <div class="lg-thinking-text">mapping your moves...</div>  
@@ -1856,7 +1856,7 @@ async function submitLongGameSetup() {
         "okay buddy, I'm an AI not a miracle worker. give me something to work with here.";  
       document.getElementById('lgArcPreviewWrap').innerHTML = `  
         <div class="lg-aria-thinking-card" style="border-color:rgba(251,191,36,0.3);">  
-          <img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/suspicious.png" alt="aria" style="width:100%;max-height:220px;object-fit:cover;object-position:top;border-radius:12px 12px 0 0;display:block;margin:-18px -18px 16px -18px;width:calc(100% + 36px);">  
+          <img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/suspicious.png" alt="aria" style="width:100%;max-height:180px;object-fit:cover;object-position:top;display:block;margin:-18px -18px 16px -18px;width:calc(100% + 36px);">  
           <div class="lg-thinking-text" style="color:var(--text);margin-bottom:16px;">${funnyLine}</div>  
           <button class="lg-setup-btn" onclick="openLongGameSetup()">add more detail</button>  
         </div>`;  
@@ -1923,14 +1923,14 @@ function showArcPreview(pendingGame) {
       <div class="lg-aria-read">${pendingGame.ariaRead}</div>  
     </div>  
     <div style="padding:0 20px 6px;">  
-      <div style="font-size:10px;letter-spacing:0.8px;color:var(--muted);font-weight:600;">THE PLAN — ${pendingGame.steps.length} MOVES</div>  
+      <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;color:var(--muted);">// PLAN · ${pendingGame.steps.length} STEPS</div>  
     </div>  
     ${pendingGame.steps.map((step, i) => `  
       <div class="lg-step-card" style="border-color:rgba(167,139,250,0.15);">  
         <div class="lg-step-header">  
           <div class="lg-step-num" style="background:rgba(167,139,250,0.15);color:\#a78bfa;">${i + 1}</div>  
           <div class="lg-step-title">${step.title}</div>  
-          <button onclick="lgPreviewEditStep(${i})" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;color:var(--muted);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;">edit</button>  
+          <button onclick="lgPreviewEditStep(${i})" style="background:none;border:1px solid var(--border);padding:4px 10px;color:var(--muted);font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;cursor:pointer;">edit</button>  
         </div>  
         <div class="lg-step-body">  
           <div class="lg-step-intent">${step.intent}</div>  
@@ -1938,11 +1938,11 @@ function showArcPreview(pendingGame) {
         </div>  
       </div>`).join('')}  
     <div style="padding:20px 20px 40px;display:flex;flex-direction:column;gap:10px;">  
-      <button onclick="commitLongGame()" style="width:100%;padding:15px;background:linear-gradient(135deg,\#6d28d9,\#7c3aed,\#8b5cf6);border:none;border-radius:14px;color:\#fff;font-size:15px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;letter-spacing:0.2px;">  
-        let's run it <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>  
+      <button onclick="commitLongGame()" style="width:100%;padding:14px;background:transparent;border:1px solid rgba(167,139,250,0.5);color:#a78bfa;font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:0.12em;cursor:pointer;">  
+        run this plan  
       </button>  
-      <button onclick="openLongGameSetup()" style="width:100%;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:14px;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">  
-        start over with different details  
+      <button onclick="openLongGameSetup()" style="width:100%;padding:12px;background:var(--card);border:1px solid var(--border);color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;cursor:pointer;">  
+        start over  
       </button>  
     </div>  
   `;  
@@ -1957,11 +1957,11 @@ function lgPreviewEditStep(idx) {
   const original = step.draft;  
   draftEl.outerHTML = `  
     <textarea id="lgPreviewEdit_${idx}" rows="4"  
-      style="width:100%;background:var(--card2);border:1px solid var(--rose-border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;resize:none;outline:none;line-height:1.6;margin-top:4px;"  
+      style="width:100%;background:var(--card2);border:1px solid var(--rose-border);padding:10px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;resize:none;outline:none;line-height:1.6;margin-top:4px;"  
     >${original}</textarea>  
     <div style="display:flex;gap:8px;margin-top:6px;">  
-      <button onclick="lgPreviewSaveEdit(${idx})" style="flex:2;background:var(--rose-dim);border:1px solid var(--rose-border);border-radius:8px;padding:8px;color:var(--rose);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;">save</button>  
-      <button onclick="lgPreviewCancelEdit(${idx}, \`${original.replace(/`/g,"'")}\`)" style="flex:1;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;">cancel</button>  
+      <button onclick="lgPreviewSaveEdit(${idx})" style="flex:2;background:var(--rose-dim);border:1px solid var(--rose-border);padding:8px;color:var(--rose);font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;cursor:pointer;">save</button>  
+      <button onclick="lgPreviewCancelEdit(${idx}, \`${original.replace(/`/g,"'")}\`)" style="flex:1;background:var(--card2);border:1px solid var(--border);padding:8px;color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;cursor:pointer;">cancel</button>  
     </div>`;  
   document.getElementById(`lgPreviewEdit_${idx}`)?.focus();  
 }
@@ -2022,16 +2022,16 @@ function renderCpActiveGames(contactId) {
   if (!games.length) { strip.innerHTML = ''; return; }
 
   strip.innerHTML = `  
-    <div style="padding:0 20px 4px;">  
-      <div style="font-size:10px;letter-spacing:0.8px;color:rgba(167,139,250,0.7);font-weight:600;margin-bottom:8px;">ACTIVE LONG GAMES</div>  
+    <div style="padding:0 16px 4px;">  
+      <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;color:rgba(167,139,250,0.7);margin-bottom:8px;">// ACTIVE PLANS</div>  
       ${games.map(g => `  
         <div onclick="openLgDetail(${g.id})"  
-          style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.2);border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">  
+          style="background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.2);border-left:2px solid rgba(167,139,250,0.4);padding:12px 14px;margin-bottom:8px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">  
           <div>  
-            <div style="font-size:13px;color:var(--text);margin-bottom:2px;">${g.goal}</div>  
-            <div style="font-size:11px;color:rgba(167,139,250,0.7);">step ${g.currentStep + 1} of ${g.steps.length}</div>  
+            <div style="font-family:var(--font-body);font-size:13px;color:var(--text);margin-bottom:2px;">${g.goal}</div>  
+            <div style="font-family:var(--font-mono);font-size:10px;color:rgba(167,139,250,0.7);letter-spacing:0.04em;">step ${g.currentStep + 1} of ${g.steps.length}</div>  
           </div>  
-          <span style="color:rgba(167,139,250,0.6);font-size:16px;">›</span>  
+          <span style="color:rgba(167,139,250,0.5);font-family:var(--font-mono);font-size:13px;">›</span>  
         </div>`).join('')}  
     </div>`;  
 }
@@ -2047,8 +2047,7 @@ function renderLongGameScreen() {
     label.style.display = 'none';  
     list.innerHTML = `  
       <div style="text-align:center;padding:60px 20px 40px;color:var(--muted);font-size:13px;">  
-        <div style="font-size:36px;margin-bottom:12px;">♟</div>  
-        <div style="font-style:italic;line-height:1.6;">no game plans yet.<br>start one above.</div>  
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--muted);line-height:1.6;letter-spacing:0.06em;">no game plans yet.<br>start one above.</div>  
       </div>`;  
     return;  
   }
@@ -2068,7 +2067,7 @@ function renderLongGameScreen() {
 
     const pips = game.steps.map((s, i) => {  
       const cls   = s.status === 'done' ? 'done' : s.status === 'active' ? 'active' : '';  
-      const label = s.status === 'done' ? '✓' : i + 1;  
+      const label = s.status === 'done' ? 'x' : i + 1;  
       return `<div class="lg-step-pip ${cls}">${label}</div>`;  
     }).join('');
 
@@ -2083,7 +2082,7 @@ function renderLongGameScreen() {
     card.draggable = !isDone;  
     card.innerHTML = `  
       <div style="display:flex;align-items:center;">  
-        ${!isDone ? `<div class="lg-drag-handle" title="drag to reprioritize">⠿</div>` : ''}  
+        ${!isDone ? `<div class="lg-drag-handle" title="drag to reprioritize"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="4" cy="3" r="1" fill="currentColor"/><circle cx="8" cy="3" r="1" fill="currentColor"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="8" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="9" r="1" fill="currentColor"/><circle cx="8" cy="9" r="1" fill="currentColor"/></svg></div>` : ''}  
         ${priorityBadge}  
         <div class="lg-game-header" style="flex:1;padding-left:0;" onclick="openLgDetail(${game.id})">  
           <div class="lg-game-avatar" style="${avatarStyle}color:\#fff;">  
@@ -2093,7 +2092,7 @@ function renderLongGameScreen() {
             <div class="lg-game-name">${game.contactName || 'general situation'}</div>  
             <div class="lg-game-goal">${game.goal}</div>  
           </div>  
-          <div class="lg-game-priority">${isDone ? '✓ done' : `step ${game.currentStep + 1}/${totalSteps}`}</div>  
+          <div class="lg-game-priority">${isDone ? 'done' : `step ${game.currentStep + 1}/${totalSteps}`}</div>  
         </div>  
       </div>  
       <div class="lg-progress-bar"><div class="lg-progress-fill" style="width:${pct}%"></div></div>  
@@ -2196,8 +2195,8 @@ function renderLgDetail() {
     </div>  
     ${game.steps.map((step, i) => renderLgStepCard(step, i, game)).join('')}  
     ${game.status === 'active' ? `  
-      <button onclick="markLgDone()" style="width:100%;margin-top:8px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:14px;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">  
-        mark this plan as complete ✓  
+      <button onclick="markLgDone()" style="width:100%;margin-top:8px;padding:12px;background:var(--card);border:1px solid var(--border);color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;cursor:pointer;">  
+        mark plan complete  
       </button>` : ''}  
   `;  
 }
@@ -2207,12 +2206,12 @@ function renderLgStepCard(step, i, game) {
   const isDone   = step.status === 'done';  
   const isPending = step.status === 'pending';
 
-  const statusText = isDone ? '✓ sent' : isActive ? 'your move' : 'locked';
+  const statusText = isDone ? 'sent' : isActive ? 'active' : 'pending';
 
   return `  
     <div class="lg-step-card ${isActive ? 'active-step' : isDone ? 'done-step' : ''}">  
       <div class="lg-step-header">  
-        <div class="lg-step-num">${isDone ? '✓' : i + 1}</div>  
+        <div class="lg-step-num">${isDone ? 'x' : i + 1}</div>  
         <div class="lg-step-title">${step.title}</div>  
         <div class="lg-step-status">${statusText}</div>  
       </div>  
@@ -2222,15 +2221,15 @@ function renderLgStepCard(step, i, game) {
           <div class="lg-step-draft" id="lgStepDraft_${i}">${step.draft}</div>  
           ${isActive ? `  
             <div class="lg-step-actions">  
-              <button class="lg-step-btn lg-btn-send" onclick="lgMarkSent(${i})">i sent this ✓</button>  
+              <button class="lg-step-btn lg-btn-send" onclick="lgMarkSent(${i})">mark sent</button>  
               <button class="lg-step-btn lg-btn-edit" onclick="lgEditStep(${i})">edit</button>  
-              <button class="lg-step-btn lg-btn-regen" onclick="lgRegenStep(${i})">↻ regen</button>  
+              <button class="lg-step-btn lg-btn-regen" onclick="lgRegenStep(${i})">regen</button>  
             </div>` : ''}  
           ${isDone ? `
             <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
               ${step.ariaNote ? `<div class="lg-aria-read" style="margin-bottom:6px;">${step.ariaNote}</div>` : ''}
-              ${step.theirReply ? `<div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:1px;">THEIR REPLY</div><div style="font-size:12px;color:var(--text);line-height:1.5;font-style:italic;">"${s(step.theirReply)}"</div>` : ''}
-              ${step.outcome ? `<div style="font-size:11px;color:var(--muted);margin-top:6px;">outcome: ${step.outcome === 'good' ? '🔥 went well' : step.outcome === 'bad' ? '💀 backfired' : '😐 okay-ish'}</div>` : `<button onclick="lgLogRetroOutcome(${i})" style="margin-top:4px;padding:6px 12px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;">+ log how this landed</button>`}
+              ${step.theirReply ? `<div style="font-family:var(--font-mono);font-size:9px;color:var(--muted);margin-bottom:4px;letter-spacing:0.14em;">THEIR REPLY</div><div style="font-family:var(--font-body);font-size:12px;color:var(--text);line-height:1.5;">"${s(step.theirReply)}"</div>` : ''}
+              ${step.outcome ? `<div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-top:6px;letter-spacing:0.04em;">outcome: ${step.outcome === 'good' ? 'went well' : step.outcome === 'bad' ? 'backfired' : 'okay'}</div>` : `<button onclick="lgLogRetroOutcome(${i})" style="margin-top:4px;padding:6px 12px;background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;cursor:pointer;">log how it landed</button>`}
             </div>` : ''}
         </div>` : ''}
     </div>`;
@@ -2297,7 +2296,7 @@ async function submitStepOutcome(skip = false) {
   const wrap = document.getElementById('lgDetailWrap');  
   const adjustCard = document.createElement('div');  
   adjustCard.className = 'lg-aria-thinking-card';  
-  adjustCard.innerHTML = `<div style="padding:0;overflow:hidden;border-radius:12px;"><img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/calculating.png" alt="aria" style="width:100%;max-height:160px;object-fit:cover;object-position:top;display:block;border-radius:12px 12px 0 0;"><div style="padding:14px;display:flex;align-items:center;gap:10px;"><div class="lg-thinking-orb"></div><div class="lg-thinking-text">adjusting your remaining steps...</div></div></div>`;  
+  adjustCard.innerHTML = `<div style="padding:0;overflow:hidden;"><img src="https://cdn.jsdelivr.net/gh/joshisking007/Aria@main/images/calculating.png" alt="aria" style="width:100%;max-height:160px;object-fit:cover;object-position:top;display:block;"><div style="padding:14px;display:flex;align-items:center;gap:10px;"><div class="lg-thinking-orb"></div><div class="lg-thinking-text">adjusting remaining steps...</div></div></div>`;  
   wrap.appendChild(adjustCard);  
   adjustCard.scrollIntoView({ behavior: 'smooth', block: 'end' });
 
@@ -2497,19 +2496,19 @@ function renderLgCompletionCard(game) {
   const badCount  = outcomes.filter(o => o === 'bad').length;  
   const totalDone = outcomes.length;
 
-  let emoji = '🎯', headline = 'plan complete.';  
-  let sub = 'I saved a summary to memory for this contact.';  
+  let headline = 'plan complete.';  
+  let sub = 'summary saved to memory.';  
   if (totalDone > 0) {  
-    if (badCount === 0)              { emoji = '🔥'; headline = 'clean sweep.'; }  
-    else if (goodCount > badCount)   { emoji = '✓';  headline = 'mostly worked.'; }  
-    else if (badCount >= goodCount)  { emoji = '📓'; headline = "didn't go as planned — but now you know."; }  
+    if (badCount === 0)              { headline = 'clean sweep.'; }  
+    else if (goodCount > badCount)   { headline = 'mostly worked.'; }  
+    else if (badCount >= goodCount)  { headline = "didn't go as planned."; }  
   }  
-  if (!game.contactId) sub = 'no contact linked — but you ran the plan.';
+  if (!game.contactId) sub = 'no contact linked.';
 
   const card = document.createElement('div');  
   card.className = 'lg-completion-card';  
   card.innerHTML = `  
-    <div class="lg-completion-emoji">${emoji}</div>  
+
     <div class="lg-completion-headline">${headline}</div>  
     <div class="lg-completion-sub">${sub}</div>  
     <div class="lg-completion-stats">  
@@ -2528,8 +2527,8 @@ function renderLgCompletionCard(game) {
       </div>` : ''}  
     </div>  
     <button onclick="showScreen('longGameScreen')"  
-      style="width:100%;margin-top:16px;padding:13px;background:var(--card2);border:1px solid var(--border);border-radius:12px;color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;">  
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> back to all plans  
+      style="width:100%;margin-top:16px;padding:13px;background:var(--card2);border:1px solid var(--border);color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;cursor:pointer;">  
+      all plans  
     </button>`;
 
   wrap.prepend(card);  
@@ -2561,11 +2560,11 @@ function maybeSuggestLgCompletion(game) {
       <div class="lg-aria-read" style="margin-bottom:12px;">${msg}</div>  
       <div style="display:flex;gap:8px;">  
         <button onclick="markLgDone();this.closest('.lg-detail-goal-card').remove();"  
-          style="flex:2;padding:10px;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.35);border-radius:10px;color:\#34d399;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;">  
-          yes, mark it done ✓  
+          style="flex:2;padding:10px;background:rgba(57,217,138,0.08);border:1px solid rgba(57,217,138,0.3);color:var(--green);font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;cursor:pointer;">  
+          mark done  
         </button>  
         <button onclick="this.closest('.lg-detail-goal-card').remove();"  
-          style="flex:1;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;">  
+          style="flex:1;padding:10px;background:var(--card2);border:1px solid var(--border);color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;cursor:pointer;">  
           not yet  
         </button>  
       </div>`;  
@@ -3436,27 +3435,26 @@ function showChatTutorial({ fromSettings = false } = {}) {
   modal.innerHTML = `  
     <div style="  
       background: var(--card);  
-      border: 1px solid var(--border);  
-      border-radius: 28px 28px 0 0;  
-      padding: 28px 22px 44px;  
+      border: 1px solid var(--rose-border);  
+      border-top: 2px solid var(--rose);  
+      padding: 20px 16px 40px;  
       width: 100%; max-width: 480px;  
       max-height: 88vh; overflow-y: auto;  
       -webkit-overflow-scrolling: touch;  
     ">  
-      <!-- drag handle -->  
-      <div style="width:40px;height:4px;border-radius:2px;background:var(--border-hover);margin:0 auto 22px;"></div>
+      <div style="width:28px;height:2px;background:var(--rose);margin:0 auto 20px;box-shadow:0 0 8px rgba(249,115,22,0.4);"></div>
 
       <!-- header -->  
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">  
         <div style="  
-          width:42px;height:42px;border-radius:50%;  
-          background:linear-gradient(135deg,\#be185d,\#db2777,\#f472b6);  
+          width:38px;height:38px;  
+          background:var(--rose-dim);border:1px solid var(--rose-border);  
           display:flex;align-items:center;justify-content:center;  
-          font-size:20px;flex-shrink:0;  
-        ">💬</div>  
+          flex-shrink:0;  
+        "><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--rose)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>  
         <div>  
-          <div style="font-family:'Instrument Serif',serif;font-size:22px;line-height:1.2;">how to talk to me</div>  
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:0.3px;">a quick guide to getting the most out of Aria</div>  
+          <div style="font-family:var(--font-display);font-size:14px;font-weight:600;letter-spacing:0.06em;line-height:1.2;">how to talk to me</div>  
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:0.06em;">getting the most out of Aria</div>  
         </div>  
       </div>
 
@@ -3464,7 +3462,7 @@ function showChatTutorial({ fromSettings = false } = {}) {
 
       <!-- section: what i do -->  
       <div style="margin-bottom:20px;">  
-        <div style="font-size:10px;letter-spacing:1.2px;color:var(--rose);font-weight:700;margin-bottom:10px;">WHAT I DO</div>  
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;color:var(--rose);margin-bottom:10px;">// WHAT I DO</div>  
         <div style="display:flex;flex-direction:column;gap:9px;">  
           ${_tutRow('✍️', 'write texts for you', 'paste what someone sent and i\'ll draft your reply in your voice')}  
           ${_tutRow('🧠', 'give you advice on situations', 'tell me what\'s going on and i\'ll give you my honest read')}  
@@ -3475,7 +3473,7 @@ function showChatTutorial({ fromSettings = false } = {}) {
 
       <!-- section: how to get the best from me -->  
       <div style="margin-bottom:20px;">  
-        <div style="font-size:10px;letter-spacing:1.2px;color:var(--rose);font-weight:700;margin-bottom:10px;">HOW TO GET THE BEST FROM ME</div>  
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;color:var(--rose);margin-bottom:10px;">// HOW TO GET THE BEST</div>  
         <div style="display:flex;flex-direction:column;gap:9px;">  
           ${_tutRow('📋', 'paste what they actually said', 'i work best with real messages, not summaries. if you can, give me the exact words')}  
           ${_tutRow('🎭', 'tell me who they are', 'the more context i have — your relationship, what\'s been going on — the sharper my read')}  
@@ -3486,7 +3484,7 @@ function showChatTutorial({ fromSettings = false } = {}) {
 
       <!-- section: what i can't do -->  
       <div style="margin-bottom:20px;">  
-        <div style="font-size:10px;letter-spacing:1.2px;color:var(--muted);font-weight:700;margin-bottom:10px;">WHAT I CAN\'T DO</div>  
+        <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;color:var(--muted);margin-bottom:10px;">// LIMITS</div>  
         <div style="display:flex;flex-direction:column;gap:9px;">  
           ${_tutRowMuted('🚫', 'write harmful, explicit, or manipulative content', 'if something\'s off-limits, i\'ll say so once and pivot. i won\'t dwell on it')}  
           ${_tutRowMuted('📵', 'contact anyone for you', 'i draft. you send. always.')}  
@@ -3496,18 +3494,18 @@ function showChatTutorial({ fromSettings = false } = {}) {
 
       <!-- section: a note from aria -->  
       <div style="  
-        background: var(--card2);  
+        background: var(--rose-dim);  
         border: 1px solid var(--rose-border);  
-        border-radius: 14px;  
+        border-left: 2px solid var(--rose);  
         padding: 14px 16px;  
-        margin-bottom: 22px;  
+        margin-bottom: 20px;  
+        font-family: var(--font-body);  
         font-size: 13px;  
-        color: var(--text);  
+        color: var(--text2);  
         line-height: 1.65;  
-        font-style: italic;  
       ">  
         "i'm still learning you. the more you use me, the better i get. if i say something that doesn't land, just tell me. i'd rather know than keep missing."  
-        <div style="font-size:11px;color:var(--muted);margin-top:6px;font-style:normal;">— Aria</div>  
+        <div style="font-family:var(--font-mono);font-size:9px;color:var(--rose);margin-top:8px;letter-spacing:0.1em;">// ARIA</div>  
       </div>
 
       <!-- buttons -->  
@@ -3515,14 +3513,12 @@ function showChatTutorial({ fromSettings = false } = {}) {
         <button  
           onclick="dismissChatTutorialForever()"  
           style="  
-            width:100%;padding:15px;  
-            background:linear-gradient(135deg,\#be185d,\#db2777,\#f472b6);  
-            border:none;border-radius:14px;  
-            color:\#fff;font-size:15px;  
-            font-family:'DM Sans',sans-serif;font-weight:500;  
-            cursor:pointer;letter-spacing:0.2px;  
+            width:100%;padding:14px;  
+            background:transparent;border:1px solid var(--rose);  
+            color:var(--rose);font-family:var(--font-display);font-size:11px;font-weight:700;  
+            letter-spacing:0.12em;cursor:pointer;  
           ">  
-          got it, let's go  
+          got it  
         </button>  
         ${!fromSettings ? `  
         <button  
@@ -3530,10 +3526,9 @@ function showChatTutorial({ fromSettings = false } = {}) {
           style="  
             width:100%;padding:12px;  
             background:var(--card2);border:1px solid var(--border);  
-            border-radius:14px;color:var(--muted);  
-            font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;  
+            color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;cursor:pointer;  
           ">  
-          remind me again next time  
+          remind me later  
         </button>  
         ` : `  
         <button  
@@ -3541,8 +3536,7 @@ function showChatTutorial({ fromSettings = false } = {}) {
           style="  
             width:100%;padding:12px;  
             background:var(--card2);border:1px solid var(--border);  
-            border-radius:14px;color:var(--muted);  
-            font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;  
+            color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;cursor:pointer;  
           ">  
           close  
         </button>  
@@ -3579,21 +3573,19 @@ function dismissChatTutorialTemporary() {
 // Row helpers for tutorial modal  
 function _tutRow(icon, title, desc) {  
   return `  
-    <div style="display:flex;gap:12px;align-items:flex-start;">  
-      <div style="width:32px;height:32px;border-radius:10px;background:rgba(244,114,182,0.1);border:1px solid rgba(244,114,182,0.2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${icon}</div>  
+    <div style="display:flex;gap:12px;align-items:flex-start;padding:9px 12px;background:var(--card2);border:1px solid var(--border);border-left:2px solid var(--rose-border);">  
       <div style="padding-top:2px;">  
-        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:1px;">${title}</div>  
-        <div style="font-size:12px;color:var(--muted);line-height:1.5;">${desc}</div>  
+        <div style="font-family:var(--font-body);font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;">${title}</div>  
+        <div style="font-family:var(--font-body);font-size:12px;color:var(--muted);line-height:1.5;">${desc}</div>  
       </div>  
     </div>`;  
 }  
 function _tutRowMuted(icon, title, desc) {  
   return `  
-    <div style="display:flex;gap:12px;align-items:flex-start;">  
-      <div style="width:32px;height:32px;border-radius:10px;background:var(--card2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${icon}</div>  
+    <div style="display:flex;gap:12px;align-items:flex-start;padding:9px 12px;background:var(--card2);border:1px solid var(--border);">  
       <div style="padding-top:2px;">  
-        <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:1px;">${title}</div>  
-        <div style="font-size:12px;color:var(--muted);line-height:1.5;opacity:0.7;">${desc}</div>  
+        <div style="font-family:var(--font-body);font-size:13px;font-weight:500;color:var(--muted);margin-bottom:2px;">${title}</div>  
+        <div style="font-family:var(--font-body);font-size:12px;color:var(--muted);line-height:1.5;opacity:0.7;">${desc}</div>  
       </div>  
     </div>`;  
 }
@@ -4630,7 +4622,7 @@ function copyPresendRewrite() {
   if (!item) return;  
   navigator.clipboard.writeText(item.text).then(() => {  
     const btn = document.getElementById('psCopyRewriteBtn');  
-    btn.textContent = '✓ copied';  
+    btn.textContent = 'copied';  
     setTimeout(() => { btn.innerHTML = 'copy rewrite <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'; }, 2500);  
     showToast('rewrite copied ✓', 'green');  
   });  
@@ -5593,21 +5585,20 @@ This is a normal part of how applications get built and improved. Treat it that 
     if (existing) return;  
     const badge = document.createElement('div');  
     badge.id = 'creatorModeBadge';  
-    badge.textContent = '⚡ creator';  
+    badge.textContent = 'creator';  
     badge.style.cssText = `  
       position: fixed;  
       top: 12px;  
       right: 16px;  
       z-index: 600;  
-      font-size: 10px;  
-      letter-spacing: 1.2px;  
-      font-weight: 700;  
+      font-family: var(--font-mono);  
+      font-size: 9px;  
+      letter-spacing: 0.14em;  
+      font-weight: 600;  
       color: rgba(251,191,36,0.9);  
       background: rgba(251,191,36,0.08);  
       border: 1px solid rgba(251,191,36,0.25);  
-      border-radius: 20px;  
-      padding: 4px 10px;  
-      font-family: 'DM Sans', sans-serif;  
+      padding: 3px 9px;  
       pointer-events: none;  
       opacity: 0;  
       transition: opacity 0.4s ease;  
