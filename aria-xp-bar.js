@@ -21,7 +21,7 @@ const ariaXP = (() => {
     {
       id:       'stranger',
       label:    'stranger',
-      subLabel: 'she's still figuring you out',
+      subLabel: "she's still figuring you out",
       min: 0,
       max: 5,
       color: '#64748b',
