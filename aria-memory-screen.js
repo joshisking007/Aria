@@ -161,6 +161,12 @@ Output ONLY the note lines. No preamble. No "Here are your notes:" intro.`;
     const statusEl = document.getElementById('memoryStatus');
     if (!body) return;
 
+    // currentUserId may be a module-scoped let in aria-core.js rather than
+    // on window — resolve whichever is available
+    if (!window.currentUserId && typeof currentUserId !== 'undefined') {
+      window.currentUserId = currentUserId;
+    }
+
     if (!window.currentUserId) {
       statusEl.textContent = '● not signed in';
       body.innerHTML = `
@@ -307,6 +313,9 @@ Output ONLY the note lines. No preamble. No "Here are your notes:" intro.`;
 
   // ── force cache bust ─────────────────────────────────────────────────────────
   function bustCache() {
+    if (!window.currentUserId && typeof currentUserId !== 'undefined') {
+      window.currentUserId = currentUserId;
+    }
     if (!window.currentUserId) return;
     try {
       localStorage.removeItem(CFG.storageKey + '_' + window.currentUserId);
