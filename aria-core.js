@@ -188,7 +188,7 @@ const ariaVoice = (() => {
       const ttsRes = await fetch(`${APPLIO_URL}/api/predict`, {
         method: 'POST',
         signal: ttsController.signal,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
         body: JSON.stringify({
           fn_index: 4, // TTS tab function index in Applio
           data: [
