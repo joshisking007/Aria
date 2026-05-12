@@ -164,6 +164,20 @@ const ariaVoice = (() => {
     return VOICES.find(v => v.key === selectedKey) || VOICES[0];
   }
 
+  // Pre-unlock audio on first user gesture so autoplay doesn't block later speak() calls.
+  // Browsers gate audio behind a user interaction — this warms it up silently.
+  (function _preUnlockAudio() {
+    const unlock = () => {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        ctx.resume().then(() => ctx.close()).catch(() => {});
+      } catch (_) {}
+    };
+    document.addEventListener('click',      unlock, { once: true, capture: true });
+    document.addEventListener('touchstart', unlock, { once: true, capture: true });
+    document.addEventListener('keydown',    unlock, { once: true, capture: true });
+  })();
+
   // core: speak via Applio (local RVC voice server)
   // Requires Applio running at http://127.0.0.1:6969
   const APPLIO_PROXY = 'https://slimy-oxidizing-tapioca.ngrok-free.dev';
@@ -176,12 +190,11 @@ const ariaVoice = (() => {
 
     stop();
     loading = true;
-    setSpeaking(true);
     onStart?.();
 
     try {
       const ttsController = new AbortController();
-      const ttsTimeout = setTimeout(() => ttsController.abort(), 60000);
+      const ttsTimeout = setTimeout(() => ttsController.abort(), 300000); // 5min — RVC can be slow
 
       const ttsRes = await fetch(`${APPLIO_PROXY}/tts`, {
         method: 'POST',
@@ -193,13 +206,14 @@ const ariaVoice = (() => {
 
       if (!ttsRes.ok) {
         showToast('❌ Applio error — is it running?');
-        setSpeaking(false);
         loading = false;
         onEnd?.();
         return;
       }
 
-      const blob = await ttsRes.blob();
+      // Use arrayBuffer + explicit MIME to guarantee correct blob type regardless of server headers
+      const buf  = await ttsRes.arrayBuffer();
+      const blob = new Blob([buf], { type: 'audio/wav' });
       const url  = URL.createObjectURL(blob);
 
       // Kill any previous audio completely before creating new one
@@ -222,15 +236,40 @@ const ariaVoice = (() => {
       currentAudio.onerror = () => {
         setSpeaking(false);
         loading = false;
+        URL.revokeObjectURL(url);
         onEnd?.();
       };
 
-      await currentAudio.play();
+      // Only show speaking state once audio actually starts — not during the long RVC wait
+      setSpeaking(true);
+
+      try {
+        await currentAudio.play();
+      } catch (playErr) {
+        // Browser autoplay policy blocked playback — requires a user gesture first
+        if (playErr.name === 'NotAllowedError') {
+          setSpeaking(false);
+          loading = false;
+          showToast('🔊 tap anywhere to hear aria');
+          // Retry once on next user tap
+          const retry = () => {
+            if (currentAudio) currentAudio.play().catch(() => {});
+          };
+          document.addEventListener('click',      retry, { once: true });
+          document.addEventListener('touchstart', retry, { once: true });
+        } else {
+          throw playErr; // re-throw real errors
+        }
+      }
 
     } catch (e) {
       setSpeaking(false);
       loading = false;
-      showToast('❌ ' + (e?.message || 'network error'));
+      if (e.name === 'AbortError') {
+        showToast('⏱ aria timed out — Applio took too long');
+      } else {
+        showToast('❌ ' + (e?.message || 'network error'));
+      }
       onEnd?.();
     }
   }
