@@ -76,8 +76,25 @@ Examples of good directives:
 
 Output ONLY the directive lines. No preamble. No categories. No numbering.`;
 
+  // Fixed directive block for creator sessions.
+  // Replaces memory-generated directives when Josiah is in developer mode.
+  // Personal memory is the wrong input here — this is a working session, not a personal one.
+  const CREATOR_DIRECTIVES = `This is a developer session. Josiah built you. Treat it that way.
+Be fully candid — if he asks how something works, tell him. No deflection, no management.
+Skip the emotional calibration you'd do with a regular user. He's not here to be handled.
+If something he's testing seems off or broken, say so directly. He wants the honest read.
+Be yourself without the layer of caution. He already knows what's under it.`;
+
   async function generateForSession(memCtx) {
     if (_generating) return;
+
+    // Creator mode — skip memory-based generation entirely.
+    // Use a fixed directive set appropriate for a developer working session.
+    if (typeof CREATOR_MODE !== 'undefined' && CREATOR_MODE.active) {
+      _directives = CREATOR_DIRECTIVES;
+      _ready = true;
+      return;
+    }
 
     // Check session cache first — don't regenerate if already done this session
     const cached = _loadFromSession();
