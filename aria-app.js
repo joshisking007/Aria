@@ -741,15 +741,35 @@ function switchContextTab(tab, el) {
   document.getElementById(tab === 'paste' ? 'ctxPanelPaste' : 'ctxPanelScreenshot').classList.add('active');  
 }
 
+// Compress screenshot before sending — keeps payload under Supabase's request limit.
+// Max 1280px on longest side, 70% JPEG quality. Preview still shows original.
+function compressImageToBase64(dataUrl) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 1280;
+      let { width, height } = img;
+      if (width > MAX || height > MAX) {
+        if (width > height) { height = Math.round(height * MAX / width); width = MAX; }
+        else { width = Math.round(width * MAX / height); height = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', 0.7).split(',')[1]);
+    };
+    img.src = dataUrl;
+  });
+}
+
 async function handleScreenshotUpload(input) {
   const file = input.files[0];
   if (!file) return;
 
   const reader = new FileReader();
   reader.onload = async (e) => {
-    screenshotBase64 = e.target.result.split(',')[1];
-
-    // show preview immediately
+    // Show preview immediately using original
     const preview = document.getElementById('screenshotPreview');
     preview.src = e.target.result;
     preview.style.display = 'block';
@@ -757,12 +777,26 @@ async function handleScreenshotUpload(input) {
     document.getElementById('contextBadge').style.display = 'inline';
     setTimeout(() => preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
 
-    showToast('reading it...');
+    // Compress before storing so generateReply() sends a small payload
+    screenshotBase64 = await compressImageToBase64(e.target.result);
 
-    try {
-      // Fast read-only call — separate from reply generation so it's quick
-      const readResult = await fetchReply(
-        `You are Aria. Read this screenshot of a conversation.
+    showToast('screenshot loaded', 'green');
+
+    // Fire-and-forget read — never blocks the user from hitting generate
+    ;(async () => {
+      try {
+        const controller = new AbortController();
+        const t = setTimeout(() => controller.abort(), 15000);
+        const res = await fetch('https://mmtdtcmhvbruubrjgjrz.supabase.co/functions/v1/aria-ai', {
+          method: 'POST',
+          cache: 'no-store',
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tdGR0Y21odmJydXVicmpnanJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMTU2MDUsImV4cCI6MjA5MjY5MTYwNX0.f2FXAA8GaUeXXE8V8dnwq4NXz3_22H7d5jVA9rAWsTo'
+          },
+          body: JSON.stringify({
+            system: `You are Aria. Read this screenshot of a conversation.
 
 Extract exactly:
 - senderName: the name or handle of the person who messaged the user. right-side bubbles are the user. left-side bubbles are the other person.
@@ -772,47 +806,30 @@ Extract exactly:
 
 Respond ONLY in this exact JSON format with no extra text:
 {"senderName":"...","theirMessage":"...","platform":"...","toneRead":"..."}`,
-        'read this screenshot',
-        screenshotBase64
-      );
+            userMsg: [
+              { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: screenshotBase64 } },
+              { type: 'text', text: 'read this screenshot' }
+            ]
+          })
+        });
+        clearTimeout(t);
 
-      let extracted = null;
-      try {
-        const clean = readResult.replace(/```json|```/g, '').trim();
-        extracted = JSON.parse(clean);
-      } catch (_) {}
+        if (!res.ok) return;
+        const data = await res.json();
+        let extracted = null;
+        try { extracted = JSON.parse(stripEmDash(data.text || '').replace(/```json|```/g, '').trim()); } catch (_) {}
+        if (!extracted) return;
 
-      if (!extracted) {
-        showToast('screenshot loaded', 'green');
-        return;
-      }
-
-      // auto-fill their message if field is empty
-      const msgInput = document.getElementById('theirMsgInput');
-      if (msgInput && !msgInput.value.trim() && extracted.theirMessage) {
-        msgInput.value = extracted.theirMessage;
-      }
-
-      // auto-set platform
-      if (extracted.platform) setPlatformByName(extracted.platform);
-
-      // show Aria's read in her voice
-      if (extracted.toneRead) showAriaReaction(extracted.toneRead);
-
-      // offer contact creation if name found and not already saved
-      if (extracted.senderName && extracted.senderName.length > 1) {
-        const alreadyExists = contacts.some(
-          c => c.name.toLowerCase() === extracted.senderName.toLowerCase()
-        );
-        if (!alreadyExists && !currentContact) {
-          _offerContactCreation(extracted.senderName, extracted.platform || currentPlatform);
+        const msgInput = document.getElementById('theirMsgInput');
+        if (msgInput && !msgInput.value.trim() && extracted.theirMessage) msgInput.value = extracted.theirMessage;
+        if (extracted.platform) setPlatformByName(extracted.platform);
+        if (extracted.toneRead) showAriaReaction(extracted.toneRead);
+        if (extracted.senderName && extracted.senderName.length > 1) {
+          const alreadyExists = contacts.some(c => c.name.toLowerCase() === extracted.senderName.toLowerCase());
+          if (!alreadyExists && !currentContact) _offerContactCreation(extracted.senderName, extracted.platform || currentPlatform);
         }
-      }
-
-    } catch (err) {
-      // fail silently — screenshot still attached, user can fill in manually
-      showToast('screenshot loaded', 'green');
-    }
+      } catch (_) { /* fail silently — screenshot still attached */ }
+    })();
   };
 
   reader.readAsDataURL(file);
