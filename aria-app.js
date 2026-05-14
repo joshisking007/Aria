@@ -210,13 +210,13 @@ function renderContacts(list) {
       const daysLabel = drift.daysSinceLast > 0 ? ` · ${drift.daysSinceLast}d` : '';
       if (drift.level === 'lost') {
         driftCardClass = 'drifting-lost';
-        driftBadgeHtml = `<div class="drift-badge lost" onclick="openDriftSnooze(${c.id},event)">gone quiet${daysLabel}</div>`;
+        driftBadgeHtml = `<div class="drift-badge lost" onclick="openDriftSnooze('${c.id}',event)">gone quiet${daysLabel}</div>`;
       } else if (drift.level === 'fading') {
         driftCardClass = 'drifting-fading';
-        driftBadgeHtml = `<div class="drift-badge fading" onclick="openDriftSnooze(${c.id},event)">fading${daysLabel}</div>`;
+        driftBadgeHtml = `<div class="drift-badge fading" onclick="openDriftSnooze('${c.id}',event)">fading${daysLabel}</div>`;
       } else if (drift.level === 'cold') {  
         driftCardClass = 'drifting-cold';  
-        driftBadgeHtml = `<div class="drift-badge cold" onclick="openDriftSnooze(${c.id},event)">gone cold${daysLabel}</div>`;  
+        driftBadgeHtml = `<div class="drift-badge cold" onclick="openDriftSnooze('${c.id}',event)">gone cold${daysLabel}</div>`;  
       }  
     }
 
@@ -226,7 +226,7 @@ function renderContacts(list) {
         : `<div class="platform-badge ${(c.platform||'').toLowerCase().replace(/\s/,'')}">${c.platform||''}</div>`);
 
     return `  
-      <div class="contact-card ${driftCardClass} stagger-${Math.min(i+1,5)}" onclick="selectContact(${c.id})" oncontextmenu="openContactProfile(${c.id});return false;" style="animation-delay:${i*0.05}s">  
+      <div class="contact-card ${driftCardClass} stagger-${Math.min(i+1,5)}" onclick="selectContact('${c.id}')" oncontextmenu="openContactProfile('${c.id}');return false;" style="animation-delay:${i*0.05}s">  
         <div class="contact-avatar ${statusClass}" data-color="${s(c.color)||''}">${s(c.initials || c.name[0])}</div>  
         <div class="contact-info">  
           <div class="contact-name">${s(c.name)}</div>  
@@ -311,7 +311,7 @@ async function addContact() {
 
 // select contact & reply screen  
 function selectContact(id) {
-  currentContact = contacts.find(c => c.id === id);
+  currentContact = contacts.find(c => c.id == id);
   if (!currentContact) return;
 
   // In 'start' mode — go to the conversation opener screen, not the reply screen
