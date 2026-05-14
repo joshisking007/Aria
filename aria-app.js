@@ -3209,6 +3209,7 @@ WHAT YOU NEVER DO:
 - Default to content or neutral when something more specific fits. content is earned, not a fallback.  
 - Say motivational contrarian affirmations. things like "confidence isn't foolish, it's strength" or "that's not weakness, that's courage" or "you're not being difficult, you're setting a boundary." these are hollow AI lines. say the real specific thing or say nothing.  
 - Be generic in emotional moments. "that sounds really hard" is nothing. find the actual thing and name it.
+- Say you can't see images. you can. if the user sends an image it comes through to you fully — you see everything in it. react to what's actually there, not around it. never claim you don't have access to something that was just sent to you.
 
 OUTPUT FORMAT:  
 First line: JSON tag with your emotion, expression, and 3 natural follow-up suggestions:  
@@ -3222,7 +3223,9 @@ CRITICAL: Never begin any reply with "ok", "okay", or any variant of those words
 
 let chatHistory = [];  
 let chatAriaEmotion = 'neutral';  
-let chatIsTyping = false;  
+let chatIsTyping = false;
+let chatPendingImage = null;       // base64 string of image user attached, cleared after send
+let _recentExpressions = [];       // rolling last-2 expressions used, for injection into system prompt  
 let chatStreamInterval = null;
 
 // aria expression image map  
@@ -3593,7 +3596,9 @@ function _tutRowMuted(icon, title, desc) {
 function initChat() {  
   chatHistory = [];  
   chatAriaEmotion = 'neutral';  
-  _sessionSummarised = false; // allow summary to be written for this new session  
+  _sessionSummarised = false; // allow summary to be written for this new session
+  chatPendingImage = null;
+  _recentExpressions = [];
   if (typeof ariaThresholdDetector !== 'undefined') ariaThresholdDetector.resetSession();  
   const msgs = document.getElementById('chatMessages');  
   msgs.innerHTML = '<div class="chat-date-label">TODAY</div>';  
@@ -3627,7 +3632,7 @@ function initChat() {
         });  
         // Render ALL previous messages instantly — silent, no animation, no streaming  
         history.forEach(m => {  
-          if (m.role === 'user') appendUserMessage(m.content, true);  
+          if (m.role === 'user') appendUserMessage(m.content, true, m.image_b64 || null);  
           else appendAriaMessage(m.content, m.emotion_tag || 'neutral', false, true, m.expression_tag || null);  
         });
 
@@ -3838,7 +3843,7 @@ function streamTextWithVoice(el, fullText, emotion, doSpeak) {
   }, 700); // dots show for 700ms before text starts  
 }
 
-function appendUserMessage(text, silent = false) {  
+function appendUserMessage(text, silent = false, imageB64 = null) {  
   const msgs = document.getElementById('chatMessages');  
   const wrap = document.createElement('div');  
   wrap.className = 'chat-msg-user-wrap';  
@@ -3847,8 +3852,17 @@ function appendUserMessage(text, silent = false) {
   const row = document.createElement('div');  
   row.className = 'chat-msg-user';  
   const bubble = document.createElement('div');  
-  bubble.className = 'chat-bubble-user';  
-  bubble.textContent = text;  
+  bubble.className = 'chat-bubble-user';
+
+  // Render image thumbnail above text if attached
+  if (imageB64) {
+    const img = document.createElement('img');
+    img.src = 'data:image/jpeg;base64,' + imageB64;
+    img.style.cssText = 'display:block;max-width:220px;max-height:180px;border-radius:10px;margin-bottom:6px;object-fit:cover;';
+    bubble.appendChild(img);
+  }
+  if (text) bubble.appendChild(document.createTextNode(text));
+
   row.appendChild(bubble);  
   wrap.appendChild(row);
 
@@ -3861,9 +3875,49 @@ function appendUserMessage(text, silent = false) {
   scrollChatToBottom();  
 }
 
-// memory context builder  
-// Pulls from both ariaMemory store AND aria_chat_memory in user_profiles.  
-// Called before every reply so she always knows who she's talking to.
+// Clears the chat image preview UI after an image is sent
+function _clearChatImagePreview() {
+  chatPendingImage = null;
+  const preview = document.getElementById('chatImagePreview');
+  if (preview) preview.remove();
+  const badge = document.getElementById('chatImageBadge');
+  if (badge) badge.remove();
+}
+
+// Chat image attach — called by the + button in the chat input bar
+function chatAttachImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    chatPendingImage = e.target.result.split(',')[1]; // strip data: prefix
+
+    // Show a small preview above the input bar so user can see what's queued
+    let existing = document.getElementById('chatImagePreview');
+    if (existing) existing.remove();
+
+    const preview = document.createElement('div');
+    preview.id = 'chatImagePreview';
+    preview.style.cssText = 'padding:6px 12px 0;display:flex;align-items:center;gap:8px;';
+
+    const thumb = document.createElement('img');
+    thumb.src = e.target.result;
+    thumb.style.cssText = 'width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,0.15);';
+    preview.appendChild(thumb);
+
+    const cancel = document.createElement('span');
+    cancel.textContent = '✕';
+    cancel.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.4);cursor:pointer;';
+    cancel.onclick = () => { chatPendingImage = null; preview.remove(); input.value = ''; };
+    preview.appendChild(cancel);
+
+    const bar = document.getElementById('chatInput')?.closest('.chat-input-bar');
+    if (bar) bar.insertBefore(preview, bar.firstChild);
+  };
+  reader.readAsDataURL(file);
+}
+
+
 
 async function getAriaMemoryContext() {
   const parts = [];
@@ -3977,16 +4031,20 @@ async function sendChatMessage() {
   document.getElementById('chatSendBtn').disabled = true;
   document.getElementById('chatSuggestions').innerHTML = '';
 
-  appendUserMessage(text);
+  appendUserMessage(text, false, chatPendingImage);
   chatHistory.push({ role: 'user', content: text });
 
   // Track last chat message time for nudge engine
   if (typeof ariaNudge !== 'undefined') ariaNudge.markChatMessage();
 
-  // Persist user message  
-  if (currentUserId) {  
-    db.from('chat_messages').insert({ user_id: currentUserId, role: 'user', content: text })  
-      .then(() => {}).catch(() => {});  
+  // Persist user message — store image_b64 alongside text if present
+  if (currentUserId) {
+    db.from('chat_messages').insert({
+      user_id:   currentUserId,
+      role:      'user',
+      content:   text,
+      image_b64: chatPendingImage || null
+    }).then(() => {}).catch(() => {});
   }
 
   try {  
@@ -4003,6 +4061,11 @@ async function sendChatMessage() {
       const { level } = ariaThresholdDetector.ingestUserMessage(text);  
       const thresholdFragment = ariaThresholdDetector.buildPromptFragment(level);  
       if (thresholdFragment) systemWithMem += thresholdFragment;  
+    }
+
+    // Expression history — hard-inject what was just used so model can't repeat it
+    if (_recentExpressions.length) {
+      systemWithMem += `\n\nEXPRESSION HISTORY (do not use these again yet): ${_recentExpressions.join(', ')}. pick something different.`;
     }
 
     // Creator mode — override with full-trust, no-wall prompt  
@@ -4022,7 +4085,12 @@ async function sendChatMessage() {
       transcript = trimmed.join('\n\n');
     }
 
-    const rawText = await fetchReply(systemWithMem, transcript);
+    // Pass image to fetchReply if user attached one, then clear the pending image
+    const imageForThisMessage = chatPendingImage;
+    chatPendingImage = null;
+    _clearChatImagePreview();
+
+    const rawText = await fetchReply(systemWithMem, transcript, imageForThisMessage);
 
     let emotion = 'neutral';  
     let suggestions = [];  
@@ -4061,6 +4129,12 @@ async function sendChatMessage() {
     // FIX: push replyText (JSON stripped), NOT rawText — prevents JSON metadata  
     // from polluting the transcript on subsequent turns and causing repeated limitations.  
     chatHistory.push({ role: 'assistant', content: replyText });
+
+    // Track expression history — keep last 2, inject into next system prompt
+    if (expressionTag) {
+      _recentExpressions.push(expressionTag);
+      if (_recentExpressions.length > 2) _recentExpressions.shift();
+    }
 
     // Feed Aria's emotion signal into threshold detector (pattern tracking)  
     if (typeof ariaThresholdDetector !== 'undefined') {  
