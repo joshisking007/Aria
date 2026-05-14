@@ -65,6 +65,73 @@
   color: rgba(255,255,255,0.85);
   border-color: rgba(255,255,255,0.3);
 }
+
+/* ── Conversation Starter Screen ─────────────────────────────────────────── */
+.starter-opener-card {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--rose);
+  padding: 14px;
+  margin-bottom: 10px;
+  animation: fadeInUp 0.25s ease both;
+}
+.starter-angle-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: var(--rose);
+  text-transform: lowercase;
+  margin-bottom: 10px;
+}
+.starter-bubbles {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.starter-bubble {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 9px 12px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.55;
+  border-radius: 2px;
+}
+.starter-card-actions {
+  display: flex;
+  gap: 8px;
+}
+.starter-copy-btn {
+  padding: 8px 18px;
+  background: transparent;
+  border: 1px solid var(--rose);
+  color: var(--rose);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.starter-copy-btn:active {
+  background: var(--rose-dim);
+}
+.starter-edit-btn {
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.starter-edit-btn:active {
+  border-color: var(--rose-border);
+  color: var(--text2);
+}
 </style>
 </head>
 <body>
@@ -1964,6 +2031,88 @@
 <script src="aria-phase3-dependency-monitor.js"></script>
 <script src="aria-phase4-followthrough.js"></script>
 <!-- aria lock screen overlay injected by awareness.showlockscreen() — this is the empty mount point. the actual content is built in js so the timer can be live. -->
+<!-- screen: conversation starter -->
+<div class="screen" id="starterScreen">
+  <div class="hud-corner hud-corner-tl"></div><div class="hud-corner hud-corner-tr"></div>
+  <div class="top-bar">
+    <button class="back-btn" onclick="showScreen('contactScreen')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="top-bar-info">
+      <div class="top-bar-name" id="starterContactName">—</div>
+      <div class="top-bar-status" id="starterContactRel">● contact</div>
+    </div>
+  </div>
+
+  <!-- Contact identity strip -->
+  <div style="display:flex;align-items:center;gap:14px;padding:18px 20px 6px;">
+    <div id="starterAvatar" style="width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:17px;font-weight:700;flex-shrink:0;"></div>
+    <div>
+      <div style="font-family:var(--font-display);font-size:18px;font-weight:700;letter-spacing:0.02em;" id="starterContactName2"></div>
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);letter-spacing:0.1em;margin-top:2px;">starting a conversation</div>
+    </div>
+  </div>
+
+  <!-- Aria's memory read -->
+  <div id="starterMemWrap" style="margin:10px 16px 0;display:none;">
+    <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.15em;color:var(--rose);margin-bottom:6px;">// WHAT I REMEMBER</div>
+    <div style="background:var(--card2);border:1px solid var(--border);border-left:2px solid var(--rose-border);padding:12px 14px;">
+      <div id="starterMemRead" style="font-family:var(--font-body);font-size:13px;color:var(--text2);line-height:1.65;"></div>
+    </div>
+  </div>
+
+  <!-- Something changed button -->
+  <div style="padding:12px 16px 0;">
+    <button onclick="starterShowUpdate()" style="width:100%;padding:11px 14px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      something's changed about them
+    </button>
+
+    <!-- Update input — hidden by default -->
+    <div id="starterUpdateWrap" style="display:none;margin-top:8px;background:var(--card2);border:1px solid var(--rose-border);padding:12px 14px;">
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:0.06em;">what's different now?</div>
+      <textarea id="starterUpdateInput" rows="2"
+        placeholder="e.g. she seems way happier lately. got a new job i think."
+        style="width:100%;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-family:var(--font-body);font-size:13px;resize:none;outline:none;padding:0 0 8px;line-height:1.6;"></textarea>
+      <button onclick="starterConfirmUpdate()" style="margin-top:10px;padding:8px 18px;background:transparent;border:1px solid var(--rose);color:var(--rose);font-family:var(--font-mono);font-size:11px;letter-spacing:0.08em;cursor:pointer;">
+        got it, use this
+      </button>
+    </div>
+
+    <!-- Update confirmed state -->
+    <div id="starterUpdateDone" style="display:none;margin-top:8px;font-family:var(--font-mono);font-size:11px;color:var(--rose);letter-spacing:0.04em;padding:4px 2px;"></div>
+  </div>
+
+  <!-- Generate button -->
+  <div style="padding:16px 16px 0;">
+    <button id="starterGenerateBtn" onclick="starterGenerate()"
+      style="width:100%;padding:14px;background:transparent;border:1px solid var(--rose);color:var(--rose);font-family:var(--font-display);font-size:12px;font-weight:700;letter-spacing:0.12em;cursor:pointer;">
+      write my openers
+    </button>
+  </div>
+
+  <!-- Thinking state -->
+  <div id="starterThinking" style="display:none;align-items:center;gap:12px;padding:20px 20px 0;">
+    <div class="thinking-dots">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+    <span style="font-family:var(--font-mono);font-size:11px;color:var(--muted);letter-spacing:0.06em;">reading everything i know about them...</span>
+  </div>
+
+  <!-- Openers -->
+  <div id="starterOpenersWrap" style="display:none;padding:16px 16px 0;">
+    <div style="font-family:var(--font-mono);font-size:9px;letter-spacing:0.15em;color:var(--muted);margin-bottom:10px;">// OPENERS</div>
+    <div id="starterOpenersList"></div>
+
+    <!-- Regenerate -->
+    <button onclick="starterRegenerate()"
+      style="width:100%;margin-top:8px;padding:12px;background:var(--card);border:1px solid var(--border);color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;cursor:pointer;margin-bottom:40px;">
+      write different ones
+    </button>
+  </div>
+
+</div>
+
 <div id="ariaLockOverlay"></div>
 <!-- games screen — self-renders via ariaGames.init() -->
 <div id="gamesScreen" class="screen"></div>

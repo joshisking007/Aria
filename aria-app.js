@@ -20,7 +20,7 @@ function updateStats() {
 }
 
 // screen nav  
-const screensWithNav = ['introScreen','historyScreen','moodScreen','profileScreen','glowupScreen','redflagScreen','vibeScreen','queueScreen','contactProfileScreen','onboardScreen','presendScreen','memoryScreen','longGameScreen','lgDetailScreen','lgArcPreviewScreen','exploreScreen'];
+const screensWithNav = ['introScreen','historyScreen','moodScreen','profileScreen','glowupScreen','redflagScreen','vibeScreen','queueScreen','contactProfileScreen','onboardScreen','presendScreen','memoryScreen','longGameScreen','lgDetailScreen','lgArcPreviewScreen','exploreScreen','starterScreen'];
 
 function showScreen(id) {  
   // If leaving chat screen, write conversation summary  
@@ -310,9 +310,15 @@ async function addContact() {
 }
 
 // select contact & reply screen  
-function selectContact(id) {  
-  currentContact = contacts.find(c => c.id === id);  
+function selectContact(id) {
+  currentContact = contacts.find(c => c.id === id);
   if (!currentContact) return;
+
+  // In 'start' mode — go to the conversation opener screen, not the reply screen
+  if (currentMode === 'start') {
+    openStarterScreen(currentContact);
+    return;
+  }
 
   showScreen('replyScreen');  
   document.getElementById('replyTopName').textContent = currentContact.name;  
@@ -372,7 +378,244 @@ function selectContact(id) {
   }  
 }
 
-// platform  
+// ─── CONVERSATION STARTER SCREEN ─────────────────────────────────────────────
+// Intercepts "start a conversation" flow — shows a dedicated screen with:
+//   1. Aria's current read on the contact (from memory)
+//   2. A one-tap "something's changed" update
+//   3. Three generated openers: based on what she knows / out of nowhere / something's different
+// ─────────────────────────────────────────────────────────────────────────────
+
+let _starterContact = null;          // contact being opened
+let _starterUpdateContext = '';      // what the user just told Aria has changed
+let _starterOpeners = [];            // generated opener objects [{angle, text}]
+
+// called when user taps a contact in start-a-convo mode
+async function openStarterScreen(contact) {
+  _starterContact = contact;
+  _starterUpdateContext = '';
+  _starterOpeners = [];
+
+  showScreen('starterScreen');
+
+  // header
+  document.getElementById('starterContactName').textContent = contact.name;
+  document.getElementById('starterContactName2').textContent = contact.name;
+  document.getElementById('starterContactRel').textContent =
+    '● ' + (contact.relationship || 'contact');
+
+  // avatar
+  const av = document.getElementById('starterAvatar');
+  av.textContent = contact.initials || contact.name[0];
+  const colorMap = { rose:'#f472b6', blue:'#60a5fa', green:'#34d399', purple:'#a78bfa', amber:'#fbbf24' };
+  const col = colorMap[contact.color] || '#f472b6';
+  av.style.background = `linear-gradient(135deg,${col}22,${col}44)`;
+  av.style.color = col;
+  av.style.border = `1.5px solid ${col}33`;
+
+  // show Aria's memory read of this contact
+  const mem = contactMemory.get(contact.id);
+  const memEl = document.getElementById('starterMemRead');
+  if (mem && mem.narrative) {
+    memEl.textContent = mem.narrative;
+    memEl.style.display = 'block';
+    document.getElementById('starterMemWrap').style.display = 'block';
+  } else {
+    memEl.style.display = 'none';
+    document.getElementById('starterMemWrap').style.display = 'none';
+  }
+
+  // reset update panel
+  document.getElementById('starterUpdateWrap').style.display = 'none';
+  document.getElementById('starterUpdateInput').value = '';
+  document.getElementById('starterUpdateDone').style.display = 'none';
+
+  // reset openers
+  document.getElementById('starterOpenersWrap').style.display = 'none';
+  document.getElementById('starterOpenersList').innerHTML = '';
+  document.getElementById('starterGenerateBtn').style.display = 'block';
+  document.getElementById('starterThinking').style.display = 'none';
+}
+
+// user taps "something's changed"
+function starterShowUpdate() {
+  const wrap = document.getElementById('starterUpdateWrap');
+  wrap.style.display = wrap.style.display === 'none' ? 'block' : 'none';
+  if (wrap.style.display === 'block') {
+    setTimeout(() => document.getElementById('starterUpdateInput').focus(), 80);
+  }
+}
+
+// user confirms the update
+function starterConfirmUpdate() {
+  const val = document.getElementById('starterUpdateInput').value.trim();
+  if (!val) return;
+  _starterUpdateContext = val;
+
+  // show a small confirmed state
+  document.getElementById('starterUpdateWrap').style.display = 'none';
+  const done = document.getElementById('starterUpdateDone');
+  done.textContent = 'got it. i'll use that.';
+  done.style.display = 'block';
+  showToast('noted', 'green');
+}
+
+// generate the three openers
+async function starterGenerate() {
+  const contact = _starterContact;
+  if (!contact) return;
+
+  document.getElementById('starterGenerateBtn').style.display = 'none';
+  document.getElementById('starterThinking').style.display = 'flex';
+  document.getElementById('starterOpenersWrap').style.display = 'none';
+
+  // build context for the prompt
+  const mem = contactMemory.get(contact.id);
+  const narrative = mem?.narrative || '';
+  const events = mem?.events?.slice(-3).join('. ') || '';
+  const contactCtx = [
+    `Name: ${contact.name}`,
+    contact.relationship ? `Relationship: ${contact.relationship}` : '',
+    contact.platform ? `Platform: ${contact.platform}` : '',
+    contact.silentHours > 0 ? `Last contact: ${contact.silentHours} hours ago` : '',
+    contact.how_we_met ? `How they met: ${contact.how_we_met}` : '',
+    contact.topics?.length ? `Their interests: ${contact.topics.join(', ')}` : '',
+    contact.notes ? `Notes: ${contact.notes}` : '',
+    narrative ? `Aria's memory of them: ${narrative}` : '',
+    events ? `Recent events: ${events}` : '',
+    _starterUpdateContext ? `IMPORTANT UPDATE from user just now: ${_starterUpdateContext}` : '',
+  ].filter(Boolean).join('\n');
+
+  // user voice context
+  const voiceCtx = buildSystemPrompt();
+
+  const prompt = `${voiceCtx}
+
+You are generating conversation openers — first messages to send to someone. NOT replies. These are unprompted reach-outs.
+
+CONTACT CONTEXT:
+${contactCtx}
+
+Generate exactly 3 openers. Each one has a different angle of approach:
+
+1. "based on what i know" — references something real and specific from the memory/context above. Not generic. Something only someone who knows this person would say.
+2. "out of nowhere" — no reason needed. A natural, low-pressure reach-out that sounds like you just randomly thought of them. Doesn't reference any specific memory. Just feels easy and human.
+3. "something's different" — ${_starterUpdateContext ? `the user just told you: "${_starterUpdateContext}". Write an opener that reflects this new read of the situation.` : `picks up on any shift in the dynamic — drift, time passed, something unresolved — and opens from that angle.`}
+
+Rules:
+- Write in the user's voice. Match their energy and slang from the system prompt.
+- Each opener is 1-2 messages max. Short. Natural. Nothing that sounds like an AI wrote it.
+- No em dashes. No formal language. Lowercase.
+- The opener should not explain itself. It just lands.
+- Split multi-message openers with a newline between messages.
+
+Respond ONLY in this exact JSON:
+{"openers":[{"angle":"based on what i know","text":"..."},{"angle":"out of nowhere","text":"..."},{"angle":"something's different","text":"..."}]}`;
+
+  try {
+    const raw = await fetchReply(
+      'You generate conversation openers. Respond ONLY in valid JSON. No markdown.',
+      prompt
+    );
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const data = JSON.parse(clean);
+
+    if (data?.openers?.length) {
+      _starterOpeners = data.openers;
+      _renderStarterOpeners(data.openers);
+    } else {
+      throw new Error('no openers');
+    }
+  } catch(e) {
+    showToast('something went wrong. tap retry.');
+    document.getElementById('starterGenerateBtn').style.display = 'block';
+    document.getElementById('starterGenerateBtn').textContent = 'try again';
+  }
+
+  document.getElementById('starterThinking').style.display = 'none';
+}
+
+function _renderStarterOpeners(openers) {
+  const list = document.getElementById('starterOpenersList');
+
+  list.innerHTML = openers.map((op, i) => {
+    const lines = op.text.split('\n').filter(Boolean);
+    const bubblesHtml = lines.map(l =>
+      `<div class="starter-bubble">${s(l)}</div>`
+    ).join('');
+
+    return `
+      <div class="starter-opener-card" style="animation-delay:${i * 0.1}s">
+        <div class="starter-angle-label">${s(op.angle)}</div>
+        <div class="starter-bubbles">${bubblesHtml}</div>
+        <div class="starter-card-actions">
+          <button class="starter-copy-btn" onclick="starterCopy(${i})">copy</button>
+          <button class="starter-edit-btn" onclick="starterSendToReply(${i})">edit in reply screen</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('starterOpenersWrap').style.display = 'block';
+  setTimeout(() => {
+    document.getElementById('starterOpenersWrap')
+      .scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 150);
+}
+
+// copy opener directly
+function starterCopy(idx) {
+  const op = _starterOpeners[idx];
+  if (!op) return;
+  navigator.clipboard.writeText(op.text).then(() => {
+    showToast('copied. go send it.', 'green');
+    // record in history and update contact
+    if (_starterContact) {
+      replySentCount++;
+      updateStats();
+      saveProfile().catch(() => {});
+      if (currentUserId && _starterContact.id) {
+        db.from('contacts')
+          .update({ last_talked_at: new Date().toISOString(), silent: false, silent_hours: 0 })
+          .eq('id', _starterContact.id)
+          .then(() => {}).catch(() => {});
+      }
+    }
+  });
+}
+
+// send to reply screen so user can tweak before copying
+function starterSendToReply(idx) {
+  const op = _starterOpeners[idx];
+  if (!op || !_starterContact) return;
+
+  // go to reply screen in start mode
+  currentMode = 'start';
+  currentContact = _starterContact;
+  showScreen('replyScreen');
+
+  document.getElementById('replyTopName').textContent = _starterContact.name;
+  document.getElementById('replyTopStatus').textContent = '● starting a convo with ' + _starterContact.name.toLowerCase();
+  setPlatformByName(_starterContact.platform || 'iMessage');
+
+  // pre-fill the opener as if it was generated
+  currentReplies = op.text.split('\n').filter(Boolean);
+  renderReplies(currentReplies);
+
+  document.getElementById('ariaThinking').style.display = 'none';
+  document.getElementById('pasteArea').style.display = 'none';
+}
+
+// regenerate all openers
+function starterRegenerate() {
+  document.getElementById('starterOpenersWrap').style.display = 'none';
+  document.getElementById('starterOpenersList').innerHTML = '';
+  document.getElementById('starterGenerateBtn').style.display = 'block';
+  document.getElementById('starterGenerateBtn').textContent = 'write my openers';
+  _starterOpeners = [];
+}
+
+// platform
+
 function setPlatform(el) {  
   document.querySelectorAll('.platform-pill').forEach(p => p.classList.remove('active'));  
   el.classList.add('active');  
