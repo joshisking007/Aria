@@ -468,62 +468,57 @@ async function starterGenerate() {
   document.getElementById('starterThinking').style.display = 'flex';
   document.getElementById('starterOpenersWrap').style.display = 'none';
 
-  // build context for the prompt
-  const mem = contactMemory.get(contact.id);
+  // set currentContact so buildSystemPrompt picks up the right contact context
+  currentContact = contact;
+
+  // build contact context string
+  const mem = (typeof contactMemory !== 'undefined') ? contactMemory.get(contact.id) : null;
   const narrative = mem?.narrative || '';
   const events = mem?.events?.slice(-3).join('. ') || '';
+
   const contactCtx = [
     `Name: ${contact.name}`,
-    contact.relationship ? `Relationship: ${contact.relationship}` : '',
-    contact.platform ? `Platform: ${contact.platform}` : '',
-    contact.silentHours > 0 ? `Last contact: ${contact.silentHours} hours ago` : '',
-    contact.how_we_met ? `How they met: ${contact.how_we_met}` : '',
-    contact.topics?.length ? `Their interests: ${contact.topics.join(', ')}` : '',
-    contact.notes ? `Notes: ${contact.notes}` : '',
-    narrative ? `Aria's memory of them: ${narrative}` : '',
-    events ? `Recent events: ${events}` : '',
-    _starterUpdateContext ? `IMPORTANT UPDATE from user just now: ${_starterUpdateContext}` : '',
+    contact.relationship   ? `Relationship: ${contact.relationship}`       : '',
+    contact.platform       ? `Platform: ${contact.platform}`               : '',
+    contact.silentHours > 0? `Last contact: ${contact.silentHours}h ago`  : '',
+    contact.how_we_met     ? `How they met: ${contact.how_we_met}`         : '',
+    contact.topics?.length ? `Their interests: ${contact.topics.join(', ')}`:'',
+    contact.notes          ? `Notes: ${contact.notes}`                     : '',
+    narrative              ? `What Aria remembers: ${narrative}`           : '',
+    events                 ? `Recent events: ${events}`                    : '',
+    _starterUpdateContext  ? `UPDATE from user just now: ${_starterUpdateContext}` : '',
   ].filter(Boolean).join('\n');
 
-  // user voice context
-  const voiceCtx = buildSystemPrompt();
+  const systemPrompt = buildSystemPrompt();
 
-  const prompt = `${voiceCtx}
-
-You are generating conversation openers — first messages to send to someone. NOT replies. These are unprompted reach-outs.
+  const userMsg = `Generate exactly 3 conversation openers — first messages to send to this person. NOT replies. These are unprompted reach-outs.
 
 CONTACT CONTEXT:
 ${contactCtx}
 
-Generate exactly 3 openers. Each one has a different angle of approach:
-
-1. "based on what i know" — references something real and specific from the memory/context above. Not generic. Something only someone who knows this person would say.
-2. "out of nowhere" — no reason needed. A natural, low-pressure reach-out that sounds like you just randomly thought of them. Doesn't reference any specific memory. Just feels easy and human.
-3. "something's different" — ${_starterUpdateContext ? `the user just told you: "${_starterUpdateContext}". Write an opener that reflects this new read of the situation.` : `picks up on any shift in the dynamic — drift, time passed, something unresolved — and opens from that angle.`}
+Each opener has a different angle:
+1. "based on what i know" — references something real and specific from the context. Not generic. Something only someone who knows this person would say.
+2. "out of nowhere" — no reason needed. Natural, low-pressure. Sounds like you just randomly thought of them. No memory references.
+3. "something's different" — ${_starterUpdateContext ? `user just said: "${_starterUpdateContext}". Write from this new read.` : `picks up on drift, time passed, or something unresolved.`}
 
 Rules:
-- Write in the user's voice. Match their energy and slang from the system prompt.
-- Each opener is 1-2 messages max. Short. Natural. Nothing that sounds like an AI wrote it.
-- No em dashes. No formal language. Lowercase.
-- The opener should not explain itself. It just lands.
-- Split multi-message openers with a newline between messages.
+- Write in the user's voice. Match their energy exactly.
+- 1-2 messages max per opener. Short. Nothing that sounds AI-written.
+- No em dashes. Lowercase. No formal language.
+- The opener just lands. It does not explain itself.
+- If an opener has 2 messages, separate them with a newline.
 
-Respond ONLY in this exact JSON:
+Respond ONLY with this exact JSON, no extra text:
 {"openers":[{"angle":"based on what i know","text":"..."},{"angle":"out of nowhere","text":"..."},{"angle":"something's different","text":"..."}]}`;
 
   try {
-    const raw = await fetchReply(
-      'You generate conversation openers. Respond ONLY in valid JSON. No markdown.',
-      prompt
-    );
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const data = JSON.parse(clean);
+    const data = await fetchReplyJSON(systemPrompt, userMsg);
 
     if (data?.openers?.length) {
       _starterOpeners = data.openers;
       _renderStarterOpeners(data.openers);
     } else {
-      throw new Error('no openers');
+      throw new Error('no openers returned');
     }
   } catch(e) {
     showToast('something went wrong. tap retry.');
