@@ -454,7 +454,7 @@ function starterConfirmUpdate() {
   // show a small confirmed state
   document.getElementById('starterUpdateWrap').style.display = 'none';
   const done = document.getElementById('starterUpdateDone');
-  done.textContent = 'got it. i'll use that.';
+  done.textContent = "got it. i'll use that.";
   done.style.display = 'block';
   showToast('noted', 'green');
 }
