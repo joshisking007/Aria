@@ -485,11 +485,14 @@ function buildSystemPrompt() {
 let screenshotBase64 = null;  
 let activeContextTab = 'paste';
 
-function toggleContextPanel() {  
-  const toggle = document.getElementById('contextToggle');  
-  const body = document.getElementById('contextBody');  
-  toggle.classList.toggle('open');  
-  body.classList.toggle('open');  
+function toggleContextPanel() {
+  const toggle = document.getElementById('contextToggle');
+  const body = document.getElementById('contextBody');
+  toggle.classList.toggle('open');
+  body.classList.toggle('open');
+  if (body.classList.contains('open')) {
+    setTimeout(() => body.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 120);
+  }
 }
 
 function switchContextTab(tab, el) {  
@@ -500,20 +503,188 @@ function switchContextTab(tab, el) {
   document.getElementById(tab === 'paste' ? 'ctxPanelPaste' : 'ctxPanelScreenshot').classList.add('active');  
 }
 
-function handleScreenshotUpload(input) {  
-  const file = input.files[0];  
-  if (!file) return;  
-  const reader = new FileReader();  
-  reader.onload = e => {  
-    screenshotBase64 = e.target.result.split(',')[1];  
-    const preview = document.getElementById('screenshotPreview');  
-    preview.src = e.target.result;  
-    preview.style.display = 'block';  
-    document.getElementById('screenshotClearBtn').style.display = 'block';  
-    document.getElementById('contextBadge').style.display = 'inline';  
-    showToast('screenshot loaded ✓', 'green');  
-  };  
-  reader.readAsDataURL(file);  
+async function handleScreenshotUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    screenshotBase64 = e.target.result.split(',')[1];
+
+    // show preview immediately
+    const preview = document.getElementById('screenshotPreview');
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    document.getElementById('screenshotClearBtn').style.display = 'block';
+    document.getElementById('contextBadge').style.display = 'inline';
+    setTimeout(() => preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
+
+    showToast('reading it...');
+
+    try {
+      // Fast read-only call — separate from reply generation so it's quick
+      const readResult = await fetchReply(
+        `You are Aria. Read this screenshot of a conversation.
+
+Extract exactly:
+- senderName: the name or handle of the person who messaged the user. right-side bubbles are the user. left-side bubbles are the other person.
+- theirMessage: the most recent message from them. exact words.
+- platform: guess from the UI. iMessage, WhatsApp, Instagram, Snapchat, or Twitter.
+- toneRead: one short sentence in Aria's voice about what's going on in this message. lowercase. no em dashes. real, like texting a friend.
+
+Respond ONLY in this exact JSON format with no extra text:
+{"senderName":"...","theirMessage":"...","platform":"...","toneRead":"..."}`,
+        'read this screenshot',
+        screenshotBase64
+      );
+
+      let extracted = null;
+      try {
+        const clean = readResult.replace(/```json|```/g, '').trim();
+        extracted = JSON.parse(clean);
+      } catch (_) {}
+
+      if (!extracted) {
+        showToast('screenshot loaded', 'green');
+        return;
+      }
+
+      // auto-fill their message if field is empty
+      const msgInput = document.getElementById('theirMsgInput');
+      if (msgInput && !msgInput.value.trim() && extracted.theirMessage) {
+        msgInput.value = extracted.theirMessage;
+      }
+
+      // auto-set platform
+      if (extracted.platform) setPlatformByName(extracted.platform);
+
+      // show Aria's read in her voice
+      if (extracted.toneRead) showAriaReaction(extracted.toneRead);
+
+      // offer contact creation if name found and not already saved
+      if (extracted.senderName && extracted.senderName.length > 1) {
+        const alreadyExists = contacts.some(
+          c => c.name.toLowerCase() === extracted.senderName.toLowerCase()
+        );
+        if (!alreadyExists && !currentContact) {
+          _offerContactCreation(extracted.senderName, extracted.platform || currentPlatform);
+        }
+      }
+
+    } catch (err) {
+      // fail silently — screenshot still attached, user can fill in manually
+      showToast('screenshot loaded', 'green');
+    }
+  };
+
+  reader.readAsDataURL(file);
+}
+
+// offer to save the auto-detected contact — small inline strip, no modal
+function _offerContactCreation(name, platform) {
+  const existing = document.getElementById('autoContactOffer');
+  if (existing) existing.remove();
+
+  const strip = document.createElement('div');
+  strip.id = 'autoContactOffer';
+  strip.style.cssText = `
+    margin: 10px 0 4px;
+    padding: 10px 14px;
+    background: var(--card2);
+    border: 1px solid var(--rose-border);
+    border-left: 2px solid var(--rose);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  `;
+
+  const safeName = ariaSecurity.sanitize(name);
+  const safePlat = ariaSecurity.sanitize(platform || '');
+
+  strip.innerHTML = `
+    <div style="font-family:var(--font-mono);font-size:11px;color:var(--text2);line-height:1.5;flex:1;">
+      save <span style="color:var(--rose);">${safeName}</span> as a contact?
+    </div>
+    <div style="display:flex;gap:8px;flex-shrink:0;">
+      <button id="autoContactYes"
+        style="padding:6px 14px;background:var(--rose-dim);border:1px solid var(--rose-border);color:var(--rose);font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;cursor:pointer;">
+        yeah
+      </button>
+      <button id="autoContactNo"
+        style="padding:6px 14px;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;cursor:pointer;">
+        nah
+      </button>
+    </div>
+  `;
+
+  const preview = document.getElementById('screenshotPreview');
+  if (preview && preview.parentNode) {
+    preview.parentNode.insertBefore(strip, preview.nextSibling);
+    setTimeout(() => strip.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
+  }
+
+  strip.querySelector('#autoContactYes').addEventListener('click', () => {
+    strip.remove();
+    _confirmAutoContact(name, platform);
+  });
+  strip.querySelector('#autoContactNo').addEventListener('click', () => strip.remove());
+}
+
+// create the contact from the screenshot extraction
+async function _confirmAutoContact(name, platform) {
+  if (!name) return;
+  const colors = ['blue', 'purple', 'green', 'rose', 'amber'];
+  const color = colors[Math.floor(Math.random() * colors.length)];
+  const initials = name.slice(0, 2).toUpperCase();
+  const now = new Date().toISOString();
+
+  if (currentUserId) {
+    const { data, error } = await db.from('contacts').insert({
+      user_id:        currentUserId,
+      name,
+      initials,
+      color,
+      relationship:   'contact',
+      platform:       platform || 'iMessage',
+      preview:        'no recent messages',
+      silent:         false,
+      silent_hours:   0,
+      last_talked_at: now
+    }).select().single();
+
+    if (error) { showToast('could not save contact'); return; }
+    const newContact = { ...data, silentHours: 0, silent: false, time: 'just now', topics: [] };
+    contacts.push(newContact);
+    currentContact = newContact;
+  } else {
+    const newContact = {
+      id:           nextContactId++,
+      name,
+      initials,
+      color,
+      relationship: 'contact',
+      platform:     platform || 'iMessage',
+      preview:      'no recent messages',
+      time:         'just now',
+      silent:       false,
+      silentHours:  0,
+      online:       false,
+      topics:       []
+    };
+    contacts.push(newContact);
+    currentContact = newContact;
+    saveToLocalStorage();
+  }
+
+  // update the reply screen header
+  const nameEl = document.getElementById('replyTopName');
+  const statusEl = document.getElementById('replyTopStatus');
+  if (nameEl) nameEl.textContent = name;
+  if (statusEl) statusEl.textContent = '● replying to ' + name.toLowerCase();
+
+  updateStats();
+  showToast(name + ' saved', 'green');
 }
 
 function clearScreenshot() {  

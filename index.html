@@ -401,16 +401,6 @@
 
     <!-- Options -->
     <div class="intro-options" id="introOptions">
-      <button class="option-btn" onclick="goToContacts('reply')">
-        <span class="option-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        </span>
-        <div class="option-label">
-          <div>someone messaged me</div>
-          <div class="option-sub">reply in your voice</div>
-        </div>
-        <span class="option-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
-      </button>
       <button class="option-btn" onclick="goToContacts('start')">
         <span class="option-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 5v14M5 12h14"/></svg>
@@ -418,6 +408,16 @@
         <div class="option-label">
           <div>start a conversation</div>
           <div class="option-sub">i'll start it for you</div>
+        </div>
+        <span class="option-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
+      </button>
+      <button class="option-btn" onclick="goToContacts('reply')">
+        <span class="option-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </span>
+        <div class="option-label">
+          <div>someone messaged me</div>
+          <div class="option-sub">reply in your voice</div>
         </div>
         <span class="option-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
       </button>
@@ -551,13 +551,13 @@
 
   <!-- Convo area -->
   <div class="convo-area" id="convoArea">
-    <div class="convo-label">THEIR MESSAGE</div>
+    <div class="convo-label">what did they say</div>
   </div>
 
   <!-- Paste area -->
   <div class="paste-area" id="pasteArea">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-      <div class="paste-label" style="margin-bottom:0;">THEIR MESSAGE</div>
+      <div class="paste-label" style="margin-bottom:0;">what did they say</div>
       <button class="thread-toggle-btn" id="threadModeToggle" onclick="toggleThreadMode()">
         <span class="tt-dot"></span> full thread mode
       </button>
@@ -565,13 +565,13 @@
     <div class="thread-mode-banner" id="threadModeBanner">
       thread mode on. paste the full conversation, both sides.
     </div>
-    <textarea class="convo-input" id="theirMsgInput" rows="3" placeholder="paste what they said... or give context"></textarea>
+    <textarea class="convo-input" id="theirMsgInput" rows="3" placeholder="paste it here. or just describe the situation."></textarea>
 
     <!-- Context accordion -->
     <div class="context-section" style="padding:0;margin-bottom:12px;">
       <div class="context-toggle" id="contextToggle" onclick="toggleContextPanel()">
         <span class="context-toggle-icon">▶</span>
-        <span class="context-toggle-label">ADD CONVERSATION CONTEXT</span>
+        <span class="context-toggle-label">give me more to work with</span>
         <span class="context-badge" id="contextBadge" style="display:none;">added</span>
       </div>
       <div class="context-body" id="contextBody">
@@ -580,13 +580,13 @@
           <button class="context-tab" onclick="switchContextTab('screenshot', this)">Screenshot</button>
         </div>
         <div class="context-panel active" id="ctxPanelPaste">
-          <textarea class="context-input" id="contextPasteInput" rows="4" placeholder="paste the previous messages..."></textarea>
+          <textarea class="context-input" id="contextPasteInput" rows="4" placeholder="paste the thread. both sides if you have it."></textarea>
         </div>
         <div class="context-panel" id="ctxPanelScreenshot">
           <div class="screenshot-drop" id="screenshotDrop">
             <input type="file" accept="image/*" onchange="handleScreenshotUpload(this)" />
             <div class="screenshot-drop-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
-            <div class="screenshot-drop-text">tap to upload screenshot</div>
+            <div class="screenshot-drop-text">drop a screenshot. i'll read it.</div>
           </div>
           <img class="screenshot-preview" id="screenshotPreview" />
           <div class="context-clear" id="screenshotClearBtn" onclick="clearScreenshot()">remove screenshot</div>
@@ -594,8 +594,8 @@
       </div>
     </div>
 
-    <button class="ask-aria-btn" onclick="openClarifyModal()">ask Aria to clarify</button>
-    <button class="gen-reply-btn" id="genReplyBtn" onclick="generateReply()">generate reply</button>
+    <button class="ask-aria-btn" onclick="openClarifyModal()">give me more context first</button>
+    <button class="gen-reply-btn" id="genReplyBtn" onclick="generateReply()">write my reply</button>
   </div>
 
   <!-- Thinking -->
