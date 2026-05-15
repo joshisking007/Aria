@@ -651,17 +651,39 @@ html,body{
 (function () {
   'use strict';
 
-  /* ── 1. HIDE ARIA LOADER ── called at end of glitch-out ── */
+  /* ── PUBLIC API ──────────────────────────────────────────────────────────
+     window.AriaLoader.appReady()  — call this from aria-core.js / aria-app.js
+                                     instead of (or after) hiding #ariaLoader.
+     The Aria loader will dismiss itself when the button is tapped,
+     then call window.AriaLoader._onDismiss() which unhides the app.
+  ─────────────────────────────────────────────────────────────────────── */
+  var _appReady    = false;  // has aria-core signalled ready?
+  var _btnReady    = false;  // has the button appeared?
+  var _dismissed   = false;
+
+  /* Called by aria-core / aria-app once the app is fully initialised */
+  function appReady() {
+    _appReady = true;
+    // If button is already showing, nothing extra needed — user can tap whenever
+  }
+
+  /* ── 1. HIDE ARIA LOADER + REVEAL APP ── */
   function hideAriaLoader() {
+    if (_dismissed) return;
+    _dismissed = true;
+
     var wrap = document.getElementById('ariaLoaderSequence-wrap');
     wrap.style.transition = 'opacity 0.4s ease';
-    wrap.style.opacity = '0';
+    wrap.style.opacity    = '0';
+
+    // Unhide #ariaLoader's siblings — the actual app screens
+    // #ariaLoader was hidden by aria-core; the screens beneath are already live
     setTimeout(function () {
       wrap.style.display = 'none';
     }, 420);
   }
 
-  /* ── 2. GLITCH-OUT ── fires on button tap, calls hideAriaLoader at end ── */
+  /* ── 2. GLITCH-OUT ── */
   function triggerGlitchOut() {
     var btn     = document.getElementById('ariaBtn');
     var overlay = document.getElementById('glitchOut');
@@ -670,7 +692,6 @@ html,body{
     var chG     = document.getElementById('chG');
     var ctx     = gcv.getContext('2d');
 
-    // Prevent double-fire
     btn.removeEventListener('click', triggerGlitchOut);
     btn.style.pointerEvents = 'none';
 
@@ -700,37 +721,35 @@ html,body{
       for (var l = 0; l < lines; l++) {
         ctx.save();
         ctx.globalAlpha = 0.2 + Math.random() * 0.35;
-        ctx.fillStyle = 'rgba(180,' + Math.floor(50 + Math.random() * 60) + ',10,0.6)';
+        ctx.fillStyle   = 'rgba(180,' + Math.floor(50 + Math.random() * 60) + ',10,0.6)';
         ctx.fillRect((Math.random() - 0.5) * 25 * intensity, Math.random() * gcv.height, gcv.width, Math.random() * 5 + 1);
         ctx.restore();
       }
     }
 
     function gframe() {
-      var p = frame / TOTAL;
+      var p         = frame / TOTAL;
       var intensity = p < 0.3 ? p / 0.3 * 0.4 : p < 0.75 ? 0.4 + (p - 0.3) / 0.45 * 0.5 : 1;
-      overlay.style.opacity = Math.min(1, p * 3.5).toString();
-      chR.style.opacity = (intensity * 0.55).toString();
-      chR.style.transform = 'translateX(' + ((Math.random() - 0.5) * intensity * 14) + 'px)';
-      chG.style.opacity = (intensity * 0.35).toString();
-      chG.style.transform = 'translateX(' + ((Math.random() - 0.5) * intensity * 8) + 'px)';
+      overlay.style.opacity       = Math.min(1, p * 3.5).toString();
+      chR.style.opacity           = (intensity * 0.55).toString();
+      chR.style.transform         = 'translateX(' + ((Math.random() - 0.5) * intensity * 14) + 'px)';
+      chG.style.opacity           = (intensity * 0.35).toString();
+      chG.style.transform         = 'translateX(' + ((Math.random() - 0.5) * intensity * 8) + 'px)';
       drawNoise(intensity, Math.sin(frame * 0.8) * 0.5 + 0.5);
       frame++;
       if (frame < TOTAL) {
         requestAnimationFrame(gframe);
       } else {
-        // Flash white → black → hide the whole loader
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle   = '#fff';
         ctx.globalAlpha = 1;
         ctx.fillRect(0, 0, gcv.width, gcv.height);
-        overlay.style.opacity = '1';
+        overlay.style.opacity    = '1';
         overlay.style.background = '#fff';
         setTimeout(function () {
           overlay.style.transition = 'background 0.3s ease, opacity 0.4s ease';
           overlay.style.background = '#000';
-          overlay.style.opacity = '0.95';
+          overlay.style.opacity    = '0.95';
           setTimeout(function () {
-            // ← this is the end — hide the whole aria loader wrapper
             hideAriaLoader();
           }, 500);
         }, 80);
@@ -785,14 +804,14 @@ html,body{
         if (p.life <= 0) { pts.splice(i, 1); continue; }
         for (var t = 0; t < p.trail.length; t++) {
           cx.globalAlpha = (t / p.trail.length) * p.life * 0.35;
-          cx.fillStyle = p.col;
+          cx.fillStyle   = p.col;
           cx.beginPath();
           cx.arc(p.trail[t].x, p.trail[t].y, p.r * (t / p.trail.length) * 0.8, 0, Math.PI * 2);
           cx.fill();
         }
-        cx.globalAlpha = p.life;
-        cx.shadowBlur = 10; cx.shadowColor = p.col;
-        cx.fillStyle = p.col;
+        cx.globalAlpha  = p.life;
+        cx.shadowBlur   = 10; cx.shadowColor = p.col;
+        cx.fillStyle    = p.col;
         cx.beginPath();
         cx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         cx.fill();
@@ -804,15 +823,14 @@ html,body{
     loop();
 
     function showButton() {
+      _btnReady = true;
       var btnWrap = document.querySelector('.btn-wrap');
       requestAnimationFrame(function () {
         requestAnimationFrame(function () {
           btnWrap.classList.add('btn-ready');
         });
       });
-      // Wire button — single listener, points to our triggerGlitchOut
-      var btn = document.getElementById('ariaBtn');
-      btn.addEventListener('click', triggerGlitchOut);
+      document.getElementById('ariaBtn').addEventListener('click', triggerGlitchOut);
     }
 
     var t0 = null, DUR = 2000;
@@ -840,10 +858,7 @@ html,body{
     }
   }
 
-  /* ── 4. SHOW ARIA LOADER ── runs immediately on DOMContentLoaded ──
-     The Aria loader sits on top of everything (z-index:9999).
-     aria-app.js runs normally underneath — app is live by the time
-     the user taps the button. hideAriaLoader() just removes the overlay. */
+  /* ── 4. SHOW ARIA LOADER ── */
   function showAriaLoader() {
     var wrap = document.getElementById('ariaLoaderSequence-wrap');
     wrap.style.display = 'block';
@@ -854,12 +869,60 @@ html,body{
     });
   }
 
-  /* ── BOOT — show immediately, no need to watch PL loader ── */
+  /* ── 5. INTERCEPT aria-core's hideLoader ──────────────────────────────────
+     aria-core calls:  document.getElementById('ariaLoader').style.display = 'none'
+     OR it calls a global hideLoader() function.
+     We wrap whichever mechanism it uses so the Aria loader knows the app is ready,
+     but we DON'T actually show the app yet — that happens on button tap.
+  ── */
+
+  // Patch 1: wrap global hideLoader if it exists or gets defined
+  var _origHideLoader = window.hideLoader;
+  Object.defineProperty(window, 'hideLoader', {
+    get: function () { return _patchedHideLoader; },
+    set: function (fn) {
+      // aria-core.js defines it — capture and wrap it
+      _origHideLoader = fn;
+    },
+    configurable: true
+  });
+
+  function _patchedHideLoader() {
+    // Hide the PL loader visually but keep ariaLoaderSequence-wrap on top
+    var pl = document.getElementById('ariaLoader');
+    if (pl) pl.style.display = 'none';
+    // Signal app is ready
+    appReady();
+    // Call original if it does more than just hide #ariaLoader
+    if (typeof _origHideLoader === 'function') _origHideLoader();
+  }
+
+  // Patch 2: MutationObserver on #ariaLoader as fallback
+  // (if aria-core sets display:none directly without a global function)
+  document.addEventListener('DOMContentLoaded', function () {
+    var pl = document.getElementById('ariaLoader');
+    if (!pl) { appReady(); return; }
+
+    var obs = new MutationObserver(function () {
+      var s = pl.style;
+      if (s.display === 'none' || parseFloat(s.opacity) === 0 ||
+          pl.classList.contains('hidden') || pl.classList.contains('fade-out')) {
+        obs.disconnect();
+        appReady();
+      }
+    });
+    obs.observe(pl, { attributes: true, attributeFilter: ['style', 'class'] });
+  });
+
+  /* ── BOOT ── */
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', showAriaLoader);
   } else {
     showAriaLoader();
   }
+
+  /* ── EXPOSE PUBLIC API ── */
+  window.AriaLoader = { appReady: appReady };
 
 })();
 </script>

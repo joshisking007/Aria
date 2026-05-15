@@ -22,7 +22,13 @@ function updateStats() {
 // screen nav  
 const screensWithNav = ['introScreen','historyScreen','moodScreen','profileScreen','glowupScreen','redflagScreen','vibeScreen','queueScreen','contactProfileScreen','onboardScreen','presendScreen','memoryScreen','longGameScreen','lgDetailScreen','lgArcPreviewScreen','exploreScreen','starterScreen'];
 
-function showScreen(id) {  
+var _ariaLoaderSignalled = false;
+function showScreen(id) {
+  // Signal AriaLoader that the app is ready on first screen show
+  if (!_ariaLoaderSignalled) {
+    _ariaLoaderSignalled = true;
+    if (window.AriaLoader) window.AriaLoader.appReady();
+  }
   // If leaving chat screen, write conversation summary  
   const currentScreen = document.querySelector('.screen[style*="display: block"], .screen:not([style*="display: none"])');  
   if (currentScreen && currentScreen.id === 'chatScreen' && id !== 'chatScreen') {  
