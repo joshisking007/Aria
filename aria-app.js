@@ -3799,9 +3799,11 @@ const ARIA_EXPRESSION_POOLS = {
 // Track last used per cluster to prevent back-to-back repeats
 const _lastPoolPick = {};
 
-function resolveExpression(key) {
+// direct=true skips pool randomization — used when restoring saved messages
+// so the exact stored expression_tag is always shown, not a random pool pick.
+function resolveExpression(key, direct = false) {
   const pool = ARIA_EXPRESSION_POOLS[key];
-  if (!pool) return key; // no pool — use directly
+  if (!pool || direct) return key; // no pool, or exact mode — use key directly
   const last = _lastPoolPick[key];
   const options = pool.filter(k => k !== last);
   const pick = options[Math.floor(Math.random() * options.length)];
@@ -3809,9 +3811,9 @@ function resolveExpression(key) {
   return pick;
 }
 
-function setAriaExpression(imgEl, expressionKey) {  
+function setAriaExpression(imgEl, expressionKey, direct = false) {  
   if (!imgEl) return;
-  const resolved = resolveExpression(expressionKey);
+  const resolved = resolveExpression(expressionKey, direct);
   const src = ARIA_EXPRESSION_IMGS[resolved] || null;
   if (!src) return; // no image for this expression — leave orb as gradient  
   if (imgEl.src !== src) {  
@@ -3823,9 +3825,10 @@ function setAriaExpression(imgEl, expressionKey) {
   ariaExprTransition(imgEl);  
 }
 
-// Helper: resolve img URL for an expression key (used in appendAriaMessage)  
-function ariaImgForExpression(expressionKey) {
-  const resolved = resolveExpression(expressionKey);
+// Helper: resolve img URL for an expression key (used in appendAriaMessage)
+// direct=true for history restore — use exact key, no pool randomization.
+function ariaImgForExpression(expressionKey, direct = false) {
+  const resolved = resolveExpression(expressionKey, direct);
   return ARIA_EXPRESSION_IMGS[resolved] || null;
 }
 
@@ -4157,8 +4160,9 @@ function appendAriaMessage(text, emotion, doSpeak = true, instant = false, expre
   const msgs = document.getElementById('chatMessages');  
   const meta = EMOTION_META[emotion] || EMOTION_META.neutral;
 
-  const expressionKey = expressionOverride || meta.expression || 'default';  
-  const imgSrc = ariaImgForExpression(expressionKey);
+  const expressionKey = expressionOverride || meta.expression || 'default';
+  // instant=true means history restore — use exact saved expression, skip pool randomization
+  const imgSrc = ariaImgForExpression(expressionKey, instant);
 
   const wrap = document.createElement('div');  
   wrap.className = 'chat-msg-aria-wrap';  
@@ -4173,8 +4177,9 @@ function appendAriaMessage(text, emotion, doSpeak = true, instant = false, expre
     const img = document.createElement('img');  
     img.crossOrigin = 'anonymous';  
     img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center 15%;display:block;';  
-    card.appendChild(img);  
-    setAriaExpression(img, expressionKey);
+    card.appendChild(img);
+    // instant=true on history restore — pass direct=true so the exact saved expression is used
+    setAriaExpression(img, expressionKey, instant);
 
     if (emotion !== 'neutral') {  
       const badge = document.createElement('div');  
@@ -4183,11 +4188,13 @@ function appendAriaMessage(text, emotion, doSpeak = true, instant = false, expre
       card.appendChild(badge);  
     }
 
-    // Update header portrait  
-    const headerPortrait = document.getElementById('chatHeaderPortrait');  
-    if (headerPortrait) {  
-      headerPortrait.style.display = 'block';  
-      setAriaExpression(headerPortrait, expressionKey);  
+    // Update header portrait — only for live messages, not history restore
+    if (!instant) {
+      const headerPortrait = document.getElementById('chatHeaderPortrait');  
+      if (headerPortrait) {  
+        headerPortrait.style.display = 'block';  
+        setAriaExpression(headerPortrait, expressionKey, false);  
+      }
     }  
   } else {  
     wrap.classList.add('no-card');  
