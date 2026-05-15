@@ -840,11 +840,13 @@ html,body{
     }
   }
 
-  /* ── 4. SHOW ARIA LOADER ── called when PL loader hides ── */
+  /* ── 4. SHOW ARIA LOADER ── runs immediately on DOMContentLoaded ──
+     The Aria loader sits on top of everything (z-index:9999).
+     aria-app.js runs normally underneath — app is live by the time
+     the user taps the button. hideAriaLoader() just removes the overlay. */
   function showAriaLoader() {
     var wrap = document.getElementById('ariaLoaderSequence-wrap');
     wrap.style.display = 'block';
-    // Small rAF so display:block paints before animations kick
     requestAnimationFrame(function () {
       requestAnimationFrame(function () {
         initAriaLoader();
@@ -852,36 +854,11 @@ html,body{
     });
   }
 
-  /* ── 5. WATCH PL LOADER ── */
-  function watchPLLoader() {
-    var plLoader = document.getElementById('ariaLoader');
-    if (!plLoader) { showAriaLoader(); return; }
-
-    // Already hidden (e.g. very fast machines)
-    if (plLoader.style.display === 'none' || plLoader.classList.contains('hidden')) {
-      showAriaLoader();
-      return;
-    }
-
-    var obs = new MutationObserver(function () {
-      var s = plLoader.style;
-      var hidden = s.display === 'none'
-                || parseFloat(s.opacity) === 0
-                || plLoader.classList.contains('hidden')
-                || plLoader.classList.contains('fade-out');
-      if (hidden) {
-        obs.disconnect();
-        showAriaLoader();
-      }
-    });
-    obs.observe(plLoader, { attributes: true, attributeFilter: ['style', 'class'] });
-  }
-
-  /* ── BOOT ── */
+  /* ── BOOT — show immediately, no need to watch PL loader ── */
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', watchPLLoader);
+    document.addEventListener('DOMContentLoaded', showAriaLoader);
   } else {
-    watchPLLoader();
+    showAriaLoader();
   }
 
 })();
