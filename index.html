@@ -132,19 +132,6 @@
   border-color: var(--rose-border);
   color: var(--text2);
 }
-/* connectivity indicator dot */
-.chat-conn-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #4ade80; /* green = good */
-  flex-shrink: 0;
-  margin-left: 6px;
-  transition: background 0.4s ease;
-  box-shadow: 0 0 4px currentColor;
-}
-.chat-conn-dot.conn-slow  { background: #facc15; } /* yellow */
-.chat-conn-dot.conn-bad   { background: #f87171; } /* red */
 </style>
 </head>
 <body>
@@ -1722,7 +1709,6 @@
       <div class="chat-header-status" id="chatHeaderStatus">online</div>
     </div>
     <div class="chat-mood-pill" id="chatMoodPill">● chill</div>
-    <div class="chat-conn-dot" id="chatConnDot" title="connection"></div>
   </div>
 
   <!-- Messages -->
@@ -2028,7 +2014,11 @@
 
 <div class="toast" id="toast"></div>
 
-<!-- scripts — load order matters: 1. aria-core.js (memory, auth, supabase, storage — no dom deps) 2. aria-app.js (all features — depends on core) -->
+<!-- scripts — load order matters:
+     1. aria-config.js  (Aria's identity, voice, expressions — pure config, no DOM deps)
+     2. aria-core.js    (memory, auth, supabase, storage — no DOM deps)
+     3. aria-app.js     (all features — depends on core + config) -->
+<script src="aria-config.js"></script>
 <script src="aria-core.js"></script>
 <script src="aria-app.js"></script>
 <script src="aria-chat-attachments.js"></script>
