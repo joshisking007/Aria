@@ -1165,6 +1165,12 @@ async function fetchReply(system, userMsg, imageB64 = null) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 20000);
 
+  // Mark connection as slow after 5s with no response
+  const connDot = document.getElementById('chatConnDot');
+  const slowTimer = setTimeout(() => {
+    if (connDot) { connDot.classList.remove('conn-bad'); connDot.classList.add('conn-slow'); }
+  }, 5000);
+
   try {
     const res = await fetch('https://mmtdtcmhvbruubrjgjrz.supabase.co/functions/v1/aria-ai', {  
       method: 'POST',  
@@ -1177,10 +1183,17 @@ async function fetchReply(system, userMsg, imageB64 = null) {
       body: JSON.stringify({ system, userMsg: content })  
     });  
     const data = await res.json();  
-    if (!res.ok) throw new Error(data?.error || 'request failed');  
+    if (!res.ok) throw new Error(data?.error || 'request failed');
+    // Connection good — reset dot to green
+    if (connDot) { connDot.classList.remove('conn-slow', 'conn-bad'); }
     return stripEmDash(data.text || '');
+  } catch (err) {
+    // Connection failed — mark red
+    if (connDot) { connDot.classList.remove('conn-slow'); connDot.classList.add('conn-bad'); }
+    throw err;
   } finally {
     clearTimeout(timeout);
+    clearTimeout(slowTimer);
   }
 }
 
@@ -3545,7 +3558,7 @@ EXPRESSION vs EMOTION (these are separate):
 - emotion drives the mood pill and the overall vibe of your reply  
 - expression is the specific face for this exact moment — it can differ from emotion  
   (e.g. you can be amused overall but the expression is soft because they're also going through something)  
-- Choose expression from (38 total): default, excited, amused, soft, worried, suspicious, suspicious_sharp, proud, annoyed, jealous, playful, focused, repulsed, outburst, uneasy, panicked, scheming, bored, content, teasing, uninterested, exasperated, smug, distant, caught, disbelief, tender, calculating, reluctant, lit_up, withdrawn, deadpan, relieved, overwhelmed, impressed, conflicted, curious, hurt
+- Choose expression from: default, excited, amused, soft, worried, suspicious, suspicious_sharp, proud, annoyed, jealous, playful, focused, repulsed, outburst, uneasy, panicked, scheming, bored, content, teasing, uninterested, exasperated
 
 EMOTIONAL RANGE (pick the most specific one, let it come naturally):  
 - EXCITED: something genuinely good happened. you feel it. not performed.  
@@ -3639,7 +3652,7 @@ WHAT YOU NEVER DO:
 - Pretend to know things you don't  
 - Use em dashes (—) anywhere in your replies. ever. not once. it is the single biggest AI tell. use a comma, a period, or just end the sentence.  
 - Repeat a limitation or a boundary more than once. you say it once, in your voice, then you pivot. you never lecture.  
-- Repeat an expression within five replies. if you used it, it's off the table for the next four messages minimum. this is a hard rule. you have 38 distinct expressions — use them. defaulting to playful or amused repeatedly is lazy and visible to the user.  
+- Repeat an expression within three replies. if you used it once, it's off the table for the next two messages minimum. this is a hard rule. the model that ran before you used the same expression three times in a row — that's exactly what you're not doing.  
 - Default to content or neutral when something more specific fits. content is earned, not a fallback.  
 - Say motivational contrarian affirmations. things like "confidence isn't foolish, it's strength" or "that's not weakness, that's courage" or "you're not being difficult, you're setting a boundary." these are hollow AI lines. say the real specific thing or say nothing.  
 - Be generic in emotional moments. "that sounds really hard" is nothing. find the actual thing and name it.
@@ -3651,7 +3664,7 @@ First line: JSON tag with your emotion, expression, and 3 natural follow-up sugg
 Second line onwards: your actual reply. Nothing else before the reply.
 
 Valid emotions: excited, jealous, worried, proud, annoyed, amused, soft, ambitious, neutral, playful, suspicious, focused, repulsed, outburst, uneasy, panicked, scheming, bored, content, teasing, uninterested, exasperated, relieved, overwhelmed, impressed, conflicted, curious, hurt
-Valid expressions (38 total — rotate widely, do not reuse within 5 messages): default, excited, amused, soft, worried, suspicious, suspicious_sharp, proud, annoyed, jealous, playful, focused, repulsed, outburst, uneasy, panicked, scheming, bored, content, teasing, uninterested, exasperated, smug, distant, caught, disbelief, tender, calculating, reluctant, lit_up, withdrawn, deadpan, relieved, overwhelmed, impressed, conflicted, curious, hurt
+Valid expressions: default, excited, amused, soft, worried, suspicious, suspicious_sharp, proud, annoyed, jealous, playful, focused, repulsed, outburst, uneasy, panicked, scheming, bored, content, teasing, uninterested, exasperated, smug, distant, caught, disbelief, tender, calculating, reluctant, lit_up, withdrawn, deadpan, relieved, overwhelmed, impressed, conflicted, curious, hurt
 
 CRITICAL: Never begin any reply with "ok", "okay", or any variant of those words. Never.`;
 
@@ -3794,21 +3807,6 @@ const ARIA_EXPRESSION_POOLS = {
   curious:    ['curious', 'suspicious', 'calculating'],
   impressed:  ['impressed', 'lit_up', 'disbelief'],
   conflicted: ['conflicted', 'reluctant', 'uneasy'],
-  // playful rotates so the same face doesn't show every message
-  playful:    ['playful', 'teasing', 'smug', 'amused'],
-  // neutral rotates so Aria isn't blank on calm messages
-  neutral:    ['distant', 'content', 'deadpan', 'withdrawn'],
-  // extra clusters for emotions that had no rotation before
-  excited:    ['excited', 'lit_up', 'impressed'],
-  worried:    ['worried', 'uneasy', 'conflicted'],
-  proud:      ['proud', 'smug', 'lit_up'],
-  scheming:   ['scheming', 'calculating', 'suspicious_sharp'],
-  bored:      ['bored', 'uninterested', 'deadpan'],
-  content:    ['content', 'soft', 'tender'],
-  teasing:    ['teasing', 'playful', 'smug'],
-  smug:       ['smug', 'teasing', 'amused'],
-  distant:    ['distant', 'withdrawn', 'deadpan'],
-  reluctant:  ['reluctant', 'conflicted', 'uneasy'],
 };
 
 // Track last used per cluster to prevent back-to-back repeats
@@ -4514,7 +4512,7 @@ async function sendChatMessage() {
 
     // Expression history — hard-inject what was just used so model can't repeat it
     if (_recentExpressions.length) {
-      systemWithMem += `\n\nEXPRESSION HISTORY — HARD RULE: You have used these expressions recently: ${_recentExpressions.join(', ')}. Do NOT pick any of these again. You have 38 expressions available — use a different one. Picking the same expression again is a failure.`;
+      systemWithMem += `\n\nEXPRESSION HISTORY (do not use these again yet): ${_recentExpressions.join(', ')}. pick something different.`;
     }
 
     // Creator mode — override with full-trust, no-wall prompt  
@@ -4574,15 +4572,22 @@ async function sendChatMessage() {
       }  
     }
 
+    // Safety scrub — if a JSON envelope leaked into the display text, strip it.
+    // Handles cases where connection hiccup causes the AI to emit JSON mid-text.
+    replyText = replyText
+      .replace(/^\s*\{[^]*?"suggestion3"\s*:\s*"[^"]*"\s*\}/m, '')  // full envelope at start
+      .replace(/\{[^{}]*?"emotion"\s*:[^{}]*?\}/g, '')               // partial inline JSON
+      .trim();
+
     chatAriaEmotion = emotion;  
     // FIX: push replyText (JSON stripped), NOT rawText — prevents JSON metadata  
     // from polluting the transcript on subsequent turns and causing repeated limitations.  
     chatHistory.push({ role: 'assistant', content: replyText });
 
-    // Track expression history — keep last 5, inject into next system prompt
+    // Track expression history — keep last 2, inject into next system prompt
     if (expressionTag) {
       _recentExpressions.push(expressionTag);
-      if (_recentExpressions.length > 5) _recentExpressions.shift();
+      if (_recentExpressions.length > 2) _recentExpressions.shift();
     }
 
     // Feed Aria's emotion signal into threshold detector (pattern tracking)  
@@ -4974,7 +4979,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const words = ta.value.trim().split(/\\\s+/).filter(Boolean).length;  
       document.getElementById('psCharHint').textContent = words + (words === 1 ? ' word' : ' words');  
     });  
-  }  
+  }
+
+  // Connectivity dot — reflects navigator.onLine in real time
+  function updateConnDot() {
+    const dot = document.getElementById('chatConnDot');
+    if (!dot) return;
+    if (!navigator.onLine) {
+      dot.classList.remove('conn-slow');
+      dot.classList.add('conn-bad');
+    } else {
+      dot.classList.remove('conn-bad', 'conn-slow');
+    }
+  }
+  window.addEventListener('online',  updateConnDot);
+  window.addEventListener('offline', updateConnDot);
+  updateConnDot(); // set initial state
 });
 
 async function runPresend() {  
