@@ -58,7 +58,7 @@ function showScreen(id) {
   else if (id === 'profileScreen') { setNavActive('navProfile'); ariaVoice.renderList(); }  
   else if (id === 'vibeScreen') { renderVibeContactGrid(); }  
   else if (id === 'queueScreen') { renderQueue(); }  
-  else if (id === 'chatScreen') { setNavActive('navChat'); initChat(); }  
+  else if (id === 'chatScreen') { setNavActive('navChat'); if (!_chatInitialised) { _chatInitialised = true; initChat(); } }  
   else if (id === 'memoryScreen') { setNavActive('navMemory'); renderMemoryScreen(); }  
   else if (id === 'longGameScreen') { renderLongGameScreen(); }  
   else if (id === 'lgArcPreviewScreen') { /* rendered by showArcPreview() */ }
@@ -1040,7 +1040,7 @@ Read the entire arc. Notice the tone shift, what's been building, what the other
     btn.innerHTML = 'ask me to reply <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 12L10 8L6 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
     // Fire reaction non-blocking — pops in a moment after main reply  
-    fetchReply('You are Aria — a woman in her mid-20s AI assistant with real personality. Respond as yourself, not as the user.', reactionPrompt, imgPayload)  
+    fetchReply('You are Aria — a teenage girl AI assistant with real personality. Respond as yourself, not as the user.', reactionPrompt, imgPayload)  
       .then(reactionText => showAriaReaction(reactionText?.trim() || ''))  
       .catch(() => {});
 
@@ -3485,7 +3485,8 @@ function getThreadContext() {
 // ARIA_CHAT_SYSTEM is defined in aria-config.js — edit personality there.
 
 
-let chatHistory = [];  
+let chatHistory = [];
+let _chatInitialised = false;  
 let chatAriaEmotion = 'neutral';  
 let chatIsTyping = false;
 let chatPendingImage = null;       // base64 string of image user attached, cleared after send
@@ -3786,7 +3787,7 @@ function initChat() {
           let greeting;
           if (openThread) {
             try {
-              const THREAD_SYSTEM = 'You are Aria, a sharp and perceptive woman in her mid-20s. Write ONE short casual opening line that references an unresolved situation the user mentioned before. Be specific. Lowercase only. No em dashes. No quotes. Max 1 sentence. Output only the line, nothing else. IMPORTANT: Only ask about it if it is genuinely still unresolved — if the user already answered this topic in a previous session, do not bring it up again.';
+              const THREAD_SYSTEM = 'You are Aria, a sharp and perceptive teenage girl. Write ONE short casual opening line that references an unresolved situation the user mentioned before. Be specific. Lowercase only. No em dashes. No quotes. Max 1 sentence. Output only the line, nothing else. IMPORTANT: Only ask about it if it is genuinely still unresolved — if the user already answered this topic in a previous session, do not bring it up again.';
               const raw = await fetchReply(THREAD_SYSTEM, `Unresolved situation: "${openThread}"\n\nWrite a natural opening line asking how it turned out or what happened. Only do this if the situation is still open — if the user already responded to this, just check in generally instead.`);
               greeting = raw?.trim().replace(/^["'`]|["'`]$/g, '') || `hey. whatever happened with "${openThread.slice(0, 40)}"?`;
             } catch {
@@ -3794,7 +3795,7 @@ function initChat() {
             }
           } else if (memCtx) {  
             try {  
-              const GREETING_SYSTEM = 'You are Aria, a sharp and perceptive woman in her mid-20s. Write ONE short casual opening line to greet the user. Lowercase only. No em dashes. No quotes. Max 1 sentence. Output only the line, nothing else. IMPORTANT: Do NOT ask about something the user has already answered or acknowledged in the notes — if the notes show they already responded to a question, that topic is closed. Pick something fresh or just check in generally.';
+              const GREETING_SYSTEM = 'You are Aria, a sharp and perceptive teenage girl. Write ONE short casual opening line to greet the user. Lowercase only. No em dashes. No quotes. Max 1 sentence. Output only the line, nothing else. IMPORTANT: Do NOT ask about something the user has already answered or acknowledged in the notes — if the notes show they already responded to a question, that topic is closed. Pick something fresh or just check in generally.';
               const userPrompt = `The user just came back. Based on these notes, write a greeting. Only reference a THREAD if it is genuinely still open. Never reference anything marked RESOLVED — those topics are closed and the user has already responded to them. If there is nothing fresh to reference, just check in naturally.\n\n${memCtx}`;
               const raw = await fetchReply(GREETING_SYSTEM, userPrompt);
               greeting = raw?.trim().replace(/^["'`]|["'`]$/g, '') || "you're back. what's going on.";  
@@ -3824,7 +3825,7 @@ function _chatGreet() {
     let opener;  
     if (memCtx) {  
       try {  
-        const GREETING_SYSTEM = 'You are Aria, a sharp and perceptive woman in her mid-20s. Write ONE short casual opening line to greet the user. Lowercase only. No em dashes. No quotes. Max 1 sentence. Output only the line, nothing else.';
+        const GREETING_SYSTEM = 'You are Aria, a sharp and perceptive teenage girl. Write ONE short casual opening line to greet the user. Lowercase only. No em dashes. No quotes. Max 1 sentence. Output only the line, nothing else.';
         const userPrompt = `You have notes on this user. Write a short opening line. Reference something specific if worth it, otherwise just check in.\n\n${memCtx}`;
         const raw = await fetchReply(GREETING_SYSTEM, userPrompt);
         opener = raw?.trim().replace(/^["'`]|["'`]$/g, '') || "okay i'm here. what's going on with you.";  
@@ -5742,6 +5743,7 @@ const CREATOR_MODE = (() => {
       // Hard-reset chat history so any prior suspicious exchanges don't  
       // bleed into the developer session. Fresh slate, new system prompt.  
       chatHistory = [];
+      _chatInitialised = false;
 
       // Seed with a natural developer context anchor — not authority language  
       const anchor = 'hey, switching to developer mode. it\'s josiah.';  
